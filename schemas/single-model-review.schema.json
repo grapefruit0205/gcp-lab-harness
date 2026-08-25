@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/gcp-lab-harness/single-model-review.schema.json",
+  "title": "Single model phase review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "phase",
+    "verdict",
+    "plan_hash",
+    "diff_hash",
+    "evidence_hash",
+    "checks",
+    "findings",
+    "reviewed_at"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$" },
+    "phase": { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+    "verdict": { "enum": ["pass", "fail"] },
+    "plan_hash": { "$ref": "#/$defs/sha256" },
+    "diff_hash": { "$ref": "#/$defs/sha256" },
+    "evidence_hash": { "$ref": "#/$defs/sha256" },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "evidence"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["passed", "failed", "not_run"] },
+          "evidence": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "summary"],
+        "properties": {
+          "severity": { "enum": ["P0", "P1", "P2", "P3"] },
+          "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "reviewed_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

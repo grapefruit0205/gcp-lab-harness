@@ -73,6 +73,16 @@ Checked: 2026-08-25 — 코드 경로는 연결했으며 현재 Linux 환경에�
 Evidence: `scripts/start-command-code.sh`, `scripts/handoff-review.sh`, `scripts/prepare-extension-review.sh`, `scripts/handoff-next.sh`, `bin/gcp-lab-harness`
 Checked: 2026-08-25 — state controller와 이름 있는 Command Code session, hash 결합 Extension prompt, 승인 후 session resume를 연결했으며 실제 15개 Phase Cloud E2E는 미실행
 
+## Command Code 단일 모델 구현·자기 검증 선택 경로 — state: wired — 2026-08-25
+
+Evidence: `prompts/single-model-phase.md`, `schemas/single-model-review.schema.json`, `scripts/single-model-phase.sh`, `scripts/prepare-single-model-review.sh`, `scripts/single-model-approve.sh`, `bin/gcp-lab-harness`; 격리 상태 root의 `single-model run --dry-run` PASS, 활성 Phase 04의 저장 plan·diff·evidence 세 hash 재검증 PASS
+Checked: 2026-08-25 — 같은 현재 모델의 구현·검증 prompt, hash 결합 result, 사용자 승인 검사를 CLI에 연결함. 실제 Command Code Phase 자기 검증과 Cloud E2E는 미실행
+
+## Phase repo 쉘 실행 허용 목록 — state: verified — 2026-08-25
+
+Evidence: `scripts/configure-command-code-permissions.sh`; 현재 `.commandcode/settings.json`에 Phase 04 `run.sh`·`verify.sh`의 직접·bash 실행 패턴이 병합되고 `defaultMode`는 `default`로 유지됨
+Checked: 2026-08-25 — Phase 01–15 패턴을 idempotent하게 추가하며 전체 command auto-accept는 사용하지 않음
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -84,6 +94,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - 실제 `run-all` foreground supervisor와 Command Code·Cloud adapter 자동 연결
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
+- 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
 - Windows PowerShell→WSL wrapper 실제 Windows 실행 검증
 
 ## Permanently excluded

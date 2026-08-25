@@ -7,6 +7,7 @@
 | Phase runner | Ubuntu Bash의 Command Code `cmd` | 승인된 Phase 범위의 Cloud 실행 | 실행 evidence와 Extension 대기 상태 |
 | Harness runner | Ubuntu Bash 또는 PowerShell→WSL wrapper | 승인된 Google Cloud 범위 | plan, 리소스, 원시 evidence |
 | Verifier | VS Code Codex Extension | 읽기 전용 | `/review`와 Phase별 심각도 review |
+| Single-model verifier(선택) | 같은 Command Code 고정 모델 | 현재 Phase의 구현·자기 검증 | hash 결합 review JSON과 사용자 승인 대기 |
 | Maintainer | 사용자 터미널 | stage, commit, 명시적 push | 한국어 Git 이력 |
 
 ## 1. Phase 시작
@@ -65,6 +66,23 @@ gcp-lab-harness handoff next --run <RUN_ID>
 ```
 
 PowerShell에서는 `.\harness.ps1 handoff next --run <RUN_ID>`를 사용한다. Command Code는 승인된 Phase의 리소스만 cleanup하고 잔여 리소스 0을 확인한 뒤 검증된 파일만 stage한다. 커밋 형식은 `Phase NN: <한국어 요약> 완료`다. push까지 성공하면 controller가 다음 Phase로 이동하고 같은 흐름을 반복한다.
+
+## 선택 경로: 단일 모델 구현·검증
+
+별도 Extension 모델 없이 같은 Command Code 고정 모델을 사용할 때 다음 명령으로 현재 Phase를 실행한다.
+
+```bash
+gcp-lab-harness single-model run --run <RUN_ID>
+```
+
+승인 plan SHA가 없으면 `planned`에서 멈춘다. hash 확인 뒤 `--confirm-plan-sha <SHA256>`을 붙여 다시 실행하면 apply·machine verification·자기 검증까지 진행한다. 단일 모델은 `single-model-review.json`을 만들지만 자기 결과를 승인하지 않는다.
+
+```bash
+gcp-lab-harness single-model approve --run <RUN_ID>
+gcp-lab-harness handoff next --run <RUN_ID>
+```
+
+`single-model approve`는 사용자가 직접 실행하는 승인 명령이다. review schema, verdict, 모든 check, P0/P1 부재와 plan/diff/evidence hash 일치를 다시 검사한다. Phase Command Code session은 `.commandcode/settings.json`에 Phase 01–15의 repo `run.sh`·`verify.sh`와 필수 하네스 스크립트만 허용 목록으로 병합해 `.sh` 실행 질문이 발생하지 않도록 하며 Cloud·Git 외부 변경 gate는 유지한다.
 
 GitHub CLI가 설치되고 저장소 이름·공개 범위가 확정된 뒤 최초 1회만 다음 중 하나를 사용한다.
 

@@ -41,3 +41,4 @@ One short section per working session: what was worked on, what was decided (wit
 - D-014에 따라 공개 clone 후 도구 설치·GCP 인증·preflight·Terraform 연결을 실행하는 bootstrap 스크립트와 README 명령을 추가했다.
 - D-015에 따라 GitHub 저장소를 public으로 전환했고 코드와 커밋 이력을 누구나 열람·clone할 수 있는 상태를 확인했다.
 - D-016에 따라 `$HOME` clone용 root bootstrap, 사용자 PATH 명령, PowerShell→WSL wrapper와 Command Code 대화형 start를 추가했다. machine verification 뒤 Extension review로 넘기고 승인·반려 후 같은 Command Code session을 재개하는 handoff를 CLI에 연결했다.
+- D-017에 따라 Extension 분리 검증을 유지하면서 같은 Command Code 고정 모델이 구현·자기 검증을 수행하는 선택 경로를 추가했다. Phase session은 repo `.sh` 실행을 자동 승인하지만 plan SHA와 최종 사용자 승인은 유지한다.

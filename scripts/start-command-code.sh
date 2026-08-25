@@ -22,6 +22,7 @@ cmd status >/dev/null
   exit 1
 }
 "$repo_root/scripts/preflight-gcp.sh" >/dev/null
+"$repo_root/scripts/configure-command-code-permissions.sh" >/dev/null
 
 state_file="$(harness_state_file "$run_id")"
 session_name="gcp-harness-$run_id"
@@ -49,6 +50,7 @@ chmod 700 "$run_dir"
 4. Cloud apply 전에는 저장 plan의 영향과 SHA256을 사용자에게 보여주고 명시적 승인을 기다린다.
 5. machine_verify 완료 뒤 `gcp-lab-harness handoff review --run <RUN_ID> --plan <저장-plan> --evidence <검증-manifest>`를 실행해 VS Code Codex Extension으로 넘긴 뒤 멈춘다.
 6. Extension 사용자 승인 전에는 cleanup, commit, push 또는 다음 Phase를 시작하지 않는다.
+7. 이 Phase session은 저장소 소유 `.sh` 실행을 자동 승인한다. 저장 plan hash 승인과 외부 변경 gate는 별개이며 생략하지 않는다.
 
 먼저 현재 상태를 짧게 설명하고 사용자의 자연어 지시를 기다린다.
 PROMPT

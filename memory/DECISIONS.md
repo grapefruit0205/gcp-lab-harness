@@ -100,3 +100,9 @@ sweep: GitHub 공개 전환, README clone 안내, workflow, product truth, check
 사용자는 임의의 `/path/to/...`로 이동해 개발용 `make` 명령을 실행하는 방식 대신, GitHub 저장소를 `$HOME`에 clone한 뒤 root script 하나로 GCP 로그인과 Terraform 연결을 구성하도록 정했다. 이후 Bash에서 Command Code `cmd` 대화형 세션을 열어 자연어로 Phase를 구현하고, 구현 완료 시 VS Code Codex Extension으로 검증 handoff하며, 사용자 승인 후 같은 Command Code session으로 handoff해 cleanup·한국어 commit·push·다음 Phase를 계속한다. Windows PowerShell은 WSL의 동일 Bash 하네스를 호출하는 wrapper를 제공한다.
 
 sweep: README, Bash·PowerShell bootstrap, 사용자 명령 installer, Command Code start, Extension review, next handoff, CLI usage, workflow와 orchestration에 반영함 (2026-08-25)
+
+## D-017 · 같은 고정 모델의 구현·검증 경로와 Phase 쉘 자동 승인을 제공한다 — 2026-08-25 (사용자, 선택 실행 모드 요청)
+
+기본 Command Code 구현·VS Code Codex Extension 검증 경로는 유지하되, 사용자가 선택하면 현재 Command Code 계정의 같은 고정 모델 하나가 한 Phase의 구현과 자기 검증을 연속 수행할 수 있게 한다. 한 Phase session에서는 저장소가 소유한 `.sh` 실행을 다시 묻지 않도록 자동 승인 모드를 사용한다. 모델·effort override는 금지하며, 저장 plan SHA 사용자 승인, project allowlist, cleanup 소유권, 최종 사용자 승인과 push gate는 생략하지 않는다.
+
+sweep: CLI, single-model prompt·schema·실행·검증·승인 스크립트, Command Code start·next handoff, README, workflow, orchestration과 validation에 반영함 (2026-08-25)

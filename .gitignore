@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 config/harness.env
+.commandcode/settings.json
+.commandcode/taste/
 *.pem
 *.key
 *credentials*.json

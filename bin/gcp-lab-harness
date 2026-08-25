@@ -13,6 +13,9 @@ usage() {
   gcp-lab-harness setup <GCP_PROJECT_ID>
   gcp-lab-harness start --run <id>
   gcp-lab-harness cmd --run <id>
+  gcp-lab-harness single-model run --run <id> [--confirm-plan-sha <sha256>]
+  gcp-lab-harness single-model prepare --run <id> [--plan <file> --evidence <file>]
+  gcp-lab-harness single-model approve --run <id>
   gcp-lab-harness handoff review --run <id> --plan <file> --evidence <file>
   gcp-lab-harness handoff next --run <id>
   gcp-lab-harness doctor
@@ -28,6 +31,7 @@ usage() {
   gcp-lab-harness gate reject <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256> --reviewer <id> --findings <file>
 
 start/cmd는 Command Code 대화형 구현 세션을 열고, handoff는 Extension 검증과 다음 단계 재개를 연결합니다.
+single-model은 같은 Command Code 고정 모델로 구현과 자기 검증을 수행하되 사용자 승인은 유지합니다.
 실제 run-all은 Google Cloud adapter가 모두 준비될 때까지 차단됩니다.
 USAGE
 }
@@ -197,6 +201,14 @@ case "${1:-}" in
     case "${2:-}" in
       review) shift 2; exec "$repo_root/scripts/handoff-review.sh" "$@" ;;
       next) shift 2; exec "$repo_root/scripts/handoff-next.sh" "$@" ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    ;;
+  single-model)
+    case "${2:-}" in
+      run) shift 2; exec "$repo_root/scripts/single-model-phase.sh" "$@" ;;
+      prepare) shift 2; exec "$repo_root/scripts/prepare-single-model-review.sh" "$@" ;;
+      approve) shift 2; exec "$repo_root/scripts/single-model-approve.sh" "$@" ;;
       *) usage >&2; exit 2 ;;
     esac
     ;;

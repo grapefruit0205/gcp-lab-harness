@@ -17,6 +17,7 @@ PowerShell 진입점은 `.\harness.ps1 start --run <RUN_ID>`다. 오케스트레
 - `codex`: VS Code Codex Extension과 공유되는 MCP 설정을 관리할 때만 쓰는 보조 CLI다. Phase 실행자나 별도 verifier가 아니다.
 - `code` CLI: 선택적으로 현재 사용자의 VS Code workspace와 Phase 검증 패키지를 화면에 여는 로컬 launcher다. Command Code 실행 명령이 아니며 클라우드 명령을 실행하지 않는다.
 - VS Code Codex Extension: Phase gate, 실제 GCP read-only 조회, diff와 evidence 검토를 수행한다.
+- 단일 모델 선택 경로: 같은 Command Code 고정 모델이 구현 뒤 별도 자기 검증 패스를 수행하고 schema 기반 review JSON을 남긴다. 사용자 승인 gate는 그대로다.
 - GCP 인증: Codex 계정과 별개이며 ADC 또는 서비스 계정 가장으로 제공한다.
 
 ## Phase 상태 머신
@@ -51,6 +52,8 @@ Lab 01의 `PUSHED`가 확인되어야 Lab 02가 시작된다. `WAITING_EXTENSION
 5. 승인 파일을 기다리되 heartbeat와 최대 대기 시간만 관리하고 Cloud 작업은 하지 않음
 
 Extension은 prompt에 따라 저장소 명령과 공식 Monitoring/Logging MCP 조회를 실행하고 결과를 사용자에게 보여준다. **Extension 자신이 승인을 추론하면 안 된다.** 사용자가 정확히 승인 의사를 밝힌 뒤에만 다음 명령을 실행한다.
+
+단일 모델 경로도 같은 원칙을 사용한다. 모델은 review 결과만 작성하고 `single-model approve`를 실행하지 않는다. 사용자가 결과와 hash를 확인해 승인 명령을 직접 실행해야 cleanup과 다음 Phase handoff가 열린다.
 
 ```bash
 ./bin/gcp-lab-harness gate approve NN \

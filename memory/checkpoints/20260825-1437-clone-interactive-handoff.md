@@ -1,8 +1,8 @@
-# Checkpoint — 선택형 단일 모델 Phase 검증 — 2026-08-25 14:37
+# Checkpoint — clone 기반 대화형 handoff 진입점 — 2026-08-25 14:00
 
 ## The story so far
 
-기본 Command Code 구현·VS Code Extension 검증 경로에 더해 같은 Command Code 고정 모델 하나가 구현과 자기 검증을 연속 수행하는 선택 경로를 연결했다. 단일 모델은 schema·plan/diff/evidence hash가 묶인 결과만 만들고 사용자 승인을 대신하지 않는다. Phase 01–15의 repo `run.sh`·`verify.sh`는 `.commandcode/settings.json`의 scoped allowlist에 자동 병합되어 실행 여부를 다시 묻지 않는다. 현재 run `lab-20260825-01`의 Phase 04는 기존 세 hash를 유지한 `waiting_extension_review`이며 단일 모델 review prompt까지 준비됐다.
+public 저장소를 Linux `$HOME`에 clone한 뒤 Bash bootstrap 하나로 사용자 명령 설치, gcloud 로그인·ADC, 프로젝트 allowlist와 Terraform 연결을 구성하도록 진입점을 고쳤다. Command Code 대화형 세션에서 자연어로 현재 Phase를 구현하고 machine verification 뒤 VS Code Codex Extension으로 handoff하며, 승인·반려 뒤 같은 session을 재개하는 CLI를 연결했다. Windows PowerShell은 WSL의 동일 Bash 하네스를 호출한다. canary plan은 create 1·change 0·destroy 0 상태이며 실제 apply는 아직 하지 않았다.
 
 ## Decided
 
@@ -11,7 +11,6 @@
 - D-014: 누구나 `git clone` 후 bootstrap 스크립트로 실행할 수 있도록 README에 기록한다.
 - D-015: `grapefruit0205/gcp-lab-harness`를 public 저장소로 전환한다.
 - D-016: Linux는 clone 후 Bash, Windows는 PowerShell→WSL로 bootstrap하고 Command Code·Extension·next handoff를 연결한다.
-- D-017: 선택하면 같은 고정 모델이 Phase 구현·자기 검증을 수행하고 repo `.sh`는 질문 없이 실행하되 사용자·Cloud·Git gate는 유지한다.
 
 ## Waiting on the user
 
@@ -19,15 +18,13 @@
 - Q-003: 저장소 라이선스가 필요하다.
 - Q-005: Command Code 고정 모델 실행 규칙을 영구 ballast pin으로 남길지 확인이 필요하다.
 - A-002: 공식 Monitoring·Logging remote MCP를 read-only verifier로 가정한다.
-- 제안한 `phase-shell-no-prompt` 프로젝트 ballast 규칙을 실제 catalog에 pin할지 사용자 확인이 필요하다.
 
 ## Next first action
 
-현재 Phase 04를 단일 모델로 검증하려면 `gcp-lab-harness single-model run --run lab-20260825-01`을 실행한다.
+사용자가 저장 plan SHA256을 승인하면 `./scripts/foundation-canary.sh apply --run canary001 --confirm-plan-sha 2ed0c69f7a2bc7526b3206af08d385637c614a867c728a49d3dfd5546382ecea`를 실행한다.
 
 ## Tried
 
 - 첫 account-check에 `google_project.lifecycle_state`를 가정했지만 provider 7.45.0에 없는 속성이어서 validate가 실패했다. ACTIVE 검사는 gcloud preflight에만 두고 Terraform data 조회로 좁혀 성공했다.
 - 서비스 계정 canary는 삭제 후 복구 가능 기간이 있어 잔존 없는 cleanup 증명에 부적합했다. 즉시 destroy 가능한 빈 custom-mode VPC canary로 변경했다.
 - PowerShell wrapper는 현재 Linux 환경에 Windows/PowerShell 런타임이 없어 실제 실행하지 못했고 코드 경로만 연결했다.
-- 전체 command auto-accept는 `.sh` 실행 허용보다 범위가 넓어 사용하지 않았다. Phase 01–15의 repo script만 exact allowlist로 병합했다.

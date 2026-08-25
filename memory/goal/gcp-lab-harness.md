@@ -26,7 +26,7 @@
 - 깨끗한 전용 프로젝트에서 전체 Phase 통합 실행
 - destroy 후 run 소유 잔여 리소스 0
 - 비밀정보·state의 Git 유입 0
-- VS Code Codex Extension review의 P0/P1 0과 사용자 승인
+- VS Code Codex Extension 또는 선택형 단일 모델 review의 P0/P1 0과 사용자 승인
 - Phase별 한국어 commit과 GitHub push
 
 ## 중단 조건
@@ -57,4 +57,4 @@ Foundation B 컨트롤러는 구현됐고, 다음 기반 작업은 Foundation A 
 | Terraform 연결 | 공식 Google provider의 ADC 조회 | `hashicorp/google`, account-check module | refresh-only plan으로 계정 연결 검증 |
 | 실제 apply | plan 승인·수량·timeout·cleanup | Foundation B 상태 controller | 실습 프로젝트 선택 후 첫 Cloud adapter에 연결 |
 
-도구 설치, gcloud 인증, billing preflight, Terraform project read와 1-resource canary 저장 plan까지 채워졌다. public 저장소를 Linux `$HOME`에 clone해 Bash bootstrap 후 Command Code 대화형 구현, Extension review, 승인 후 같은 session의 next handoff로 이어지는 진입점도 연결했다. Windows PowerShell은 WSL의 같은 Bash 하네스를 호출한다. 현재 단일 next leaf는 사용자 승인 hash에 묶인 canary apply다.
+도구 설치, gcloud 인증, billing preflight, Terraform project read와 1-resource canary 저장 plan까지 채워졌다. public 저장소를 Linux `$HOME`에 clone해 Bash bootstrap 후 Command Code 대화형 구현, Extension review, 승인 후 같은 session의 next handoff로 이어지는 진입점을 연결했다. 같은 고정 모델의 구현·자기 검증 선택 경로와 Phase repo `.sh` scoped allowlist도 준비됐고 Windows PowerShell은 WSL의 같은 Bash 하네스를 호출한다. 현재 활성 run은 Phase 04 review 대기 상태다.

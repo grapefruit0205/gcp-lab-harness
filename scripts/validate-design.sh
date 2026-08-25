@@ -41,7 +41,8 @@ fi
 if grep -E -- '--(model|effort)([=[:space:]]|$)' \
   scripts/handoff-execute.sh \
   scripts/start-command-code.sh \
-  scripts/handoff-next.sh >/dev/null; then
+  scripts/handoff-next.sh \
+  scripts/single-model-phase.sh >/dev/null; then
   printf 'FAIL: cmd 실행 스크립트는 --model 또는 --effort를 전달하면 안 됩니다.\n' >&2
   exit 1
 fi

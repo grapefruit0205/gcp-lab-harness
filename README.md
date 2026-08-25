@@ -72,12 +72,44 @@ PowerShell에서는 다음과 같습니다.
 
 반려된 경우에도 같은 `handoff next`가 Extension findings를 기존 Command Code 세션에 전달하며, 다음 Phase로 넘어가지 않고 현재 Phase를 다시 구현합니다.
 
+## 4. 선택: 단일 모델로 구현과 검증
+
+VS Code Extension과 별도 모델을 사용하지 않고, 현재 Command Code 계정에 고정된 **같은 모델 하나**가 구현 패스와 자기 검증 패스를 연속 수행할 수도 있습니다. 모델·effort override는 사용하지 않습니다.
+
+```bash
+gcp-lab-harness single-model run --run lab-20260825-01
+```
+
+plan 단계에서는 생성·변경·삭제 수와 SHA256을 출력하고 중단합니다. 사용자가 그 hash를 확인한 뒤에만 다음처럼 apply까지 허용합니다.
+
+```bash
+gcp-lab-harness single-model run --run lab-20260825-01 \
+  --confirm-plan-sha <PLAN_SHA256>
+```
+
+이미 `waiting_extension_review` 상태인 Phase도 첫 명령으로 같은 모델 검증만 수행할 수 있습니다. 결과가 `pass`이고 세 hash가 현재 bundle과 일치하는 것을 사용자가 확인한 뒤 승인과 다음 handoff를 실행합니다.
+
+```bash
+gcp-lab-harness single-model approve --run lab-20260825-01
+gcp-lab-harness handoff next --run lab-20260825-01
+```
+
+PowerShell에서는 앞에 `.\harness.ps1`을 붙입니다.
+
+```powershell
+.\harness.ps1 single-model run --run lab-20260825-01
+.\harness.ps1 single-model approve --run lab-20260825-01
+.\harness.ps1 handoff next --run lab-20260825-01
+```
+
+Phase session을 열 때 `.commandcode/settings.json`에 Phase 01–15의 repo `run.sh`·`verify.sh`와 필수 하네스 스크립트만 허용 목록으로 병합해 `.sh` 실행 여부를 매번 묻지 않도록 설정합니다. 모든 명령을 포괄 승인하지 않으며 plan SHA 사용자 승인, project allowlist, cleanup 소유권과 push gate는 그대로 유지됩니다.
+
 ## 설계 원칙
 
 - 콘솔 클릭을 자동화하지 않고 같은 최종 상태를 만드는 `gcloud`, `bq`, Terraform, REST 검증으로 전환합니다.
 - 모든 시나리오는 `plan -> apply -> verify -> destroy` 상태 전이를 따릅니다.
 - 프로젝트 allowlist, plan 저장, 명시적 승인, 비용 사전 점검 없이 `apply`하지 않습니다.
-- 실행자(builder)와 검증자(verifier)를 분리하고, 검증 통과 후에만 Phase 단위 한국어 커밋을 남깁니다.
+- 기본 경로는 실행자와 Extension 검증자를 분리하며, 선택 경로는 같은 고정 모델의 구현·자기 검증 뒤 사용자 승인을 받습니다. 두 경로 모두 검증 승인 후에만 Phase 단위 한국어 커밋을 남깁니다.
 - 각 Phase는 clean working tree에서 `git pull --ff-only`로 시작하고 승인·cleanup 뒤 commit과 push로 닫습니다.
 - 원시 로그·state·비밀정보는 Git에서 제외하고 정제된 증거 요약만 보존합니다.
 
