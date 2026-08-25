@@ -34,3 +34,15 @@
 - 허용 프로젝트, 결제 계정, 예산 한도가 확정되지 않으면 Cloud apply를 시작하지 않는다.
 - 리소스 소유권을 증명할 manifest가 없으면 자동 destroy하지 않는다.
 - Marketplace 상품의 공식 CLI 배포 경로가 없으면 해당 항목을 blocked로 표시한다.
+
+## Foundation B 동원 — 2026-08-25
+
+| 구분 | 기존 자산 | 이번 적용 |
+|---|---|---|
+| 상태 계약 | `docs/foundation/harness-core.md`, D-008~D-010 | 15개 Phase cursor와 허용 전이를 JSON으로 영속화 |
+| 승인 계약 | Extension approval schema | plan/diff/evidence SHA-256 결합과 stale approval 차단 |
+| 복구 계약 | `resume --run <id>` 설계 | 현재 Phase 상태에서 다음 동작을 결정론적으로 출력 |
+| 안전 경계 | Q-002, Foundation A 중단 조건 | Cloud adapter와 실제 `run-all`은 계속 차단 |
+| 검증 | 최소 테스트 선호, offline 계약 | 단일 Bash fixture로 전이·승인·반려·resume 확인 |
+
+Foundation B 컨트롤러는 구현됐고, 다음 기반 작업은 Foundation A 도구 설치·계정 preflight 및 실제 supervisor 연결이다.

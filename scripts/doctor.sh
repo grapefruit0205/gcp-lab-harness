@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-readonly CORE_COMMANDS=(bash git jq cmd code codex curl)
+readonly CORE_COMMANDS=(bash git jq flock sha256sum cmd code codex curl)
 readonly CLOUD_COMMANDS=(gcloud terraform)
 missing=0
 
@@ -12,6 +12,8 @@ for command_name in "${CORE_COMMANDS[@]}" "${CLOUD_COMMANDS[@]}"; do
       bash) version="$(bash --version | head -n 1)" ;;
       git) version="$(git --version)" ;;
       jq) version="$(jq --version)" ;;
+      flock) version="$(flock --version | head -n 1)" ;;
+      sha256sum) version="$(sha256sum --version | head -n 1)" ;;
       cmd) version="$(cmd --version | head -n 1)" ;;
       code) version="$(code --version | head -n 1)" ;;
       codex) version="$(codex --version)" ;;

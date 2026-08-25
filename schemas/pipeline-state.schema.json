@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GCP lab harness pipeline state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "mode",
+    "status",
+    "current_phase",
+    "created_at",
+    "updated_at",
+    "phases",
+    "history"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$" },
+    "mode": { "enum": ["cloud", "offline"] },
+    "status": { "enum": ["active", "blocked", "complete"] },
+    "current_phase": {
+      "anyOf": [
+        { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+        { "type": "null" }
+      ]
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "phases": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phase", "state", "attempt", "updated_at", "review_bundle", "approval_file"],
+        "properties": {
+          "phase": { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+          "state": {
+            "enum": [
+              "pending",
+              "synced",
+              "preflight",
+              "planned",
+              "applied",
+              "machine_verified",
+              "waiting_extension_review",
+              "rejected",
+              "human_approved",
+              "destroyed",
+              "committed",
+              "pushed",
+              "failed",
+              "cleanup_required"
+            ]
+          },
+          "attempt": { "type": "integer", "minimum": 0 },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "review_bundle": {
+            "anyOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["plan_hash", "diff_hash", "evidence_hash", "prepared_at"],
+                "properties": {
+                  "plan_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "diff_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "evidence_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "prepared_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            ]
+          },
+          "approval_file": {
+            "anyOf": [
+              { "type": "string", "minLength": 1 },
+              { "type": "null" }
+            ]
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phase", "from", "to", "at"],
+        "properties": {
+          "phase": { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 한국어 Google Cloud 실습 15개를 CLI에서 재현·검증·정리하기 위한 harness engineering 저장소입니다. Ubuntu Bash의 **Command Code CLI `cmd`**가 Phase 실행을 오케스트레이션하고, 현재 사용 중인 **VS Code Codex Extension**이 변경과 실행 증거를 독립 검증합니다. `cmd`는 현재 계정에 고정된 모델을 그대로 사용합니다.
 
-> 현재 상태: **설계와 실행 골격만 준비됨**. Google Cloud 리소스 자동화 모듈은 아직 구현되지 않았으며 계정에 어떤 변경도 수행하지 않았습니다.
+> 현재 상태: **설계와 Foundation B 상태 컨트롤러 준비됨**. Google Cloud 리소스 자동화 adapter는 아직 구현되지 않았으며 계정에 어떤 변경도 수행하지 않았습니다.
 
 원격 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (private)
 
@@ -26,7 +26,8 @@
 - `references/google-cloud-labs-ko/`: 자동화 기준이 되는 한국어 실습 원본 보존본
 - `prompts/`: builder와 verifier의 handoff 계약
 - `scripts/`: 환경 점검, Command Code handoff, Extension review, Phase gate, 커밋·push 보조 명령
-- `schemas/`: Command Code 실행 결과, Extension 승인, Phase manifest의 기계 판독 계약
+- `lib/harness/`: pipeline 상태 전이와 Extension 승인 gate
+- `schemas/`: pipeline 상태, Command Code 실행 결과, Extension 승인, Phase manifest의 기계 판독 계약
 
 ## 시작
 
@@ -34,6 +35,7 @@
 cd /path/to/gcp-lab-harness
 make doctor
 make validate-design
+make test-offline
 ```
 
 Foundation에는 `gcloud`, Terraform, 동작하는 Git 원격 인증이 필요합니다. `gh`는 저장소 관리용 선택 도구입니다. 누락 도구와 계정·결제 설정이 있으면 설계 검증과 `run-all --dry-run`까지만 실행합니다.
@@ -42,6 +44,14 @@ Foundation에는 `gcloud`, Terraform, 동작하는 Git 원격 인증이 필요�
 
 ```bash
 ./scripts/run-all.sh --dry-run
+```
+
+Cloud 변경 없이 상태 컨트롤러를 직접 확인할 수도 있습니다. 실제 실행 데이터는 Git에서 제외된 `artifacts/runs/`에 0700 디렉터리와 0600 JSON으로 저장됩니다.
+
+```bash
+./bin/gcp-lab-harness run init --run offline-demo-001 --mode offline
+./bin/gcp-lab-harness status --run offline-demo-001
+./bin/gcp-lab-harness resume --run offline-demo-001
 ```
 
 원격 저장소가 연결된 뒤 Phase 시작 전 동기화합니다.

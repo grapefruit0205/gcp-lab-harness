@@ -57,7 +57,8 @@ Extension은 prompt에 따라 저장소 명령과 공식 Monitoring/Logging MCP 
   --run <run-id> \
   --plan-hash <hash> \
   --diff-hash <hash> \
-  --evidence-hash <hash>
+  --evidence-hash <hash> \
+  --reviewer <local-id>
 ```
 
 문제가 있으면 Extension은 `gate reject`와 finding 파일을 남긴다. 오케스트레이터는 다음 Phase로 가지 않고 같은 Command Code session에 finding을 handoff한다.
@@ -88,7 +89,7 @@ cleanup 또는 push가 실패하면 다음 Phase로 가지 않는다. 재실행 
 
 ## 단일 실행과 재개
 
-`run-all`은 foreground supervisor로 동작하며 상태를 `artifacts/<run-id>/pipeline.json`에 매 전이마다 fsync 후 저장한다. 프로세스가 종료되어도 다음 명령이 동일 run을 복구한다.
+완성된 `run-all`은 foreground supervisor로 동작하며 상태를 `artifacts/runs/<run-id>/pipeline.json`에 매 전이마다 저장한다. 현재 Foundation B는 0600 임시 JSON을 같은 filesystem에서 atomic rename하고, 프로세스가 종료되어도 다음 명령이 동일 run의 다음 동작을 계산한다.
 
 ```bash
 ./bin/gcp-lab-harness resume --run <run-id>

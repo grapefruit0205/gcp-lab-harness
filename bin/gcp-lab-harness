@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export HARNESS_REPO_ROOT="$repo_root"
+source "$repo_root/lib/harness/gate.sh"
 cd "$repo_root"
 
 usage() {
@@ -10,8 +12,15 @@ usage() {
   gcp-lab-harness doctor
   gcp-lab-harness phase list
   gcp-lab-harness run-all [--dry-run]
+  gcp-lab-harness run init --run <id> [--mode cloud|offline]
+  gcp-lab-harness status --run <id>
+  gcp-lab-harness resume --run <id>
+  gcp-lab-harness hash <file>
+  gcp-lab-harness gate prepare <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256>
+  gcp-lab-harness gate approve <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256> --reviewer <id>
+  gcp-lab-harness gate reject <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256> --reviewer <id> --findings <file>
 
-현재 설계 골격에서는 --dry-run만 Cloud 변경 없이 실행할 수 있습니다.
+실제 run-all은 Google Cloud adapter와 계정 안전 설정이 준비될 때까지 차단됩니다.
 USAGE
 }
 
@@ -57,9 +66,95 @@ run_all() {
     printf 'FAIL: config/harness.example.env를 복사해 config/harness.env를 준비하세요.\n' >&2
     exit 1
   fi
-  printf 'BLOCKED: 실제 Google Cloud adapter와 영속 상태 controller는 아직 구현되지 않았습니다.\n' >&2
-  printf '설계 골격을 실습 완료 도구로 오인하지 않도록 Cloud 실행을 중단했습니다.\n' >&2
+  printf 'BLOCKED: 상태 controller는 준비됐지만 실제 Google Cloud Phase adapter는 아직 구현되지 않았습니다.\n' >&2
+  printf '불완전한 run-all이 Cloud를 변경하지 않도록 실행을 중단했습니다.\n' >&2
   exit 1
+}
+
+parse_run_option() {
+  local value=""
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --run)
+        [[ "$#" -ge 2 ]] || { usage >&2; return 2; }
+        value="$2"
+        shift 2
+        ;;
+      *) usage >&2; return 2 ;;
+    esac
+  done
+  [[ -n "$value" ]] || { usage >&2; return 2; }
+  printf '%s\n' "$value"
+}
+
+run_init() {
+  local run_id=""
+  local mode="cloud"
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --run)
+        [[ "$#" -ge 2 ]] || { usage >&2; return 2; }
+        run_id="$2"
+        shift 2
+        ;;
+      --mode)
+        [[ "$#" -ge 2 ]] || { usage >&2; return 2; }
+        mode="$2"
+        shift 2
+        ;;
+      *) usage >&2; return 2 ;;
+    esac
+  done
+  [[ -n "$run_id" ]] || { usage >&2; return 2; }
+  harness_state_init "$run_id" "$mode"
+}
+
+gate_command() {
+  local action="${1:-}"
+  local phase="${2:-}"
+  local run_id=""
+  local plan_hash=""
+  local diff_hash=""
+  local evidence_hash=""
+  local reviewer=""
+  local findings=""
+  shift $(( $# >= 2 ? 2 : $# ))
+
+  [[ "$action" == "prepare" || "$action" == "approve" || "$action" == "reject" ]] || {
+    usage >&2
+    return 2
+  }
+  harness_validate_phase "$phase" || return
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --run) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; run_id="$2"; shift 2 ;;
+      --plan-hash) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; plan_hash="$2"; shift 2 ;;
+      --diff-hash) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; diff_hash="$2"; shift 2 ;;
+      --evidence-hash) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; evidence_hash="$2"; shift 2 ;;
+      --reviewer) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; reviewer="$2"; shift 2 ;;
+      --findings) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; findings="$2"; shift 2 ;;
+      *) usage >&2; return 2 ;;
+    esac
+  done
+  [[ -n "$run_id" && -n "$plan_hash" && -n "$diff_hash" && -n "$evidence_hash" ]] || {
+    usage >&2
+    return 2
+  }
+
+  case "$action" in
+    prepare)
+      [[ -z "$reviewer" && -z "$findings" ]] || { usage >&2; return 2; }
+      harness_state_prepare_review "$run_id" "$phase" "$plan_hash" "$diff_hash" "$evidence_hash"
+      ;;
+    approve)
+      [[ -n "$reviewer" && -z "$findings" ]] || { usage >&2; return 2; }
+      harness_gate_write_decision approved "$run_id" "$phase" "$plan_hash" "$diff_hash" "$evidence_hash" "$reviewer"
+      ;;
+    reject)
+      [[ -n "$reviewer" && -n "$findings" ]] || { usage >&2; return 2; }
+      harness_gate_write_decision rejected "$run_id" "$phase" "$plan_hash" "$diff_hash" "$evidence_hash" "$reviewer" "$findings"
+      ;;
+  esac
 }
 
 case "${1:-}" in
@@ -74,6 +169,29 @@ case "${1:-}" in
   run-all)
     shift
     run_all "$@"
+    ;;
+  run)
+    [[ "${2:-}" == "init" ]] || { usage >&2; exit 2; }
+    shift 2
+    run_init "$@"
+    ;;
+  status)
+    shift
+    run_id="$(parse_run_option "$@")"
+    jq '{run_id, mode, status, current_phase, updated_at, phases}' "$(harness_state_read "$run_id")"
+    ;;
+  resume)
+    shift
+    run_id="$(parse_run_option "$@")"
+    harness_state_next_action "$run_id"
+    ;;
+  hash)
+    [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }
+    harness_sha256_file "$2"
+    ;;
+  gate)
+    shift
+    gate_command "$@"
     ;;
   -h|--help|help)
     usage

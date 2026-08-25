@@ -23,6 +23,11 @@ Checked: 2026-08-25 — Bash·정적 정책 검사 통과, 실제 GCP Phase hand
 Evidence: `bin/gcp-lab-harness`, `scripts/run-all.sh`; `./scripts/run-all.sh --dry-run`이 Phase 01–15 순서를 출력하고 외부 변경 없이 종료
 Checked: 2026-08-25
 
+## Foundation B 상태·승인 컨트롤러 — state: verified — 2026-08-25
+
+Evidence: `lib/harness/`, `schemas/pipeline-state.schema.json`, `tests/offline-controller.sh`; offline test PASS
+Checked: 2026-08-25 — 15개 Phase 초기화, 허용/금지 전이, stale approval 거부, 승인·반려, resume를 확인했으며 Cloud에는 실행하지 않음
+
 ## Phase 시작 전 fast-forward-only 동기화 보호 — state: verified — 2026-08-25
 
 Evidence: `scripts/sync-before-phase.sh`, `scripts/validate-design.sh`; dirty tree 거부와 실제 `origin/main`의 `Already up to date` 결과
@@ -45,7 +50,7 @@ Checked: 2026-08-25 — this section goes stale in the other direction: a line l
 capability shipped makes you claim less than you have earned. Sweep it on the same 90-day clock. -->
 
 - Google Cloud 리소스 plan/apply/verify/destroy adapter
-- 실제 `run-all` 상태 영속화·승인 대기·자동 resume controller
+- 실제 `run-all` foreground supervisor와 Command Code·Cloud adapter 자동 연결
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 

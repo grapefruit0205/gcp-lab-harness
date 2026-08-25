@@ -51,5 +51,7 @@ fi
 jq empty schemas/*.json
 bash -n scripts/*.sh
 bash -n bin/gcp-lab-harness
+bash -n lib/harness/*.sh
+bash -n tests/*.sh
 git diff --check
 printf 'PASS: Phase 15개, cmd 고정 모델 상속, JSON Schema, Bash 문법, whitespace를 확인했습니다.\n'

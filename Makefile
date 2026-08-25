@@ -2,13 +2,16 @@ SHELL := /usr/bin/env bash
 
 PHASE ?=
 
-.PHONY: doctor validate-design run-all-dry-run sync-before-phase handoff-execute prepare-extension-review phase-gate
+.PHONY: doctor validate-design test-offline run-all-dry-run sync-before-phase handoff-execute prepare-extension-review phase-gate
 
 doctor:
 	./scripts/doctor.sh
 
 validate-design:
 	./scripts/validate-design.sh
+
+test-offline:
+	./tests/offline-controller.sh
 
 run-all-dry-run:
 	./scripts/run-all.sh --dry-run
