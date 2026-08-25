@@ -72,3 +72,9 @@ sweep: AGENTS, README, Makefile, controller dry-run, Git sync script, 아키텍�
 사용자는 앞서 제안한 저장소 이름 `gcp-lab-harness`와 private 공개 범위로 원격 저장소를 생성하는 것을 승인했다. GitHub 계정 `grapefruit0205` 아래 빈 저장소로 생성하고 로컬 `main`을 연결한다.
 
 sweep: GitHub private 저장소 생성, repo 전용 Read/write deploy key, origin/main push, SHA 대조, fast-forward-only pull 및 README·Foundation 상태에 반영함 (2026-08-25)
+
+## D-012 · 예산 한도 없이 GCP 계정 연동과 Cloud apply를 진행한다 — 2026-08-25 (사용자, Foundation A 구현 요청)
+
+사용자는 별도 예산 한도를 정하지 않아도 되며, GCP 계정을 하네스에 연동해 실제 Cloud apply를 수행하는 것이 목적이라고 확정했다. 예산 값은 필수 gate에서 제거하되 프로젝트 allowlist, 저장된 plan 승인, 리소스 수 제한, 실행 시간 제한과 cleanup 보호는 유지한다.
+
+sweep: README, Foundation A, 아키텍처, goal, config 예시, preflight, checkpoint와 open question에서 예산 필수 조건을 제거하고 대체 보호를 반영함 (2026-08-25)

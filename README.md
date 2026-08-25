@@ -40,6 +40,18 @@ make test-offline
 
 Foundation에는 `gcloud`, Terraform, 동작하는 Git 원격 인증이 필요합니다. `gh`는 저장소 관리용 선택 도구입니다. 누락 도구와 계정·결제 설정이 있으면 설계 검증과 `run-all --dry-run`까지만 실행합니다.
 
+Ubuntu x86_64에서는 공식 archive와 고정 SHA-256을 사용하는 사용자 영역 설치를 제공합니다. 이어서 한 번의 Google 로그인으로 gcloud와 Terraform ADC를 연결합니다.
+
+```bash
+make install-toolchain
+make gcp-auth
+./scripts/configure-gcp-project.sh <PROJECT_ID>
+make gcp-preflight
+make terraform-gcp-check
+```
+
+예산 한도는 필수 설정이 아닙니다. 대신 허용 프로젝트 exact match, 결제 연결 확인, 저장된 plan 승인, Phase당 리소스 상한, apply timeout과 실패 시 cleanup을 사용합니다.
+
 15개 Phase의 단일 실행 진입점을 먼저 점검할 수 있습니다.
 
 ```bash
@@ -87,4 +99,4 @@ git add <검증된-파일>
 
 ## 다음 결정
 
-Google Cloud 프로젝트·결제 계정·예산 한도와 라이선스를 확정한 뒤 Foundation과 실제 Cloud adapter를 구현합니다.
+Google Cloud 로그인 후 접근 가능한 실습 프로젝트를 선택하고, 저장소 라이선스를 확정합니다. 실제 Cloud adapter는 선택한 프로젝트의 allowlist preflight 뒤에만 apply됩니다.

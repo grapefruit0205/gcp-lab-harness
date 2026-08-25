@@ -2,7 +2,19 @@ SHELL := /usr/bin/env bash
 
 PHASE ?=
 
-.PHONY: doctor validate-design test-offline run-all-dry-run sync-before-phase handoff-execute prepare-extension-review phase-gate
+.PHONY: install-toolchain gcp-auth gcp-preflight terraform-gcp-check doctor validate-design test-offline run-all-dry-run sync-before-phase handoff-execute prepare-extension-review phase-gate
+
+install-toolchain:
+	./scripts/install-toolchain.sh
+
+gcp-auth:
+	./scripts/gcp-auth-login.sh
+
+gcp-preflight:
+	./scripts/preflight-gcp.sh
+
+terraform-gcp-check:
+	./scripts/verify-terraform-gcp.sh
 
 doctor:
 	./scripts/doctor.sh

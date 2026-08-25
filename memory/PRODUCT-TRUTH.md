@@ -28,6 +28,16 @@ Checked: 2026-08-25
 Evidence: `lib/harness/`, `schemas/pipeline-state.schema.json`, `tests/offline-controller.sh`; offline test PASS
 Checked: 2026-08-25 — 15개 Phase 초기화, 허용/금지 전이, stale approval 거부, 승인·반려, resume를 확인했으며 Cloud에는 실행하지 않음
 
+## Foundation A 도구·GCP 계정 preflight — state: verified — 2026-08-25
+
+Evidence: `scripts/install-toolchain.sh`, `config/toolchain.lock.env`, `scripts/gcp-auth-login.sh`, `scripts/configure-gcp-project.sh`, `scripts/preflight-gcp.sh`; 설치 재실행과 실제 계정 preflight PASS
+Checked: 2026-08-25 — gcloud 581.0.0, Terraform 1.15.8, 사용자 로그인·ADC, 단일 project allowlist와 billing 연결을 로컬에서 확인함. 실제 계정 식별자는 Git에 저장하지 않음
+
+## Terraform Google provider 계정 연결 — state: verified — 2026-08-25
+
+Evidence: `foundation/terraform/account-check/`, provider lock, `scripts/verify-terraform-gcp.sh`; provider 7.45.0 refresh-only plan PASS
+Checked: 2026-08-25 — ADC로 허용 프로젝트 data source 조회에 성공했으며 Cloud resource apply는 하지 않음
+
 ## Phase 시작 전 fast-forward-only 동기화 보호 — state: verified — 2026-08-25
 
 Evidence: `scripts/sync-before-phase.sh`, `scripts/validate-design.sh`; dirty tree 거부와 실제 `origin/main`의 `Already up to date` 결과

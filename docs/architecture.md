@@ -87,7 +87,7 @@ inventory   생성 전·후·정리 후 잔여 리소스 비교
 - 서비스 계정 JSON 키를 만들지 않는다. 로컬 사용자 ADC 또는 단기 서비스 계정 가장을 사용한다.
 - Terraform은 저장된 plan만 apply하고 state는 Git에 넣지 않는다. 운영 구현 시 버전 관리·암호화·접근 제어가 설정된 전용 GCS backend를 사용한다.
 - CSEK, Cloud SQL 비밀번호, VPN PSK는 프로세스 수명 또는 Secret Manager 참조로만 유지한다.
-- 비용 예산은 알림일 뿐 상한이 아니므로, 하네스 자체의 리소스 allowlist·최대 수량·timeout·강제 destroy를 별도 적용한다.
+- 예산 설정은 D-012에 따라 필수로 사용하지 않는다. 하네스 자체의 프로젝트 allowlist·최대 수량·timeout·강제 destroy를 적용한다.
 - 실패 trap은 자동 정리를 시도하되, 데이터 삭제 위험이 있는 destroy는 manifest가 소유권을 증명할 때만 실행한다.
 
 ## 멱등성과 동시성

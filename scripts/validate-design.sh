@@ -53,5 +53,8 @@ bash -n scripts/*.sh
 bash -n bin/gcp-lab-harness
 bash -n lib/harness/*.sh
 bash -n tests/*.sh
+terraform fmt -check -recursive foundation/terraform
+terraform -chdir=foundation/terraform/account-check init -backend=false -input=false >/dev/null
+terraform -chdir=foundation/terraform/account-check validate
 git diff --check
 printf 'PASS: Phase 15개, cmd 고정 모델 상속, JSON Schema, Bash 문법, whitespace를 확인했습니다.\n'

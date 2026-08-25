@@ -33,3 +33,7 @@ One short section per working session: what was worked on, what was decided (wit
 - Foundation B 상태·승인 컨트롤러를 구현했다. 15개 Phase cursor, 허용 상태 전이, atomic JSON, Extension 승인 hash 결합, 반려와 resume next-action을 포함한다.
 - 로컬 offline fixture에서 금지 전이와 stale approval이 거부되고 승인·반려·재개가 동작하는 것을 관찰했다. 설계 검사와 15단계 dry-run도 다시 통과했다.
 - 실제 Cloud adapter, foreground `run-all` 자동 연결, GCP 계정 통합은 계속 미구현이며 Cloud 명령은 실행하지 않았다.
+- D-012에 따라 예산 한도를 필수 gate에서 제거하고 프로젝트 allowlist·plan 승인·수량·timeout·cleanup 보호를 유지했다.
+- 공식 archive와 SHA lock으로 사용자 영역에 gcloud 581.0.0과 Terraform 1.15.8을 설치하고, Google 사용자 로그인과 Terraform ADC를 연동했다.
+- 유일하게 조회된 ACTIVE 프로젝트를 로컬 exact allowlist로 구성하고 billing preflight를 통과했다. 실제 apply 대상으로 사용하는 해석은 A-003으로 등록했다.
+- `hashicorp/google` 7.45.0으로 실제 프로젝트 data source를 읽는 refresh-only plan을 통과했다. 첫 schema 가정 실패를 수정했으며 Cloud resource apply는 아직 하지 않았다.
