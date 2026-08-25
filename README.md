@@ -4,6 +4,8 @@
 
 > 현재 상태: **설계와 실행 골격만 준비됨**. Google Cloud 리소스 자동화 모듈은 아직 구현되지 않았으며 계정에 어떤 변경도 수행하지 않았습니다.
 
+원격 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (private)
+
 ## 설계 원칙
 
 - 콘솔 클릭을 자동화하지 않고 같은 최종 상태를 만드는 `gcloud`, `bq`, Terraform, REST 검증으로 전환합니다.
@@ -34,7 +36,7 @@ make doctor
 make validate-design
 ```
 
-Foundation에는 `gcloud`, `terraform`, `gh`가 필요합니다. 누락 도구와 계정·결제 설정이 있으면 설계 검증과 `run-all --dry-run`까지만 실행합니다.
+Foundation에는 `gcloud`, Terraform, 동작하는 Git 원격 인증이 필요합니다. `gh`는 저장소 관리용 선택 도구입니다. 누락 도구와 계정·결제 설정이 있으면 설계 검증과 `run-all --dry-run`까지만 실행합니다.
 
 15개 Phase의 단일 실행 진입점을 먼저 점검할 수 있습니다.
 
@@ -75,4 +77,4 @@ git add <검증된-파일>
 
 ## 다음 결정
 
-GitHub 저장소 이름·공개 범위, Google Cloud 프로젝트·결제 계정·예산 한도, 라이선스를 확정한 뒤 Foundation과 실제 Cloud adapter를 구현합니다.
+Google Cloud 프로젝트·결제 계정·예산 한도와 라이선스를 확정한 뒤 Foundation과 실제 Cloud adapter를 구현합니다.

@@ -2,7 +2,7 @@
 set -uo pipefail
 
 readonly CORE_COMMANDS=(bash git jq cmd code codex curl)
-readonly CLOUD_COMMANDS=(gcloud terraform gh)
+readonly CLOUD_COMMANDS=(gcloud terraform)
 missing=0
 
 printf 'Google Cloud 실습 하네스 환경 점검\n'
@@ -26,6 +26,12 @@ for command_name in "${CORE_COMMANDS[@]}" "${CLOUD_COMMANDS[@]}"; do
     missing=1
   fi
 done
+
+if command -v gh >/dev/null 2>&1; then
+  printf 'PASS  %-10s %s\n' 'gh' "$(gh --version | head -n 1)"
+else
+  printf 'WARN  %-10s %s\n' 'gh' '선택 도구 — 설치되지 않음'
+fi
 
 if cmd status >/dev/null; then
   printf 'PASS  %-10s %s\n' 'cmd-auth' 'Command Code 계정 인증됨'

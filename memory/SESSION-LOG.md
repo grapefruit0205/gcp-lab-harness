@@ -28,3 +28,5 @@ One short section per working session: what was worked on, what was decided (wit
 - 설계 전체를 로컬 `main`의 한국어 root commit `설계: Google Cloud 15단계 자동화 하네스 구성`으로 기록했다.
 - D-011: `grapefruit0205/gcp-lab-harness` private GitHub 저장소를 빈 상태로 생성하고 로컬 `origin`을 연결했다.
 - 기존 Mywiki key와 충돌하지 않는 repo 전용 ed25519 deploy key와 SSH host alias를 로컬에 준비했다. write 권한 등록은 사용자 action-time 승인 대기다.
+- 사용자 승인과 GitHub 이메일 sudo 인증 후 repo 전용 deploy key를 Read/write로 등록했다.
+- 로컬 `main` 두 커밋을 `origin/main`에 최초 push하고 local/remote SHA 일치 및 실제 `git pull --ff-only` 성공을 확인했다.

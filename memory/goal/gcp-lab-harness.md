@@ -7,9 +7,9 @@
 ## 현재 지형
 
 - 입력: 정리된 한국어 Markdown 실습 15개와 이미지 자산
-- 실행 표면: Bash, Command Code CLI `cmd`, gcloud, Terraform, Git, GitHub CLI
+- 실행 표면: Bash, Command Code CLI `cmd`, gcloud, Terraform, Git (`gh`는 원격 관리용 선택 도구)
 - 현재 관찰: Command Code 1.32.2 설치·계정 인증 완료, Codex Extension용 Codex CLI 0.149.1, Git 2.43.0, jq 1.7, Bash 5.2 설치됨
-- 현재 결손: gcloud, Terraform, GitHub CLI 미설치
+- 현재 결손: gcloud, Terraform 미설치; GitHub CLI는 선택 도구로 미설치
 - 외부 제약: Marketplace CLI 지원은 제품별, Billing 데이터는 비동기, 예산은 사용 상한이 아님
 
 ## 전체 골격

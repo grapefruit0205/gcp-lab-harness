@@ -4,7 +4,7 @@
 
 ## 목표
 
-- Command Code `cmd`, VS Code/Extension, gcloud, Terraform, Git, GitHub CLI의 설치·인증 상태 확인
+- Command Code `cmd`, VS Code/Extension, gcloud, Terraform, Git 원격 인증 상태 확인 (`gh`는 선택 도구)
 - 실습 전용 GCP project allowlist와 billing·budget·quota preflight
 - 사용자 ADC에서 최소 권한 service account를 가장하는 runner identity
 - 별도 read-only MCP verifier identity와 Monitoring/Logging remote MCP 연결
