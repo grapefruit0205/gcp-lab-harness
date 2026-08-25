@@ -9,7 +9,7 @@
 - 입력: 정리된 한국어 Markdown 실습 15개와 이미지 자산
 - 실행 표면: Bash, Command Code CLI `cmd`, gcloud, Terraform, Git (`gh`는 원격 관리용 선택 도구)
 - 현재 관찰: Command Code 1.32.2, gcloud 581.0.0, Terraform 1.15.8, Codex CLI 0.149.1, Git 2.43.0, jq 1.7, Bash 5.2 설치됨. gcloud 사용자 로그인·ADC·project read가 동작함
-- 현재 결손: 실제 Cloud resource apply/destroy 미검증; GitHub CLI는 선택 도구로 미설치
+- 현재 결손: 저장 plan은 완료했으나 실제 Cloud resource apply/destroy 미검증; GitHub CLI는 선택 도구로 미설치
 - 외부 제약: Marketplace CLI 지원은 제품별, Billing 데이터는 비동기, 예산은 사용 상한이 아님
 
 ## 전체 골격
@@ -57,4 +57,4 @@ Foundation B 컨트롤러는 구현됐고, 다음 기반 작업은 Foundation A 
 | Terraform 연결 | 공식 Google provider의 ADC 조회 | `hashicorp/google`, account-check module | refresh-only plan으로 계정 연결 검증 |
 | 실제 apply | plan 승인·수량·timeout·cleanup | Foundation B 상태 controller | 실습 프로젝트 선택 후 첫 Cloud adapter에 연결 |
 
-도구 설치, gcloud 인증, billing preflight와 Terraform project read는 채워졌다. 현재 단일 next leaf는 `kdt5-05` 대상 확인 후 plan hash에 묶인 1-resource canary apply·verify·destroy다.
+도구 설치, gcloud 인증, billing preflight, Terraform project read와 1-resource canary 저장 plan까지 채워졌다. 저장소는 public이며 clone bootstrap 사용법도 원격 README에 포함한다. 현재 단일 next leaf는 사용자 승인 hash에 묶인 canary apply다.

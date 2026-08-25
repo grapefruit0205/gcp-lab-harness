@@ -79,8 +79,8 @@ git diff --cached
 GitHub CLI가 설치되고 저장소 이름·공개 범위가 확정된 뒤 최초 1회만 다음 중 하나를 사용한다.
 
 ```bash
-gh repo create <repo-name> --private --source=. --remote=origin --push
-# 또는 --public
+gh repo create <repo-name> --public --source=. --remote=origin --push
+# 비공개 저장소가 필요할 때만 --private
 ```
 
 최초 push 뒤부터는 모든 Phase가 `sync-before-phase.sh`를 통과해야 한다. `pull --ff-only` 실패는 자동 해결하지 않고 사용자에게 remote/local SHA를 보고한다.

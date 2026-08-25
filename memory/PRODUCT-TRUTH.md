@@ -48,10 +48,15 @@ Checked: 2026-08-25 — local/remote SHA `6f0ca8e2d83b428cf8a6fc469e4c670f751867
 Evidence: `git log -1 --format='%h %s'`가 한국어 root commit을 반환하고 working tree가 clean함
 Checked: 2026-08-25 — GitHub `origin/main`에 포함됨
 
-## GitHub private 저장소 — state: verified — 2026-08-25
+## GitHub public 저장소 — state: verified — 2026-08-25
 
-Evidence: `https://github.com/grapefruit0205/gcp-lab-harness` private 저장소, read/write deploy key, `git push`, `git ls-remote`, `git pull --ff-only`
-Checked: 2026-08-25 — 최초 push SHA와 local/remote SHA 일치
+Evidence: `https://github.com/grapefruit0205/gcp-lab-harness` 설정의 `This repository is currently public`, read/write deploy key, `git push`, 무인증 HTTPS `git ls-remote`, `git pull --ff-only`
+Checked: 2026-08-25 — GitHub 공개 전환 확인, 공개 clone과 local/remote SHA 확인
+
+## Foundation canary 저장 plan — state: verified — 2026-08-25
+
+Evidence: `foundation/terraform/apply-canary/`, `scripts/foundation-canary.sh`; run `canary001` plan이 `google_compute_network` create 1·change 0·destroy 0과 SHA256 `2ed0c69f7a2bc7526b3206af08d385637c614a867c728a49d3dfd5546382ecea`를 출력
+Checked: 2026-08-25 — `kdt5-05` allowlist와 저장 plan 정책 통과, 실제 apply는 미실행
 
 ## Not implemented
 
@@ -59,7 +64,8 @@ Checked: 2026-08-25 — 최초 push SHA와 local/remote SHA 일치
 Checked: 2026-08-25 — this section goes stale in the other direction: a line left here after the
 capability shipped makes you claim less than you have earned. Sweep it on the same 90-day clock. -->
 
-- Google Cloud 리소스 plan/apply/verify/destroy adapter
+- 실제 canary Cloud apply·verify·destroy 성공
+- Lab 01–15별 Google Cloud 리소스 adapter
 - 실제 `run-all` foreground supervisor와 Command Code·Cloud adapter 자동 연결
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행

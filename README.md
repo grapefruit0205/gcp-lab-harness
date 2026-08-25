@@ -2,9 +2,37 @@
 
 한국어 Google Cloud 실습 15개를 CLI에서 재현·검증·정리하기 위한 harness engineering 저장소입니다. Ubuntu Bash의 **Command Code CLI `cmd`**가 Phase 실행을 오케스트레이션하고, 현재 사용 중인 **VS Code Codex Extension**이 변경과 실행 증거를 독립 검증합니다. `cmd`는 현재 계정에 고정된 모델을 그대로 사용합니다.
 
-> 현재 상태: **설계와 Foundation B 상태 컨트롤러 준비됨**. Google Cloud 리소스 자동화 adapter는 아직 구현되지 않았으며 계정에 어떤 변경도 수행하지 않았습니다.
+> 현재 상태: **Foundation과 canary adapter 준비, 1단계 Terraform plan 완료**. 실제 Google Cloud 리소스 apply는 아직 수행하지 않았습니다.
 
-원격 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (private)
+원격 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (public)
+
+## git clone 후 스크립트로 실행
+
+누구나 다음 순서로 clone하고 Foundation을 한 번에 구성할 수 있습니다. Google 로그인 창이 열리면 각자의 실습 계정으로 승인합니다.
+
+```bash
+git clone git@github.com:grapefruit0205/gcp-lab-harness.git
+cd gcp-lab-harness
+./scripts/bootstrap-from-clone.sh <GCP_PROJECT_ID>
+```
+
+HTTPS를 사용하려면 첫 명령만 다음과 같이 바꿉니다.
+
+```bash
+git clone https://github.com/grapefruit0205/gcp-lab-harness.git
+```
+
+bootstrap 스크립트는 사용자 영역에 gcloud·Terraform을 설치하고, gcloud/ADC 로그인 상태를 확인한 뒤 프로젝트 allowlist·billing preflight와 Terraform provider read를 실행합니다. 인증정보와 로컬 project·billing 값은 Git에 올라가지 않습니다.
+
+Foundation이 통과한 뒤 canary는 저장 plan부터 단계적으로 실행합니다.
+
+```bash
+./scripts/foundation-canary.sh plan --run canary001
+# 출력된 plan_sha256을 확인한 다음에만 apply
+./scripts/foundation-canary.sh apply --run canary001 --confirm-plan-sha <PLAN_SHA256>
+./scripts/foundation-canary.sh verify --run canary001
+./scripts/foundation-canary.sh destroy --run canary001
+```
 
 ## 설계 원칙
 
@@ -99,4 +127,4 @@ git add <검증된-파일>
 
 ## 다음 결정
 
-Google Cloud 로그인 후 접근 가능한 실습 프로젝트를 선택하고, 저장소 라이선스를 확정합니다. 실제 Cloud adapter는 선택한 프로젝트의 allowlist preflight 뒤에만 apply됩니다.
+저장 plan hash를 승인한 뒤 canary apply·verify·destroy를 순서대로 진행하고, 저장소 라이선스를 확정합니다. 실제 Lab adapter는 선택한 프로젝트의 allowlist preflight 뒤에만 apply됩니다.

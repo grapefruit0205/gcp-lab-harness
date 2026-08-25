@@ -69,6 +69,8 @@ sweep: AGENTS, README, Makefile, controller dry-run, Git sync script, 아키텍�
 
 ## D-011 · GitHub 원격은 `grapefruit0205/gcp-lab-harness` private 저장소다 — 2026-08-25 (AI-proposed, user-confirmed)
 
+→ superseded by D-015 (2026-08-25)
+
 사용자는 앞서 제안한 저장소 이름 `gcp-lab-harness`와 private 공개 범위로 원격 저장소를 생성하는 것을 승인했다. GitHub 계정 `grapefruit0205` 아래 빈 저장소로 생성하고 로컬 `main`을 연결한다.
 
 sweep: GitHub private 저장소 생성, repo 전용 Read/write deploy key, origin/main push, SHA 대조, fast-forward-only pull 및 README·Foundation 상태에 반영함 (2026-08-25)
@@ -78,3 +80,17 @@ sweep: GitHub private 저장소 생성, repo 전용 Read/write deploy key, origi
 사용자는 별도 예산 한도를 정하지 않아도 되며, GCP 계정을 하네스에 연동해 실제 Cloud apply를 수행하는 것이 목적이라고 확정했다. 예산 값은 필수 gate에서 제거하되 프로젝트 allowlist, 저장된 plan 승인, 리소스 수 제한, 실행 시간 제한과 cleanup 보호는 유지한다.
 
 sweep: README, Foundation A, 아키텍처, goal, config 예시, preflight, checkpoint와 open question에서 예산 필수 조건을 제거하고 대체 보호를 반영함 (2026-08-25)
+
+## D-013 · `kdt5-05`에서 canary Cloud apply를 단계적으로 진행한다 — 2026-08-25 (AI-proposed, user-confirmed)
+
+사용자는 연동된 `kdt5-05` 프로젝트에서 Terraform canary를 plan, apply, verify, destroy 순서로 진행하고 1단계 완료 시 보고하도록 승인했다. 각 외부 변경은 저장 plan과 승인 hash에 묶고 cleanup 후 활성 잔여 리소스를 확인한다.
+
+## D-014 · git clone 기반 실행법을 원격 README에 남긴다 — 2026-08-25 (사용자, 배포·실행 문서 요청)
+
+다른 사용자가 GitHub 저장소를 `git clone`으로 받은 뒤 스크립트만으로 설치·인증·프로젝트 설정·검증·실행할 수 있도록 README에 순서와 명령을 기록하고, 변경을 커밋·push한 뒤 pull로 원격 동기화를 검증한다.
+
+## D-015 · GitHub 저장소를 public으로 전환한다 — 2026-08-25 (사용자, 공개 전환 요청)
+
+Supersedes D-011. `grapefruit0205/gcp-lab-harness`의 코드와 커밋 이력을 누구나 열람·clone할 수 있도록 GitHub 저장소 공개 범위를 public으로 전환한다. 인증정보, 로컬 GCP 설정과 실행 artifact는 계속 Git에서 제외한다.
+
+sweep: GitHub 공개 전환, README clone 안내, workflow, product truth, checkpoint와 open question에 반영함 (2026-08-25)
