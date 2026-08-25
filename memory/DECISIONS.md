@@ -66,3 +66,7 @@ sweep: README, 아키텍처, 워크플로, 오케스트레이션, Foundation, Ph
 프로젝트를 GitHub 원격 저장소로 만들고 로컬 변경을 커밋하며, Phase 작업 흐름에 원격 변경을 가져오는 pull 단계도 포함한다. 각 Phase는 최신 원격 기준에서 시작하고 완료 후 커밋·push한다.
 
 sweep: AGENTS, README, Makefile, controller dry-run, Git sync script, 아키텍처, 워크플로, 오케스트레이션, Foundation, Phase 목록, Command Code prompt에 반영함 (2026-08-25) → Q-001
+
+## D-011 · GitHub 원격은 `grapefruit0205/gcp-lab-harness` private 저장소다 — 2026-08-25 (AI-proposed, user-confirmed)
+
+사용자는 앞서 제안한 저장소 이름 `gcp-lab-harness`와 private 공개 범위로 원격 저장소를 생성하는 것을 승인했다. GitHub 계정 `grapefruit0205` 아래 빈 저장소로 생성하고 로컬 `main`을 연결한다.

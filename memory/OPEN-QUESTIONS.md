@@ -4,7 +4,7 @@ Rule: anything unresolved gets a row here the moment it surfaces. A question is 
 
 | ID | Question | Opened | Status |
 |---|---|---|---|
-| Q-001 | GitHub 저장소 이름과 공개 범위(public/private)는 무엇으로 할까? | 2026-08-25 | open |
+| Q-001 | GitHub 저장소 이름과 공개 범위(public/private)는 무엇으로 할까? | 2026-08-25 | closed — D-011 |
 | Q-002 | 자동화 실행에 사용할 Google Cloud 프로젝트·결제 계정·예산 한도는 무엇인가? | 2026-08-25 | open |
 | Q-003 | 공유 저장소에 적용할 라이선스는 무엇인가? | 2026-08-25 | open |
 | Q-004 | 제안한 `codex-extension-verifier` 프로젝트 pin을 ballast 규칙 카탈로그에 기록할까? | 2026-08-25 | closed — D-007 및 `.claude/ballast.rules.json` |

@@ -33,6 +33,11 @@ Checked: 2026-08-25 — 실제 origin pull은 GitHub 저장소 생성 전이라 
 Evidence: `git log -1 --format='%h %s'`가 한국어 root commit을 반환하고 working tree가 clean함
 Checked: 2026-08-25 — GitHub remote와 push는 아직 없음
 
+## GitHub private 저장소 — state: operational — 2026-08-25
+
+Evidence: `https://github.com/grapefruit0205/gcp-lab-harness`가 private 빈 저장소로 생성됐고 로컬 `origin`이 repo 전용 SSH host alias를 가리킴
+Checked: 2026-08-25 — deploy key 등록과 최초 push는 사용자 승인 대기
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -43,7 +48,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - 실제 `run-all` 상태 영속화·승인 대기·자동 resume controller
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
-- GitHub 저장소 생성과 push
+- GitHub 최초 push
 - 실제 GitHub origin을 대상으로 한 pull
 
 ## Permanently excluded
