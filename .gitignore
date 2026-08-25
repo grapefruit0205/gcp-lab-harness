@@ -1,0 +1,32 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+config/harness.env
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+
+# Terraform runtime state
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Generated run data (sanitized summaries may be added under evidence/)
+artifacts/**
+!artifacts/.gitkeep
+
+# Local editor and OS files
+.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.bak

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+usage() {
+  cat <<'USAGE'
+사용법:
+  gcp-lab-harness doctor
+  gcp-lab-harness phase list
+  gcp-lab-harness run-all [--dry-run]
+
+현재 설계 골격에서는 --dry-run만 Cloud 변경 없이 실행할 수 있습니다.
+USAGE
+}
+
+load_phase_docs() {
+  mapfile -t phase_docs < <(
+    find "$repo_root/docs/phases" -maxdepth 1 -type f \
+      -name 'phase-[0-9][0-9]-*.md' -print | sort
+  )
+  if [[ "${#phase_docs[@]}" -ne 15 ]]; then
+    printf 'FAIL: Phase 01~15 문서가 정확히 15개여야 합니다. 현재 %s개\n' "${#phase_docs[@]}" >&2
+    exit 1
+  fi
+}
+
+list_phases() {
+  load_phase_docs
+  local phase_doc
+  for phase_doc in "${phase_docs[@]}"; do
+    printf '%s\t%s\n' "$(basename "$phase_doc" .md | cut -d- -f2)" "$(sed -n '1s/^# //p' "$phase_doc")"
+  done
+}
+
+run_all() {
+  local dry_run=false
+  if [[ "${1:-}" == "--dry-run" && "$#" -eq 1 ]]; then
+    dry_run=true
+  elif [[ "$#" -ne 0 ]]; then
+    usage >&2
+    exit 2
+  fi
+
+  load_phase_docs
+  if [[ "$dry_run" == true ]]; then
+    printf 'DRY RUN: Command Code cmd가 현재 고정 모델을 상속하는 15-Phase 순서를 확인합니다.\n'
+    list_phases
+    printf '각 Phase: pull --ff-only → cmd 실행 → machine verification → VS Code Codex Extension 검증 → 사용자 승인 → cleanup → 한국어 commit → push\n'
+    printf 'Cloud·GitHub 외부 변경은 수행하지 않았습니다.\n'
+    return 0
+  fi
+
+  "$repo_root/scripts/doctor.sh"
+  if [[ ! -f "$repo_root/config/harness.env" ]]; then
+    printf 'FAIL: config/harness.example.env를 복사해 config/harness.env를 준비하세요.\n' >&2
+    exit 1
+  fi
+  printf 'BLOCKED: 실제 Google Cloud adapter와 영속 상태 controller는 아직 구현되지 않았습니다.\n' >&2
+  printf '설계 골격을 실습 완료 도구로 오인하지 않도록 Cloud 실행을 중단했습니다.\n' >&2
+  exit 1
+}
+
+case "${1:-}" in
+  doctor)
+    [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
+    exec "$repo_root/scripts/doctor.sh"
+    ;;
+  phase)
+    [[ "${2:-}" == "list" && "$#" -eq 2 ]] || { usage >&2; exit 2; }
+    list_phases
+    ;;
+  run-all)
+    shift
+    run_all "$@"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

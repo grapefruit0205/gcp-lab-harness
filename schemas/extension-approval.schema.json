@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VS Code Codex Extension human approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "phase",
+    "decision",
+    "plan_hash",
+    "diff_hash",
+    "evidence_hash",
+    "reviewed_at",
+    "reviewer_local_id"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 8 },
+    "phase": { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+    "decision": { "enum": ["approved", "rejected"] },
+    "plan_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "diff_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidence_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "reviewer_local_id": { "type": "string", "minLength": 1 },
+    "findings_file": { "type": "string" }
+  }
+}

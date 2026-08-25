@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Command Code Phase execution result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "phase",
+    "status",
+    "summary",
+    "session_id",
+    "commands_run",
+    "checks",
+    "risks",
+    "next_action"
+  ],
+  "properties": {
+    "phase": { "type": "string", "pattern": "^phase-(0[1-9]|1[0-5])$" },
+    "status": { "enum": ["waiting_extension_review", "blocked", "failed"] },
+    "summary": { "type": "string", "minLength": 1 },
+    "session_id": { "type": "string", "minLength": 1 },
+    "commands_run": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "detail"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "enum": ["passed", "failed", "skipped"] },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "next_action": { "const": "extension_review" }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "codex-extension-verifier",
+      "title": "VS Code Extension으로 검증",
+      "when": {
+        "keywords": [
+          "codex",
+          "vs code",
+          "vscode",
+          "extension",
+          "확장",
+          "검증",
+          "handoff"
+        ]
+      },
+      "body": "이 프로젝트의 검증은 VS Code Codex Extension에서 수행한다. 별도의 codex review CLI를 검증자로 제안하거나 기본 검증 경로로 설명하지 않는다. Extension이 저장소의 검증 명령을 실행하고 결과와 diff를 판정한다. (substitute illusion: VS Code 통합 터미널 CLI를 Extension 검증으로 취급함)"
+    }
+  ]
+}
