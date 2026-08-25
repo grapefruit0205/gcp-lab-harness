@@ -42,3 +42,6 @@ One short section per working session: what was worked on, what was decided (wit
 - D-015에 따라 GitHub 저장소를 public으로 전환했고 코드와 커밋 이력을 누구나 열람·clone할 수 있는 상태를 확인했다.
 - D-016에 따라 `$HOME` clone용 root bootstrap, 사용자 PATH 명령, PowerShell→WSL wrapper와 Command Code 대화형 start를 추가했다. machine verification 뒤 Extension review로 넘기고 승인·반려 후 같은 Command Code session을 재개하는 handoff를 CLI에 연결했다.
 - D-017에 따라 Extension 분리 검증을 유지하면서 같은 Command Code 고정 모델이 구현·자기 검증을 수행하는 선택 경로를 추가했다. Phase session은 repo `.sh` 실행을 자동 승인하지만 plan SHA와 최종 사용자 승인은 유지한다.
+- D-018에 따라 README를 Windows 우선 순서로 재구성했다. public GitHub 주소+복사 프롬프트, Desktop 단일 GUI 모델, PowerShell clone, VS Code Claude/Codex, 기존 Command Code 경로 순으로 배치했다.
+- README 무맥락 실행 점검에서 clone 후 GUI 폴더 재선택, 고유 RUN_ID 초기화, Git 설치 후 PowerShell 재시작 안내 누락을 발견해 보완했다. 실제 Windows 런타임 검증은 수행하지 않았다.
+- 후속 무맥락 점검에서 VS Code `code` 명령 설치 순서를 보완했고, 3차 정적 점검에서 섹션 순서·코드 펜스·필수 파일·GitHub 주소·whitespace를 통과했다.

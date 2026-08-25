@@ -106,3 +106,9 @@ sweep: README, Bash·PowerShell bootstrap, 사용자 명령 installer, Command C
 기본 Command Code 구현·VS Code Codex Extension 검증 경로는 유지하되, 사용자가 선택하면 현재 Command Code 계정의 같은 고정 모델 하나가 한 Phase의 구현과 자기 검증을 연속 수행할 수 있게 한다. 한 Phase session에서는 저장소가 소유한 `.sh` 실행을 다시 묻지 않도록 자동 승인 모드를 사용한다. 모델·effort override는 금지하며, 저장 plan SHA 사용자 승인, project allowlist, cleanup 소유권, 최종 사용자 승인과 push gate는 생략하지 않는다.
 
 sweep: CLI, single-model prompt·schema·실행·검증·승인 스크립트, Command Code start·next handoff, README, workflow, orchestration과 validation에 반영함 (2026-08-25)
+
+## D-018 · Windows에서 GitHub 주소로 시작하는 GUI 안내를 README 최상단에 둔다 — 2026-08-25 (사용자, 공개 사용법 요청)
+
+Windows 사용자가 `https://github.com/grapefruit0205/gcp-lab-harness`를 Claude Desktop 또는 Codex Desktop에 붙여넣고 시작할 수 있도록 README의 첫 사용법을 구성한다. 이어서 단일 GUI 모델 실행법, VS Code의 Claude Code 또는 Codex Extension 실행법 순서로 설명하며, 수동 clone이 필요할 때도 같은 공개 저장소 주소와 `$HOME\gcp-lab-harness` 경로를 사용한다. 기존 Command Code 실행·VS Code Codex 검증 경로는 별도 고급 경로로 유지한다.
+
+sweep: README 최상단 링크+공용 프롬프트, Windows Desktop 단일 GUI 모델, PowerShell clone, VS Code Claude/Codex, 기존 Command Code 경로 순서로 반영함 (2026-08-25)
