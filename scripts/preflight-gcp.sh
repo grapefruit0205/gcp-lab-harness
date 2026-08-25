@@ -33,7 +33,7 @@ harness_load_config "$config_file"
   printf 'FAIL: GCP_CLEANUP_ON_FAILURE=true가 필요합니다.\n' >&2
   exit 1
 }
-[[ "${GCP_MAX_APPLY_MINUTES:-}" =~ ^[0-9]+$ && "$GCP_MAX_APPLY_MINUTES" -le 60 ]] || {
+[[ "${GCP_MAX_APPLY_MINUTES:-}" =~ ^[0-9]+$ && "$GCP_MAX_APPLY_MINUTES" -ge 1 && "$GCP_MAX_APPLY_MINUTES" -le 60 ]] || {
   printf 'FAIL: 최대 apply 시간은 1~60분이어야 합니다.\n' >&2
   exit 1
 }
@@ -42,7 +42,7 @@ harness_load_config "$config_file"
   exit 1
 }
 
-for command_name in gcloud terraform jq; do
+for command_name in gcloud terraform jq timeout curl sha256sum; do
   command -v "$command_name" >/dev/null 2>&1 || {
     printf 'FAIL: 필수 명령이 없습니다: %s\n' "$command_name" >&2
     exit 1

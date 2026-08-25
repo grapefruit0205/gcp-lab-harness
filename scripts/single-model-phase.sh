@@ -67,8 +67,9 @@ if [[ "$dry_run" == true ]]; then
   exit 0
 fi
 
-command -v cmd >/dev/null 2>&1 || { printf 'FAIL: Command Code CLI cmd가 없습니다.\n' >&2; exit 1; }
-cmd status >/dev/null
+command_code_bin="${COMMAND_CODE_BIN:-cmd}"
+if [[ "$command_code_bin" == */* ]]; then [[ -x "$command_code_bin" ]]; else command -v "$command_code_bin" >/dev/null 2>&1; fi || { printf 'FAIL: Command Code CLI cmd가 없습니다.\n' >&2; exit 1; }
+"$command_code_bin" status >/dev/null
 [[ -f "$repo_root/config/harness.env" ]] || {
   printf 'FAIL: 먼저 gcp-lab-harness setup <GCP_PROJECT_ID>를 실행하세요.\n' >&2
   exit 1
@@ -92,7 +93,7 @@ fi
 cmd_args+=("Read $prompt_file and execute the current Phase contract. Use only the currently configured model.")
 
 cd "$repo_root"
-cmd "${cmd_args[@]}" | tee "$events_file"
+"$command_code_bin" "${cmd_args[@]}" | tee "$events_file"
 chmod 600 "$events_file"
 
 state_file="$(harness_state_read "$run_id")"

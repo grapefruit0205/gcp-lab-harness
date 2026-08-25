@@ -63,10 +63,10 @@ Checked: 2026-08-25 — `kdt5-05` allowlist와 저장 plan 정책 통과, 실제
 Evidence: `bootstrap.sh`, `scripts/install-home-command.sh`, symlink-safe `bin/gcp-lab-harness`; `$HOME/.local/bin/gcp-lab-harness phase list`가 Phase 01·15를 저장소 밖에서 출력
 Checked: 2026-08-25 — 사용자 명령 설치와 `$HOME` 실행 경로 확인
 
-## PowerShell→WSL 진입점 — state: wired — 2026-08-25
+## WSL 없는 Windows PowerShell 진입점 — state: wired — 2026-08-25
 
-Evidence: `bootstrap.ps1`, `harness.ps1`이 clone 경로를 `wslpath`로 변환하고 같은 `bootstrap.sh`와 `bin/gcp-lab-harness`에 인수를 전달
-Checked: 2026-08-25 — 코드 경로는 연결했으며 현재 Linux 환경에는 PowerShell/Windows 런타임이 없어 실제 Windows 실행은 미검증
+Evidence: `bootstrap.ps1`, `harness.ps1`, `scripts/bootstrap-windows.sh`, `scripts/windows-bin/python3`, `lib/harness/state.sh`
+Checked: 2026-08-25 — PowerShell이 Git for Windows Bash로 같은 controller를 호출하고 pipeline lock은 `flock` 없이 동작한다. 현재 Linux 환경에는 PowerShell/Windows 런타임이 없어 실제 Windows 실행은 미검증
 
 ## Command Code 대화형 start·Extension review·next handoff — state: wired — 2026-08-25
 
@@ -80,8 +80,43 @@ Checked: 2026-08-25 — 같은 현재 모델의 구현·검증 prompt, hash 결�
 
 ## Phase repo 쉘 실행 허용 목록 — state: verified — 2026-08-25
 
-Evidence: `scripts/configure-command-code-permissions.sh`; 현재 `.commandcode/settings.json`에 Phase 04 `run.sh`·`verify.sh`의 직접·bash 실행 패턴이 병합되고 `defaultMode`는 `default`로 유지됨
+Evidence: `scripts/configure-command-code-permissions.sh`; Phase 01–15 `execute.sh`·`verify.sh`의 직접·bash 실행 패턴을 `.commandcode/settings.json`에 병합하고 `defaultMode`는 `default`로 유지
 Checked: 2026-08-25 — Phase 01–15 패턴을 idempotent하게 추가하며 전체 command auto-accept는 사용하지 않음
+
+## Phase 07–15 Cloud adapter — state: implemented, cloud validation required — 2026-08-25
+
+Evidence: `phases/07/`부터 `phases/15/`, `lib/harness/phase-adapter.sh`, `scripts/phase-contract.py`, `scripts/sanitize-terraform-plan.jq`, `tests/offline-phases-07-15.sh`, `docs/audits/phase-07-15-coverage.md`; Google provider 7.45.0 init/validate와 offline suite PASS
+Checked: 2026-08-25 — IAM·Storage·SQL·BigQuery·Monitoring·HA VPN·ALB·ILB·Terraform의 원본 Task 계약과 실제 상태 verifier가 구현됨. 실제 Cloud apply, metric/routing/autoscaling 수렴, Extension 승인은 실행하지 않음
+
+## plan-bundle·민감 plan 정제·artifact 상태 전이 — state: verified offline — 2026-08-25
+
+Evidence: `schemas/action-plan.schema.json`, `schemas/phase-manifest.schema.json`, `lib/harness/phase-adapter.sh`, `scripts/sanitize-terraform-plan.jq`, `bin/gcp-lab-harness`, `tests/offline-phases-07-15.sh`; synthetic secret redaction과 offline transition test PASS
+Checked: 2026-08-25 — binary plan과 imperative action hash를 결합하고 민감 mask를 적용한 JSON만 handoff하며 applied/verified/destroyed artifact 없이는 상태 전이를 거부함
+
+## 실제 `run-all --run` supervisor 연결 — state: wired — 2026-08-25
+
+Evidence: `bin/gcp-lab-harness`, `scripts/start-command-code.sh`, `scripts/handoff-review.sh`, `scripts/handoff-next.sh`; `run-all --dry-run`과 전체 offline suite PASS
+Checked: 2026-08-25 — 단일 Command Code session과 Phase별 Extension 승인 대기를 연결했으나 Cloud 15-Phase foreground E2E는 미실행
+
+## Phase 02 (Infrastructure Preview - Marketplace Jenkins) adapter — state: implemented, cloud revalidation required — 2026-08-25
+
+Evidence: `phases/02/terraform/main.tf`, `phases/02/execute.sh`, `phases/02/verify.sh`, `tests/offline-phases-01-06.sh`; offline 계약 PASS
+Checked: 2026-08-25 — 기존 검증은 Jenkins HTTP와 service stop/start를 확인하지 않아 `verified` 근거로 부족했다. IAP-only ingress, Marketplace boot-disk provenance, HTTP readiness와 stop/start 전이를 추가했으며 실제 Cloud 재검증은 아직 하지 않았다.
+
+## Phase 04 (Private Google Access 및 Cloud NAT) adapter — state: implemented, cloud revalidation required — 2026-08-25
+
+Evidence: `phases/04/terraform/main.tf`, `phases/04/execute.sh`, `phases/04/verify.sh`, `tests/offline-phases-01-06.sh`; offline 계약 PASS
+Checked: 2026-08-25 — 기존 검증은 PGA·NAT·Logging 설정 존재만 확인했다. disabled control과 enabled VM의 실제 Storage/egress 차이, NAT log 조회를 추가했으며 실제 Cloud 재검증은 아직 하지 않았다.
+
+## Phase 05 (Creating Virtual Machines) adapter — state: implemented, cloud revalidation required — 2026-08-25
+
+Evidence: `phases/05/terraform/main.tf`, `phases/05/execute.sh`, `phases/05/verify.sh`, `tests/offline-phases-01-06.sh`; 과거 리소스 create/destroy와 현재 offline 계약 PASS
+Checked: 2026-08-25 — 과거 canary는 VM 사양과 cleanup은 확인했지만 Linux/custom SSH·guest 사양과 Windows guest agent/RDP readiness를 확인하지 않았다. IAP-only ingress와 guest evidence를 추가했으며 개정 adapter의 Cloud 재검증은 아직 하지 않았다.
+
+## Phase 06 (Working with Virtual Machines) adapter — state: implemented, cloud revalidation required — 2026-08-25
+
+Evidence: `phases/06/terraform/main.tf`, `phases/06/execute.sh`, `phases/06/verify.sh`, `tests/test-phase-06.sh`; 개정 offline 계약 PASS, 과거 run 리소스 destroy와 잔여 0 확인
+Checked: 2026-08-25 — 과거 Cloud run은 리소스 존재만 확인해 guest mount·application·backup·maintenance 완료 증거로 무효다. 개정 verifier의 실제 Cloud 재검증은 아직 하지 않음
 
 ## Not implemented
 
@@ -90,12 +125,12 @@ Checked: 2026-08-25 — this section goes stale in the other direction: a line l
 capability shipped makes you claim less than you have earned. Sweep it on the same 90-day clock. -->
 
 - 실제 canary Cloud apply·verify·destroy 성공
-- Lab 01–15별 Google Cloud 리소스 adapter
-- 실제 `run-all` foreground supervisor와 Command Code·Cloud adapter 자동 연결
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Windows PowerShell→WSL wrapper 실제 Windows 실행 검증
+- Phase 07–15 실제 Cloud apply·machine verify·destroy
+- Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
+- WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 
 ## Permanently excluded
 

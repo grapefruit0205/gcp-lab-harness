@@ -58,6 +58,10 @@ Command Code `cmd`는 현재 고정 모델을 상속하고 실제 사용자 두 
 
 Command Code는 실제 사용자 로그인을 서비스 계정 가장과 동일하다고 숨기지 않고 `cli-equivalent` 경계를 보고한다. Extension은 execution identity와 verifier identity를 분리해 IAM policy·audit evidence를 확인한다.
 
+## 현재 adapter
+
+`phases/07/terraform`이 전용 VPC·비공개 bucket·격리 service account 3개와 최소 binding을 소유한다. `phases/07/verify.sh`는 immutable Debian image로 가장 VM을 만들고 project 조회 거부, object read 성공, write 거부, Viewer→Creator 전이를 실제 guest에서 확인한다.
+
 ## Git 종료 조건
 
 `Phase 07: IAM 권한 경계 자동화 및 검증 완료` 커밋을 push하고 remote SHA가 확인된 뒤 Phase 08로 간다.

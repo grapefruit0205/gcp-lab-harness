@@ -53,6 +53,7 @@ mkdir -p "$output_dir"
     printf -- '- plan SHA256: `%s`\n' "$plan_hash"
     printf -- '- diff SHA256: `%s`\n' "$diff_hash"
     printf -- '- evidence SHA256: `%s`\n\n' "$evidence_hash"
+    printf -- '- evidence index: `artifacts/runs/%s/phase-%s/extension/evidence-index.json`\n\n' "$run_id" "$phase_number"
     printf '사용자가 검증 완료를 명시적으로 승인한 경우에만 다음 명령을 실행합니다.\n\n```bash\n'
     printf 'gcp-lab-harness gate approve %s --run %s --plan-hash %s --diff-hash %s --evidence-hash %s --reviewer vscode-codex\n' \
       "$phase_number" "$run_id" "$plan_hash" "$diff_hash" "$evidence_hash"

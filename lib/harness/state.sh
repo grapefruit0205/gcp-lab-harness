@@ -2,6 +2,41 @@
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
+HARNESS_STATE_LOCK_DIR=""
+
+harness_state_lock_acquire() {
+  local run_dir="$1" deadline owner
+  HARNESS_STATE_LOCK_DIR="$run_dir/.pipeline.lock.d"
+  deadline=$((SECONDS + 30))
+  while ! mkdir "$HARNESS_STATE_LOCK_DIR" 2>/dev/null; do
+    if [[ -f "$HARNESS_STATE_LOCK_DIR/owner" ]]; then
+      owner="$(<"$HARNESS_STATE_LOCK_DIR/owner")"
+      if [[ "$owner" =~ ^[0-9]+$ ]] && ! kill -0 "$owner" 2>/dev/null; then
+        rm -f "$HARNESS_STATE_LOCK_DIR/owner"
+        rmdir "$HARNESS_STATE_LOCK_DIR" 2>/dev/null || true
+        continue
+      fi
+    fi
+    (( SECONDS < deadline )) || {
+      harness_die "pipeline 상태 lock을 30초 안에 획득하지 못했습니다."
+      return
+    }
+    sleep 0.1
+  done
+  printf '%s\n' "$BASHPID" >"$HARNESS_STATE_LOCK_DIR/owner"
+}
+
+harness_state_lock_release() {
+  local owner=""
+  [[ -n "$HARNESS_STATE_LOCK_DIR" && -d "$HARNESS_STATE_LOCK_DIR" ]] || return 0
+  [[ ! -f "$HARNESS_STATE_LOCK_DIR/owner" ]] || owner="$(<"$HARNESS_STATE_LOCK_DIR/owner")"
+  if [[ -z "$owner" || "$owner" == "$BASHPID" ]]; then
+    rm -f "$HARNESS_STATE_LOCK_DIR/owner"
+    rmdir "$HARNESS_STATE_LOCK_DIR" 2>/dev/null || true
+  fi
+  HARNESS_STATE_LOCK_DIR=""
+}
+
 harness_state_allowed_transition() {
   local from="$1"
   local to="$2"
@@ -92,31 +127,26 @@ harness_state_transition() {
   local now
   local temporary
   local next_phase
-  local lock_fd
 
   harness_validate_phase "$phase" || return
   state_file="$(harness_state_read "$run_id")" || return
   run_dir="$(dirname "$state_file")"
-  exec {lock_fd}>"$run_dir/.pipeline.lock"
-  flock -x "$lock_fd"
+  harness_state_lock_acquire "$run_dir" || return
 
   current_phase="$(jq -r '.current_phase // empty' "$state_file")"
   current_state="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .state' "$state_file")"
   if [[ "$current_phase" != "$phase" ]]; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "현재 실행 Phase는 ${current_phase:-없음}이며 Phase $phase를 전이할 수 없습니다."
     return
   fi
   if [[ -z "$current_state" ]]; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "Phase $phase 상태가 없습니다."
     return
   fi
   if ! harness_state_allowed_transition "$current_state" "$next_state"; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "허용되지 않은 상태 전이입니다: $current_state -> $next_state"
     return
   fi
@@ -153,15 +183,13 @@ harness_state_transition() {
       else . end
     ' "$state_file" >"$temporary"; then
     rm -f "$temporary"
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "상태 전이 JSON 생성에 실패했습니다."
     return
   fi
   chmod 600 "$temporary"
   mv -f "$temporary" "$state_file"
-  flock -u "$lock_fd"
-  exec {lock_fd}>&-
+  harness_state_lock_release
 }
 
 harness_state_prepare_review() {
@@ -176,7 +204,6 @@ harness_state_prepare_review() {
   local current_state
   local now
   local temporary
-  local lock_fd
 
   harness_validate_phase "$phase" || return
   harness_validate_hash "plan hash" "$plan_hash" || return
@@ -184,13 +211,11 @@ harness_state_prepare_review() {
   harness_validate_hash "evidence hash" "$evidence_hash" || return
   state_file="$(harness_state_read "$run_id")" || return
   run_dir="$(dirname "$state_file")"
-  exec {lock_fd}>"$run_dir/.pipeline.lock"
-  flock -x "$lock_fd"
+  harness_state_lock_acquire "$run_dir" || return
   current_phase="$(jq -r '.current_phase // empty' "$state_file")"
   current_state="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .state' "$state_file")"
   if [[ "$current_phase" != "$phase" || "$current_state" != "machine_verified" ]]; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "Extension 검증 준비는 현재 Phase의 machine_verified 상태에서만 가능합니다."
     return
   fi
@@ -220,15 +245,13 @@ harness_state_prepare_review() {
       .history += [{phase: $phase, from: "machine_verified", to: "waiting_extension_review", at: $now}]
     ' "$state_file" >"$temporary"; then
     rm -f "$temporary"
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "Extension 검증 준비 상태 생성에 실패했습니다."
     return
   fi
   chmod 600 "$temporary"
   mv -f "$temporary" "$state_file"
-  flock -u "$lock_fd"
-  exec {lock_fd}>&-
+  harness_state_lock_release
 }
 
 harness_state_attach_approval() {
@@ -245,7 +268,6 @@ harness_state_attach_approval() {
   local actual
   local now
   local temporary
-  local lock_fd
 
   harness_validate_phase "$phase" || return
   [[ "$decision" == "approved" || "$decision" == "rejected" ]] ||
@@ -257,22 +279,19 @@ harness_state_attach_approval() {
     return
   fi
   run_dir="$(dirname "$state_file")"
-  exec {lock_fd}>"$run_dir/.pipeline.lock"
-  flock -x "$lock_fd"
+  harness_state_lock_acquire "$run_dir" || return
 
   current_phase="$(jq -r '.current_phase // empty' "$state_file")"
   current_state="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .state' "$state_file")"
   expected="$(jq -c --arg phase "$phase" '.phases[] | select(.phase == $phase) | .review_bundle | [.plan_hash, .diff_hash, .evidence_hash]' "$state_file")"
   actual="$(jq -c '[.plan_hash, .diff_hash, .evidence_hash]' "$approval_file")"
   if [[ "$current_phase" != "$phase" || "$current_state" != "waiting_extension_review" ]]; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "승인 반영은 현재 Phase의 waiting_extension_review 상태에서만 가능합니다."
     return
   fi
   if [[ "$expected" != "$actual" ]]; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "승인 해시가 현재 plan/diff/evidence와 일치하지 않습니다. stale approval을 거부했습니다."
     return
   fi
@@ -282,8 +301,7 @@ harness_state_attach_approval() {
     --arg decision "$decision" '
       .run_id == $run_id and .phase == $phase and .decision == $decision
     ' "$approval_file" >/dev/null; then
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "승인 파일의 run ID, Phase 또는 결정이 요청과 일치하지 않습니다."
     return
   fi
@@ -311,15 +329,13 @@ harness_state_attach_approval() {
       .history += [{phase: $phase, from: "waiting_extension_review", to: $next_state, at: $now}]
     ' "$state_file" >"$temporary"; then
     rm -f "$temporary"
-    flock -u "$lock_fd"
-    exec {lock_fd}>&-
+    harness_state_lock_release
     harness_die "승인 반영 상태 생성에 실패했습니다."
     return
   fi
   chmod 600 "$temporary"
   mv -f "$temporary" "$state_file"
-  flock -u "$lock_fd"
-  exec {lock_fd}>&-
+  harness_state_lock_release
 }
 
 harness_state_next_action() {

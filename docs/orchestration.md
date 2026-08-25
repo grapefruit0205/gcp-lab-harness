@@ -5,10 +5,10 @@
 사용자는 clone과 bootstrap 뒤 Bash 또는 PowerShell에서 한 번 시작한다.
 
 ```bash
-gcp-lab-harness start --run <RUN_ID>
+gcp-lab-harness run-all --run <RUN_ID>
 ```
 
-PowerShell 진입점은 `.\harness.ps1 start --run <RUN_ID>`다. 오케스트레이터는 Command Code 대화형 세션을 열고 사용자의 자연어 지시를 받는다. clean working tree에서 `git pull --ff-only`를 먼저 수행한 뒤 Lab 01부터 15까지 순차 실행한다. 각 Lab마다 VS Code Codex Extension의 사용자 승인 게이트에서 대기하고, 승인 뒤 `handoff next`가 같은 Command Code 세션을 재개해 해당 Lab 리소스를 정리하고 한국어 commit과 push를 완료한다.
+PowerShell 진입점은 `.\harness.ps1 run-all --run <RUN_ID>`다. Windows에서는 WSL 대신 Git for Windows의 Bash 호환층이 동일 스크립트를 실행한다. 오케스트레이터는 전체 offline gate 뒤 Command Code 대화형 세션을 열고 사용자의 자연어 지시를 받는다. clean working tree에서 `git pull --ff-only`를 먼저 수행한 뒤 Lab 01부터 15까지 순차 실행한다. 각 Lab마다 VS Code Codex Extension의 사용자 승인 게이트에서 대기하고, 승인 뒤 `handoff next`가 같은 Command Code 세션을 재개해 해당 Lab 리소스를 정리하고 한국어 commit과 push를 완료한다.
 
 ## `cmd`, `codex`, `code`의 역할
 
@@ -45,7 +45,7 @@ Lab 01의 `PUSHED`가 확인되어야 Lab 02가 시작된다. `WAITING_EXTENSION
 
 기계 검증이 끝나면 오케스트레이터가 다음을 수행한다.
 
-1. `artifacts/<run-id>/phase-NN/review/EXTENSION_REVIEW_PROMPT.md` 생성
+1. `artifacts/runs/<run-id>/phase-NN/extension/EXTENSION_REVIEW_PROMPT.md` 생성
 2. plan hash, diff hash, evidence manifest hash, 리소스 inventory를 묶음
 3. `code --reuse-window <repo> <review-prompt>` 실행
 4. gate 상태를 `waiting_extension_review`로 원자적으로 기록

@@ -20,8 +20,8 @@ harness_now() {
 
 harness_validate_run_id() {
   local run_id="$1"
-  [[ "$run_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{7,63}$ ]] ||
-    harness_die "run ID는 8~64자의 영문자·숫자·점·밑줄·하이픈이어야 합니다." 2
+  [[ "$run_id" =~ ^[a-z0-9][a-z0-9-]{6,18}[a-z0-9]$ ]] ||
+    harness_die "run ID는 8~20자의 소문자·숫자·하이픈이며 영숫자로 끝나야 합니다." 2
 }
 
 harness_validate_phase() {

@@ -1,33 +1,27 @@
-# Checkpoint — 선택형 단일 모델 Phase 검증 — 2026-08-25 14:37
+# Checkpoint — Phase 01–15 보완 통합·push 준비 — 2026-08-25
 
 ## The story so far
 
-기본 Command Code 구현·VS Code Extension 검증 경로에 더해 같은 Command Code 고정 모델 하나가 구현과 자기 검증을 연속 수행하는 선택 경로를 연결했다. 단일 모델은 schema·plan/diff/evidence hash가 묶인 결과만 만들고 사용자 승인을 대신하지 않는다. Phase 01–15의 repo `run.sh`·`verify.sh`는 `.commandcode/settings.json`의 scoped allowlist에 자동 병합되어 실행 여부를 다시 묻지 않는다. 현재 run `lab-20260825-01`의 Phase 04는 기존 세 hash를 유지한 `waiting_extension_review`이며 단일 모델 review prompt까지 준비됐다.
+원격의 선택형 단일 모델 실행 경로와 이번 Phase 01–15 adapter 보완을 통합했다. 공통 source-task 계약, action-plan/plan-bundle, 민감 plan 정제, artifact 전이 guard, 실패 cleanup과 Phase별 잔여 inventory가 구현돼 있다. Monitoring·ALB evidence는 현재 run의 metric·log로 한정한다. Windows는 WSL 없이 PowerShell→Git for Windows Bash를 사용한다. 전체 offline suite와 Google provider schema 검증은 통과했지만 개정 adapter의 Cloud E2E는 아직 실행하지 않았다.
 
 ## Decided
 
-- D-012: 별도 예산 한도 없이 GCP 계정 연동과 실제 Cloud apply를 진행하되 allowlist·plan 승인·수량·timeout·cleanup 보호를 유지한다.
-- D-013: `kdt5-05`에서 canary Cloud apply를 단계적으로 진행하고 각 단계가 끝날 때 보고한다.
-- D-014: 누구나 `git clone` 후 bootstrap 스크립트로 실행할 수 있도록 README에 기록한다.
-- D-015: `grapefruit0205/gcp-lab-harness`를 public 저장소로 전환한다.
-- D-016: Linux는 clone 후 Bash, Windows는 PowerShell→WSL로 bootstrap하고 Command Code·Extension·next handoff를 연결한다.
-- D-017: 선택하면 같은 고정 모델이 Phase 구현·자기 검증을 수행하고 repo `.sh`는 질문 없이 실행하되 사용자·Cloud·Git gate는 유지한다.
+- D-017: 같은 Command Code 고정 모델의 구현·자기 검증 선택 경로를 유지한다.
+- D-018: README는 Windows Desktop 링크·프롬프트를 가장 먼저 설명한다.
+- D-019: Windows는 WSL을 요구하지 않는다.
+- Phase `execute.sh`·`verify.sh`만 Command Code 무확인 허용 목록에 넣고 직접 `gcloud`·`terraform`·`rm`은 포괄 허용하지 않는다.
+- 정상 검증 리소스는 사용자 승인 전 유지하되 apply·post-apply 실패 시 manifest 소유 범위만 자동 cleanup한다.
 
 ## Waiting on the user
 
-- canary apply 전에 저장 plan SHA256 `2ed0c69f7a2bc7526b3206af08d385637c614a867c728a49d3dfd5546382ecea` 승인이 필요하다.
-- Q-003: 저장소 라이선스가 필요하다.
-- Q-005: Command Code 고정 모델 실행 규칙을 영구 ballast pin으로 남길지 확인이 필요하다.
-- A-002: 공식 Monitoring·Logging remote MCP를 read-only verifier로 가정한다.
-- 제안한 `phase-shell-no-prompt` 프로젝트 ballast 규칙을 실제 catalog에 pin할지 사용자 확인이 필요하다.
+- Cloud 비용이 발생하는 새 run의 plan/apply 승인과 Extension 또는 단일 모델 review의 사용자 승인.
 
 ## Next first action
 
-현재 Phase 04를 단일 모델로 검증하려면 `gcp-lab-harness single-model run --run lab-20260825-01`을 실행한다.
+새 run ID로 Phase 01 plan을 만들고 exact plan hash를 보고한 뒤 사용자 승인을 기다린다. 전체 15개 Phase Cloud E2E, Windows 실기동, MCP OAuth는 별도 검증한다.
 
 ## Tried
 
-- 첫 account-check에 `google_project.lifecycle_state`를 가정했지만 provider 7.45.0에 없는 속성이어서 validate가 실패했다. ACTIVE 검사는 gcloud preflight에만 두고 Terraform data 조회로 좁혀 성공했다.
-- 서비스 계정 canary는 삭제 후 복구 가능 기간이 있어 잔존 없는 cleanup 증명에 부적합했다. 즉시 destroy 가능한 빈 custom-mode VPC canary로 변경했다.
-- PowerShell wrapper는 현재 Linux 환경에 Windows/PowerShell 런타임이 없어 실제 실행하지 못했고 코드 경로만 연결했다.
-- 전체 command auto-accept는 `.sh` 실행 허용보다 범위가 넓어 사용하지 않았다. Phase 01–15의 repo script만 exact allowlist로 병합했다.
+- 원격 `main`이 두 커밋 앞서 있어 현재 변경을 stash로 보존한 뒤 `git pull --ff-only`했다.
+- 원격 단일 모델 기능과 Phase 보완이 같은 파일을 수정해 충돌했으며 두 기능을 모두 유지하도록 수동 통합했다.
+- Terraform Registry가 한 번 timeout됐지만 단일 재시도에서 설계 검증이 통과했다.

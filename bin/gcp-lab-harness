@@ -20,7 +20,9 @@ usage() {
   gcp-lab-harness handoff next --run <id>
   gcp-lab-harness doctor
   gcp-lab-harness phase list
-  gcp-lab-harness run-all [--dry-run]
+  gcp-lab-harness run-all --run <id>
+  gcp-lab-harness run-all --dry-run
+  gcp-lab-harness phase-gate <docs/phases/phase-NN-name.md>
   gcp-lab-harness run init --run <id> [--mode cloud|offline]
   gcp-lab-harness status --run <id>
   gcp-lab-harness resume --run <id>
@@ -32,7 +34,7 @@ usage() {
 
 start/cmd는 Command Code 대화형 구현 세션을 열고, handoff는 Extension 검증과 다음 단계 재개를 연결합니다.
 single-model은 같은 Command Code 고정 모델로 구현과 자기 검증을 수행하되 사용자 승인은 유지합니다.
-실제 run-all은 Google Cloud adapter가 모두 준비될 때까지 차단됩니다.
+run-all은 단일 Command Code 세션을 열고 각 Phase의 Extension 사용자 승인 gate에서 대기합니다.
 USAGE
 }
 
@@ -56,12 +58,18 @@ list_phases() {
 }
 
 run_all() {
-  local dry_run=false
+  local dry_run=false run_id=""
   if [[ "${1:-}" == "--dry-run" && "$#" -eq 1 ]]; then
     dry_run=true
-  elif [[ "$#" -ne 0 ]]; then
-    usage >&2
-    exit 2
+  else
+    while [[ "$#" -gt 0 ]]; do
+      case "$1" in
+        --run) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; run_id="$2"; shift 2 ;;
+        *) usage >&2; return 2 ;;
+      esac
+    done
+    [[ -n "$run_id" ]] || { usage >&2; return 2; }
+    harness_validate_run_id "$run_id"
   fi
 
   load_phase_docs
@@ -73,14 +81,14 @@ run_all() {
     return 0
   fi
 
-  "$repo_root/scripts/doctor.sh"
   if [[ ! -f "$repo_root/config/harness.env" ]]; then
     printf 'FAIL: config/harness.example.env를 복사해 config/harness.env를 준비하세요.\n' >&2
     exit 1
   fi
-  printf 'BLOCKED: 상태 controller는 준비됐지만 실제 Google Cloud Phase adapter는 아직 구현되지 않았습니다.\n' >&2
-  printf '불완전한 run-all이 Cloud를 변경하지 않도록 실행을 중단했습니다.\n' >&2
-  exit 1
+  "$repo_root/scripts/validate-design.sh" >/dev/null
+  "$repo_root/tests/offline-phases-01-06.sh" >/dev/null
+  "$repo_root/tests/offline-phases-07-15.sh" >/dev/null
+  exec "$repo_root/scripts/start-command-code.sh" --run "$run_id"
 }
 
 parse_run_option() {
@@ -181,7 +189,46 @@ transition_command() {
     esac
   done
   [[ -n "$run_id" ]] || { usage >&2; return 2; }
+  transition_artifact_guard "$run_id" "$phase" "$next_state"
   harness_state_transition "$run_id" "$phase" "$next_state"
+}
+
+transition_artifact_guard() {
+  local run_id="$1" phase="$2" next_state="$3"
+  local run_dir manifest evidence bundle expected actual
+  run_dir="$(harness_run_dir "$run_id")/phase-$phase"
+  manifest="$run_dir/manifest.json"
+  evidence="$run_dir/evidence/phase-$phase-machine.json"
+  case "$next_state" in
+    planned)
+      harness_require_file "$manifest" "planned manifest" || return
+      jq -e '.status == "planned"' "$manifest" >/dev/null || harness_die "planned 전이는 planned manifest가 필요합니다."
+      if (( 10#$phase >= 7 )); then
+        bundle="$run_dir/plan-bundle.json"
+        harness_require_file "$bundle" "plan bundle" || return
+        expected="$(jq -r '.plan.bundle_sha256 // empty' "$manifest")"
+        actual="$(harness_sha256_file "$bundle")"
+        [[ "$expected" == "$actual" ]] || harness_die "planned manifest와 plan bundle hash가 일치하지 않습니다."
+      fi
+      ;;
+    applied)
+      harness_require_file "$manifest" "applied manifest" || return
+      jq -e '.status == "applied"' "$manifest" >/dev/null || harness_die "applied 전이는 실제 applied manifest가 필요합니다."
+      ;;
+    machine_verified)
+      harness_require_file "$manifest" "verified manifest" || return
+      harness_require_file "$evidence" "machine evidence" || return
+      jq -e '.status == "verified" and ([.checks[].status] | all(. == "passed" or . == "manual-boundary"))' \
+        "$manifest" >/dev/null || harness_die "machine_verified 전이는 모든 check가 완료된 verified manifest가 필요합니다."
+      jq -e '.tasks | type == "object" and length > 0 and ([.[] | .status] | all(. == "passed"))' \
+        "$evidence" >/dev/null || harness_die "machine evidence의 Task 판정이 완료되지 않았습니다."
+      ;;
+    destroyed)
+      harness_require_file "$manifest" "destroyed manifest" || return
+      jq -e '.status == "destroyed" and .cleanup.status == "completed" and .cleanup.remaining_resource_count == 0' \
+        "$manifest" >/dev/null || harness_die "destroyed 전이는 cleanup 잔여 0 manifest가 필요합니다."
+      ;;
+  esac
 }
 
 case "${1:-}" in
@@ -215,6 +262,10 @@ case "${1:-}" in
   doctor)
     [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
     exec "$repo_root/scripts/doctor.sh"
+    ;;
+  phase-gate)
+    [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }
+    exec "$repo_root/scripts/phase-gate.sh" "$2"
     ;;
   phase)
     [[ "${2:-}" == "list" && "$#" -eq 2 ]] || { usage >&2; exit 2; }

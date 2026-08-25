@@ -57,6 +57,10 @@ Command Code `cmd`는 현재 계정에 고정된 모델로 gcloud/API adapter를
 
 Command Code는 MCP를 통해 Cloud 변경을 만들지 않고 실행 evidence까지만 남긴다. Extension은 공식 MCP 결과가 API와 다르면 API/CLI를 기준으로 차이를 보고하며, 사용자의 승인을 추론하지 않는다.
 
+## 현재 adapter
+
+`phases/11/terraform`은 nginx fixture VM 3개, CPU dashboard, 두 조건 AND alert, label group, 1분 HTTP uptime check를 만든다. verifier는 group member 3개, CPU time series 3개 이상, 실제 uptime time series를 기다린 뒤 alert를 enabled true에서 false로 전이한다. plan 전에는 Monitoring·Logging MCP endpoint 등록을 확인한다.
+
 ## Git 종료 조건
 
 `Phase 11: Cloud Monitoring 자동화 및 검증 완료` 커밋을 push하고 remote SHA 확인 뒤 Phase 12를 시작한다.

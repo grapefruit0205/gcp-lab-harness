@@ -16,7 +16,7 @@ gcp-lab-harness phase plan|apply|verify|destroy <NN> # adapter 구현 예정
 gcp-lab-harness inventory <NN> --run <id>
 ```
 
-현재 구현된 Foundation B 명령은 `run init`, `status`, `resume`, `hash`, `gate prepare|approve|reject`다. 실제 Cloud Phase 명령과 `run-all` supervisor 연결은 adapter가 준비되기 전까지 차단한다.
+Foundation B 명령은 `run init`, `status`, `resume`, `hash`, `gate prepare|approve|reject`다. `run-all --run <id>`는 Phase 01–15 adapter와 연결된 단일 Command Code supervisor를 열며, 각 Phase의 saved plan 승인과 Extension 사용자 승인에서 대기한다.
 
 ## 공통 상태
 

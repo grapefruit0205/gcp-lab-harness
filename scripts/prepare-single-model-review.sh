@@ -35,6 +35,14 @@ if [[ "$state" == "machine_verified" ]]; then
   }
   plan_file="$(realpath -e "$plan_file")"
   evidence_file="$(realpath -e "$evidence_file")"
+  case "$plan_file" in "$phase_dir"/*) ;; *) printf 'FAIL: plan은 현재 run/Phase 디렉터리 안에 있어야 합니다.\n' >&2; exit 1;; esac
+  case "$evidence_file" in "$phase_dir"/*) ;; *) printf 'FAIL: evidence는 현재 run/Phase 디렉터리 안에 있어야 합니다.\n' >&2; exit 1;; esac
+  if (( 10#$phase >= 7 )); then
+    [[ "$plan_file" == "$phase_dir/plan-bundle.json" ]] || {
+      printf 'FAIL: Phase %s부터 plan 입력은 exact plan-bundle.json이어야 합니다.\n' "$phase" >&2
+      exit 1
+    }
+  fi
   diff_file="$bundle_dir/git-diff.patch"
   git -C "$repo_root" diff --binary HEAD >"$diff_file"
   while IFS= read -r -d '' untracked_file; do
@@ -55,8 +63,18 @@ elif [[ "$state" == "waiting_extension_review" ]]; then
   plan_hash="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .review_bundle.plan_hash' "$state_file")"
   diff_hash="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .review_bundle.diff_hash' "$state_file")"
   evidence_hash="$(jq -r --arg phase "$phase" '.phases[] | select(.phase == $phase) | .review_bundle.evidence_hash' "$state_file")"
-  plan_file="$phase_dir/plan.tfplan"
-  evidence_file="$phase_dir/manifest.json"
+  if (( 10#$phase >= 7 )); then
+    plan_file="$phase_dir/plan-bundle.json"
+  elif [[ -f "$phase_dir/phase-$phase.tfplan" ]]; then
+    plan_file="$phase_dir/phase-$phase.tfplan"
+  else
+    plan_file="$phase_dir/plan.tfplan"
+  fi
+  if [[ -f "$phase_dir/extension/evidence-index.json" ]]; then
+    evidence_file="$phase_dir/extension/evidence-index.json"
+  else
+    evidence_file="$phase_dir/manifest.json"
+  fi
   diff_file="$phase_dir/extension/git-diff.patch"
   [[ "$(harness_sha256_file "$plan_file")" == "$plan_hash" ]] || {
     printf 'FAIL: 저장 plan이 현재 review bundle hash와 다릅니다.\n' >&2
@@ -88,7 +106,7 @@ phase_doc="$(harness_phase_doc "$phase")"
   printf -- '- evidence SHA256: `%s`\n' "$evidence_hash"
   printf -- '- 저장 plan: `%s`\n' "$plan_file"
   printf -- '- 저장 diff: `%s`\n' "$diff_file"
-  printf -- '- evidence manifest: `%s`\n' "$evidence_file"
+  printf -- '- evidence 입력: `%s`\n' "$evidence_file"
   printf -- '- 결과 JSON: `%s`\n' "$report_file"
   printf -- '- JSON Schema: `%s`\n' "$repo_root/schemas/single-model-review.schema.json"
 } >"$prompt_file"

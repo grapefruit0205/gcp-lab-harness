@@ -97,6 +97,8 @@ sweep: GitHub 공개 전환, README clone 안내, workflow, product truth, check
 
 ## D-016 · clone 후 Bash 또는 PowerShell에서 대화형 handoff 흐름을 시작한다 — 2026-08-25 (사용자, 실행 진입점 정정)
 
+→ superseded by D-019 (2026-08-25)
+
 사용자는 임의의 `/path/to/...`로 이동해 개발용 `make` 명령을 실행하는 방식 대신, GitHub 저장소를 `$HOME`에 clone한 뒤 root script 하나로 GCP 로그인과 Terraform 연결을 구성하도록 정했다. 이후 Bash에서 Command Code `cmd` 대화형 세션을 열어 자연어로 Phase를 구현하고, 구현 완료 시 VS Code Codex Extension으로 검증 handoff하며, 사용자 승인 후 같은 Command Code session으로 handoff해 cleanup·한국어 commit·push·다음 Phase를 계속한다. Windows PowerShell은 WSL의 동일 Bash 하네스를 호출하는 wrapper를 제공한다.
 
 sweep: README, Bash·PowerShell bootstrap, 사용자 명령 installer, Command Code start, Extension review, next handoff, CLI usage, workflow와 orchestration에 반영함 (2026-08-25)
@@ -112,3 +114,9 @@ sweep: CLI, single-model prompt·schema·실행·검증·승인 스크립트, Co
 Windows 사용자가 `https://github.com/grapefruit0205/gcp-lab-harness`를 Claude Desktop 또는 Codex Desktop에 붙여넣고 시작할 수 있도록 README의 첫 사용법을 구성한다. 이어서 단일 GUI 모델 실행법, VS Code의 Claude Code 또는 Codex Extension 실행법 순서로 설명하며, 수동 clone이 필요할 때도 같은 공개 저장소 주소와 `$HOME\gcp-lab-harness` 경로를 사용한다. 기존 Command Code 실행·VS Code Codex 검증 경로는 별도 고급 경로로 유지한다.
 
 sweep: README 최상단 링크+공용 프롬프트, Windows Desktop 단일 GUI 모델, PowerShell clone, VS Code Claude/Codex, 기존 Command Code 경로 순서로 반영함 (2026-08-25)
+
+## D-019 · Windows는 WSL 없이 PowerShell에서 동일 하네스를 실행한다 — 2026-08-25 (사용자, Windows 실행 환경 정정)
+
+Supersedes D-016. `$HOME` clone, 자연어 Command Code 실행, Extension handoff, 사용자 승인 뒤 cleanup·한국어 commit·push·다음 Phase 진행은 유지한다. Linux는 Bash를 사용하고 Windows는 WSL을 요구하지 않으며, PowerShell entrypoint가 Git for Windows의 Bash 호환층을 내부적으로 호출해 같은 adapter와 상태 머신을 사용한다.
+
+sweep: `bootstrap.ps1`, `harness.ps1`, `scripts/bootstrap-windows.sh`, portable pipeline lock, README, workflow, orchestration, product truth에 반영함 (2026-08-25)

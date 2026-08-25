@@ -21,11 +21,12 @@ if [[ ! -x "$adapter" || ! -f "$repo_root/config/harness.env" ]]; then
   exit 1
 fi
 
-command -v cmd >/dev/null 2>&1 || {
+command_code_bin="${COMMAND_CODE_BIN:-cmd}"
+if [[ "$command_code_bin" == */* ]]; then [[ -x "$command_code_bin" ]]; else command -v "$command_code_bin" >/dev/null 2>&1; fi || {
   printf 'Command Code CLI cmd가 설치되어 있지 않습니다.\n' >&2
   exit 1
 }
-cmd status >/dev/null
+"$command_code_bin" status >/dev/null
 
 run_id="${HARNESS_RUN_ID:-$(date -u '+%Y%m%dT%H%M%SZ')}"
 phase_name="$(basename "$phase_path" .md)"
@@ -40,7 +41,7 @@ mkdir -p "$output_dir"
 } >"$prompt_file"
 
 # D-009: 모델과 reasoning 설정은 Command Code 계정의 현재 고정값을 상속한다.
-cmd -p \
+"$command_code_bin" -p \
   --name "gcp-harness-$run_id-$phase_name" \
   --output-format json \
   --max-turns "${CMD_MAX_TURNS:-100}" \

@@ -1,0 +1,1 @@
+SELECT * FROM `__TABLE__` WHERE Cost > 0

@@ -45,3 +45,15 @@ One short section per working session: what was worked on, what was decided (wit
 - D-018에 따라 README를 Windows 우선 순서로 재구성했다. public GitHub 주소+복사 프롬프트, Desktop 단일 GUI 모델, PowerShell clone, VS Code Claude/Codex, 기존 Command Code 경로 순으로 배치했다.
 - README 무맥락 실행 점검에서 clone 후 GUI 폴더 재선택, 고유 RUN_ID 초기화, Git 설치 후 PowerShell 재시작 안내 누락을 발견해 보완했다. 실제 Windows 런타임 검증은 수행하지 않았다.
 - 후속 무맥락 점검에서 VS Code `code` 명령 설치 순서를 보완했고, 3차 정적 점검에서 섹션 순서·코드 펜스·필수 파일·GitHub 주소·whitespace를 통과했다.
+- Phase 04 (Private Google Access 및 Cloud NAT) adapter를 구현했다: `phases/04/terraform/main.tf`, `phases/04/execute.sh`, `phases/04/verify.sh`, `tests/test-phase-04.sh`. VPC·서브넷(PGA)·Firewall(IAP)·외부 IP 없는 VM·Cloud Router·Cloud NAT·Logging Terraform 구성, plan/apply/verify/destroy 생명주기 및 offline/schema 검증을 통과했다.
+- Phase 02 (Infrastructure Preview) adapter를 구현했다: `phases/02/terraform/main.tf`, `phases/02/execute.sh`, `phases/02/verify.sh`, `tests/test-phase-02.sh`. Marketplace Click-to-Deploy 이미지(`click-to-deploy-images`) 가용성을 사전 검사하고, Jenkins VM, 방화벽, VPC/서브넷 생명주기 및 offline/schema 검증을 통과했다.
+- Phase 05 (Creating Virtual Machines) adapter를 구현하고 Google Cloud `kdt5-05`에 실제 배포 및 검증, destroy를 완료했다: `phases/05/terraform/main.tf`, `phases/05/execute.sh`, `phases/05/verify.sh`, `tests/test-phase-05.sh`. `utility-vm` (e2-medium, 외부 IP 없음), `windows-vm` (e2-standard-2, 64GB SSD, Windows Server 2022 Core), `custom-vm` (e2-custom-2-4096)의 3개 VM을 생성하고 기계 검증(`verify.sh`)을 통과한 뒤 destroy를 거쳐 활성 잔여 리소스 0개를 확인했다.
+- Phase 06 (Working with Virtual Machines) 초기 adapter를 Google Cloud canary에 배포했다. 공개 IP는 기록하지 않으며 리소스는 Extension 검토를 위해 유지했다. 이후 독립 감사에서 당시 `verify.sh`가 guest mount·애플리케이션·backup·maintenance를 확인하지 않아 완료 판정은 무효화되었다.
+- Phase 01–06 재감사에서 canonical coverage map을 작성하고, Phase 01·03 adapter를 추가했으며 Phase 02·04·05·06을 Terraform·guest automation·실제 상태 검증 계층으로 보완했다. 개정 adapter는 offline 계약을 통과했지만 Cloud apply는 실행하지 않았으므로 `verified`로 주장하지 않는다.
+- 사용자 요청에 따라 Phase 06 리소스(`mc-server`, `minecraft-disk`, 방화벽 규칙, 백업 버킷, 네트워크)를 `phases/06/execute.sh destroy --run runphase006`로 삭제하고 GCP 프로젝트(`kdt5-05`)에서 잔여 리소스 0개를 확인했다.
+- Phase 07–15의 Terraform·action plan·실제 상태 verifier를 구현하고 원본 Task 계약, provider 7.45.0 schema, 전체 offline suite를 통과했다. 실제 Cloud apply는 실행하지 않았다.
+- 공통 `plan-bundle.json`, 민감 plan 정제, artifact 기반 상태 전이, 소유권 기반 destroy와 Phase 누락 gate를 추가했다.
+- D-019에 따라 Windows 경로를 WSL wrapper에서 PowerShell→Git for Windows Bash 방식으로 교체하고 portable lock과 `python3` shim을 연결했다. Windows 실기동은 아직 미검증이다.
+- Command Code의 무확인 실행 권한을 Phase execute script와 로컬 검증 스크립트로 제한하고 직접 `gcloud`·`terraform`·`rm` 허용을 제거했다.
+- `run-all --run <id>`를 단일 Command Code supervisor에 연결하고 Phase 01–15 offline 검사를 선행하도록 했다. Cloud E2E, Extension 승인, 이번 diff의 commit/push는 남아 있다.
+- 최종 안전 감사에서 post-apply/verify 실패 뒤 destroy 진입, 실패 시 자동 cleanup, Phase별 Cloud 잔여 inventory를 보강했다. Phase 08 공개 ACL은 어떤 중간 실패에서도 EXIT trap으로 회수하고, Phase 11 metric·uptime과 Phase 13 LB log는 현재 run의 exact resource만 증거로 인정하도록 수정했다.

@@ -54,6 +54,10 @@ Command Code `cmd`는 현재 고정 모델을 상속하고 모델·effort 인수
 
 Command Code는 Terraform 명령과 결과 요약을 남기되 state 원문을 반환하지 않는다. Extension은 binary plan을 apply하지 않고 configuration, 정제 plan JSON, Cloud read-only 상태를 검토하며 사용자만 승인 결정을 내린다.
 
+## 현재 adapter
+
+`phases/15/terraform`은 auto-mode `mynetwork`, 단일 lab firewall, local reusable instance module을 사용한 서로 다른 region의 VM 2개로 구성된다. verifier는 provider lock·fmt·validate, state address 정확히 4개, Cloud API inventory, VM 간 private ping, apply 뒤 두 번째 plan의 detailed exit code 0을 확인한다.
+
 ## Git 종료 조건
 
 `Phase 15: Terraform 인프라 배포 자동화 및 검증 완료` 커밋을 push하고 remote SHA를 확인한다. 전체 release tag는 별도 사용자 승인 없이는 만들지 않는다.

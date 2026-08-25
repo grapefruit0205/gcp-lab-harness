@@ -32,3 +32,6 @@ Thumbs.db
 *.tmp
 *.swp
 *.bak
+__pycache__/
+*.pyc
+.windows-bin/

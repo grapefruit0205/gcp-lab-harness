@@ -56,6 +56,10 @@ Command Code `cmd`는 현재 고정 모델로 장시간 Cloud SQL 작업을 time
 
 Command Code는 UI 화면 대신 SQL·HTTP 트랜잭션으로 결과를 증명하고 비밀을 출력하지 않는다. Extension은 read-only Cloud 상태와 redacted evidence를 대조하며 높은 비용의 보존 시간을 사용자에게 알린다.
 
+## 현재 adapter
+
+`phases/09/terraform`은 pinned HTTPS artifact 세트, private service access, MySQL 8 public·private address, Auth Proxy VM과 private-direct VM을 만든다. verifier는 ignored 0600 runtime 비밀번호를 guest에 전달해 두 경로가 같은 SQL marker를 공유하는지와 제한 CIDR의 두 WordPress HTTP endpoint를 확인한 뒤 로컬 비밀을 삭제한다.
+
 ## Git 종료 조건
 
 `Phase 09: Cloud SQL과 WordPress 연결 자동화 및 검증 완료`를 커밋·push하고 remote SHA를 확인해야 Phase 10으로 진행한다.

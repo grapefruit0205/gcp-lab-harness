@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GCP lab harness imperative action plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "phase", "run_id", "actions"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "phase": { "type": "string", "pattern": "^(0[1-9]|1[0-5])$" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{6,18}[a-z0-9]$" },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "target", "mutation", "rollback", "timeout_seconds"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,63}$" },
+          "kind": { "enum": ["terraform", "gcloud", "bq", "guest", "http", "sql", "local"] },
+          "target": { "type": "string", "minLength": 1 },
+          "mutation": { "type": "string", "minLength": 1 },
+          "rollback": { "type": "string", "minLength": 1 },
+          "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 3600 },
+          "contains_secret": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

@@ -57,6 +57,10 @@ Command Code `cmd`는 현재 고정 모델을 상속하고 저장된 고비용 p
 
 Command Code는 HTTP 200 하나만으로 성공을 선언하지 않고 backend health·분산·scale을 각각 증명한다. Extension은 Monitoring metric과 API 상태를 교차 확인하고 비용 잔여 위험을 사용자에게 보고한다.
 
+## 현재 adapter
+
+`phases/13/terraform`은 immutable Debian base image를 plan에 고정하고 serial readiness 뒤 builder를 중지해 Apache custom image를 만든다. 두 regional MIG, min 1/max 2 autoscaler, logging-enabled backend, IPv4·IPv6 forwarding을 구성한다. verifier는 builder 삭제·image provenance, healthy backend, 여러 backend marker, bounded load의 scale-out과 scale-in을 각각 확인한다.
+
 ## Git 종료 조건
 
 `Phase 13: Application Load Balancer와 자동 확장 자동화 및 검증 완료` 커밋·push 뒤 Phase 14를 시작한다.

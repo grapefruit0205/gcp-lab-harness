@@ -59,6 +59,10 @@ Command Code `cmd`는 모델·effort 선택 없이 높은 비용 plan 승인을 
 
 Command Code는 한 tunnel만 up인 상태를 전체 성공으로 보고하지 않는다. Extension은 두 경로와 route set을 독립 확인하고 수렴 중·실패·미실행을 구분해 사용자에게 보고한다.
 
+## 현재 adapter
+
+`phases/12/terraform`은 gateway 2개, Router 2개, 양방향 tunnel 4개, interface·BGP peer 각 4개와 VM 3개를 소유한다. verifier는 baseline의 tunnel 4개·peer 4개가 모두 정상이고 양방향·교차 region ping이 성공한 뒤 원본 절차대로 `vpc-demo-tunnel0` 한쪽을 삭제하고 surviving tunnel1 경로를 다시 확인한다. Extension에는 baseline evidence와 현재 degraded topology를 함께 전달한다.
+
 ## Git 종료 조건
 
 `Phase 12: HA VPN 이중화 자동화 및 검증 완료` 커밋·push가 확인되어야 Phase 13으로 전이한다.

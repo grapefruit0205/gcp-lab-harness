@@ -22,8 +22,8 @@ permissions='[
 ]'
 for number in $(seq -w 1 15); do
   permissions="$(jq -c \
-    --arg run "Shell(./phases/$number/run.sh:*)" \
-    --arg run_bash "Shell(bash ./phases/$number/run.sh:*)" \
+    --arg run "Shell(./phases/$number/execute.sh:*)" \
+    --arg run_bash "Shell(bash ./phases/$number/execute.sh:*)" \
     --arg verify "Shell(./phases/$number/verify.sh:*)" \
     --arg verify_bash "Shell(bash ./phases/$number/verify.sh:*)" \
     '. + [$run, $run_bash, $verify, $verify_bash]' <<<"$permissions")"
@@ -42,7 +42,7 @@ temporary=""
 
 if [[ -d "$repo_root/phases" ]]; then
   find "$repo_root/phases" -mindepth 2 -maxdepth 2 -type f \
-    \( -name 'run.sh' -o -name 'verify.sh' \) -exec chmod u+x {} +
+    \( -name 'execute.sh' -o -name 'verify.sh' \) -exec chmod u+x {} +
 fi
 
 printf 'PASS: Phase 01~15 저장소 .sh 실행 허용 목록을 Command Code 설정에 병합했습니다.\n'

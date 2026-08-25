@@ -12,8 +12,9 @@ fi
 run_id="$2"
 harness_validate_run_id "$run_id"
 
-command -v cmd >/dev/null 2>&1 || { printf 'FAIL: Command Code CLI cmd가 없습니다.\n' >&2; exit 1; }
-cmd status >/dev/null
+command_code_bin="${COMMAND_CODE_BIN:-cmd}"
+if [[ "$command_code_bin" == */* ]]; then [[ -x "$command_code_bin" ]]; else command -v "$command_code_bin" >/dev/null 2>&1; fi || { printf 'FAIL: Command Code CLI cmd가 없습니다.\n' >&2; exit 1; }
+"$command_code_bin" status >/dev/null
 "$repo_root/scripts/configure-command-code-permissions.sh" >/dev/null
 
 state_file="$(harness_state_read "$run_id")"
@@ -55,5 +56,5 @@ else
   session_name="gcp-harness-$run_id"
 fi
 cd "$repo_root"
-exec cmd --resume "$session_name" --trust --add-dir "$repo_root" \
+exec "$command_code_bin" --resume "$session_name" --trust --add-dir "$repo_root" \
   "$instruction Run gcp-lab-harness resume --run $run_id first and preserve every state-machine guardrail."

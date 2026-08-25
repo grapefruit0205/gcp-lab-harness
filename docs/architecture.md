@@ -43,7 +43,7 @@ Command Code `cmd`는 현재 계정의 고정 모델을 상속해 Phase를 실�
 
 ### 증거 계층
 
-- `artifacts/<run-id>/`: 원시 로그, 저장된 plan, inventory, 검증 JSON. Git 제외.
+- `artifacts/runs/<run-id>/`: 원시 로그, runtime state, inventory, 검증 JSON. Git 제외. binary plan은 apply 직후 삭제하고 정제 plan JSON과 plan-bundle hash만 handoff한다.
 - `evidence/phase-NN.md`: 비밀정보와 식별자를 제거한 결과 요약. 검토 후 Git 포함 가능.
 - manifest 상태: `planned`, `applied`, `verified`, `failed`, `destroyed`, `cleanup_required`.
 

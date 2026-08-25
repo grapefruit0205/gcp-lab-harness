@@ -55,6 +55,10 @@ Command Code `cmd`는 모델 선택 없이 `bq` 또는 BigQuery API를 호출한
 
 Command Code는 fixture와 실제 export 결과를 혼합하지 않고 데이터 출처를 명시한다. Extension은 query를 다시 실행할 때 dry-run과 byte limit를 적용하고 사용자 대신 결과를 승인하지 않는다.
 
+## 현재 adapter
+
+`phases/10/terraform`은 run 전용 US dataset을 소유한다. action plan은 원본 AVRO의 generation과 CRC32C를 고정하고, verifier는 415,602행을 요구한 뒤 `phases/10/sql/`의 원본 SQL 8개를 dry-run·1 GiB 상한으로 실행해 결과 hash와 처리 bytes만 남긴다.
+
 ## Git 종료 조건
 
 `Phase 10: BigQuery 청구 데이터 분석 자동화 및 검증 완료` 커밋·push가 확인된 뒤 Phase 11로 이동한다.

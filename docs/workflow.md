@@ -5,7 +5,7 @@
 | 역할 | 실행 위치 | 권한 | 결과 |
 |---|---|---|---|
 | Phase runner | Ubuntu Bash의 Command Code `cmd` | 승인된 Phase 범위의 Cloud 실행 | 실행 evidence와 Extension 대기 상태 |
-| Harness runner | Ubuntu Bash 또는 PowerShell→WSL wrapper | 승인된 Google Cloud 범위 | plan, 리소스, 원시 evidence |
+| Harness runner | Ubuntu Bash 또는 Windows PowerShell→Git Bash wrapper | 승인된 Google Cloud 범위 | plan, 리소스, 원시 evidence |
 | Verifier | VS Code Codex Extension | 읽기 전용 | `/review`와 Phase별 심각도 review |
 | Single-model verifier(선택) | 같은 Command Code 고정 모델 | 현재 Phase의 구현·자기 검증 | hash 결합 review JSON과 사용자 승인 대기 |
 | Maintainer | 사용자 터미널 | stage, commit, 명시적 push | 한국어 Git 이력 |
@@ -13,10 +13,10 @@
 ## 1. Phase 시작
 
 ```bash
-gcp-lab-harness start --run <RUN_ID>
+gcp-lab-harness run-all --run <RUN_ID>
 ```
 
-PowerShell에서는 clone한 저장소에서 `.\harness.ps1 start --run <RUN_ID>`를 실행한다. 시작 스크립트가 pipeline 상태를 만들고 Command Code 대화형 세션을 연다. 작업 트리에 이전 Phase의 미확인 변경이 있으면 pull하지 않고 먼저 해결한다. 동기화는 `git pull --ff-only`만 허용하며 remote와 local이 분기되면 자동 merge·rebase 없이 중단한다.
+PowerShell에서는 clone한 저장소에서 `.\harness.ps1 run-all --run <RUN_ID>`를 실행한다. 시작 스크립트가 전체 offline gate를 확인하고 pipeline 상태를 만들며 Command Code 대화형 세션을 연다. 작업 트리에 이전 Phase의 미확인 변경이 있으면 pull하지 않고 먼저 해결한다. 동기화는 `git pull --ff-only`만 허용하며 remote와 local이 분기되면 자동 merge·rebase 없이 중단한다.
 
 ## 2. Ubuntu Bash에서 Command Code 실행 handoff
 
@@ -52,10 +52,12 @@ gcp-lab-harness transition <NN> planned --run <RUN_ID>
 machine verification이 끝난 Command Code가 Phase별 검증 prompt를 생성하고 VS Code에 연다.
 
 ```bash
-gcp-lab-harness handoff review --run <RUN_ID> --plan <저장-plan> --evidence <검증-manifest>
+gcp-lab-harness handoff review --run <RUN_ID> \
+  --plan artifacts/runs/<RUN_ID>/phase-<NN>/plan-bundle.json \
+  --evidence artifacts/runs/<RUN_ID>/phase-<NN>/manifest.json
 ```
 
-VS Code Codex Extension은 prompt의 저장 plan·diff·evidence hash와 필요한 CLI 검증을 실행한 뒤 현재 uncommitted changes와 실행 증거를 판정한다. 사용자가 명시적으로 승인한 경우에만 prompt에 포함된 exact `gate approve` 명령을 실행한다. Verifier는 파일을 고치지 않는다. P0/P1, Phase 목표 누락, 안전장치 우회, 정리 누락을 발견하면 builder로 되돌린다.
+Phase 07 이상은 binary plan 대신 exact `plan-bundle.json`을 전달한다. VS Code Codex Extension은 prompt의 plan-bundle·정제 plan·diff·evidence hash와 필요한 CLI 검증을 실행한 뒤 현재 uncommitted changes와 실행 증거를 판정한다. 사용자가 명시적으로 승인한 경우에만 prompt에 포함된 exact `gate approve` 명령을 실행한다. Verifier는 파일을 고치지 않는다. P0/P1, Phase 목표 누락, 안전장치 우회, 정리 누락을 발견하면 builder로 되돌린다.
 
 ## 5. 한국어 commit과 push
 
@@ -82,7 +84,7 @@ gcp-lab-harness single-model approve --run <RUN_ID>
 gcp-lab-harness handoff next --run <RUN_ID>
 ```
 
-`single-model approve`는 사용자가 직접 실행하는 승인 명령이다. review schema, verdict, 모든 check, P0/P1 부재와 plan/diff/evidence hash 일치를 다시 검사한다. Phase Command Code session은 `.commandcode/settings.json`에 Phase 01–15의 repo `run.sh`·`verify.sh`와 필수 하네스 스크립트만 허용 목록으로 병합해 `.sh` 실행 질문이 발생하지 않도록 하며 Cloud·Git 외부 변경 gate는 유지한다.
+`single-model approve`는 사용자가 직접 실행하는 승인 명령이다. review schema, verdict, 모든 check, P0/P1 부재와 plan/diff/evidence hash 일치를 다시 검사한다. Phase Command Code session은 `.commandcode/settings.json`에 Phase 01–15의 repo `execute.sh`·`verify.sh`와 필수 하네스 스크립트만 허용 목록으로 병합해 해당 `.sh` 실행 질문이 발생하지 않도록 하며 Cloud·Git 외부 변경 gate는 유지한다.
 
 GitHub CLI가 설치되고 저장소 이름·공개 범위가 확정된 뒤 최초 1회만 다음 중 하나를 사용한다.
 

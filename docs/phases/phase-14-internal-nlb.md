@@ -55,6 +55,10 @@ Command Code `cmd`는 별도 모델 설정 없이 saved plan을 실행한다. ex
 
 Command Code는 utility VM 내부에서 실제 data path를 검증하고 API 존재만으로 성공을 선언하지 않는다. Extension은 internal-only 경계를 확인하고 승인 전 Git 또는 cleanup을 수행하지 않는다.
 
+## 현재 adapter
+
+`phases/14/terraform`은 subnet 2개, 축소된 firewall 4개, regional template 2개, 서로 다른 zone의 MIG 2개, utility VM과 `10.10.30.5` internal forwarding을 만든다. verifier는 utility VM에서 각 backend IP를 먼저 직접 호출하고, 이어 VIP 60회 요청에서 두 hostname marker가 모두 나오는지 확인하며 external instance IP가 0인지 검사한다.
+
 ## Git 종료 조건
 
 `Phase 14: Internal Network Load Balancer 자동화 및 검증 완료` 커밋·push를 확인한 뒤 Phase 15로 이동한다.

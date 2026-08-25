@@ -23,6 +23,17 @@ codex mcp add gcp-logging --url https://logging.googleapis.com/mcp
 codex mcp list --json
 ```
 
+저장소 helper로 같은 등록을 멱등 실행할 수 있다.
+
+```bash
+./scripts/setup-gcp-mcp.sh setup
+codex mcp login gcp-monitoring --scopes https://www.googleapis.com/auth/monitoring.read
+codex mcp login gcp-logging --scopes https://www.googleapis.com/auth/logging.read
+./scripts/setup-gcp-mcp.sh check
+```
+
+OAuth 로그인은 사용자 브라우저 승인이 필요하므로 helper가 대신 승인하지 않는다. 공식 안내는 [Cloud Monitoring remote MCP](https://docs.cloud.google.com/monitoring/docs/use-monitoring-mcp), [Cloud Logging remote MCP](https://docs.cloud.google.com/logging/docs/use-logging-mcp), [MCP IAM access control](https://docs.cloud.google.com/mcp/access-control)을 기준으로 한다.
+
 위 명령은 endpoint만 예시한다. 실제 인증 방식과 OAuth client 값은 Foundation에서 선택하며 자격 증명을 저장소 명령행이나 `config.toml` 평문에 넣지 않는다.
 
 ## 계정 준비
@@ -66,5 +77,5 @@ MCP 결과는 두 번째 관측 경로다. 동일 항목을 runner의 API/CLI ev
 ## 현재 상태
 
 - 로컬 Codex는 remote MCP URL 등록 기능을 지원한다.
-- 현재 Codex 구성에는 Google Cloud MCP server가 등록되어 있지 않다.
-- GCP project·identity·권한이 확정되지 않아 연결이나 로그인은 아직 수행하지 않았다.
+- endpoint 등록·확인을 위한 `scripts/setup-gcp-mcp.sh`가 구현되어 있다.
+- 저장소가 OAuth, IAM 또는 project 선택을 대신 승인하지 않는다. 실제 등록·로그인 여부는 각 사용자의 `codex mcp list --json`과 Extension `/mcp`에서 확인한다.

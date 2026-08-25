@@ -12,14 +12,14 @@
 | 06 Working with VMs | 06 | disk attach/format/mount, 앱 설치, firewall | mount·fstab, systemd/process, TCP 연결 | 공개 포트 source range 최소화, 종료 후 disk까지 정리 |
 | 07 Exploring IAM | 07 | 테스트 서비스 계정·가장으로 role 부여/회수 | 허용 동작과 expected-denial 오류 코드 | 실제 두 사용자 로그인 대신 격리된 principal 사용 |
 | 08 Cloud Storage | 08 | object, ACL/IAM, CSEK, lifecycle, versioning, sync | metadata JSON, hash, generation, 복호화 성공/실패 | CSEK는 임시 파일/프로세스에만 존재 |
-| 09 Cloud SQL | 09 | SQL instance, private IP, proxy, WordPress VM | SQL query, proxy health, HTTP, private 경로 | DB 비밀번호는 Secret Manager 참조; 비용 높은 인스턴스 제한 |
+| 09 Cloud SQL | 09 | SQL instance, private IP, proxy, WordPress VM | SQL query, proxy health, HTTP, private 경로 | DB 비밀번호는 ignored runtime secret로 생성·전달·삭제; 비용 높은 인스턴스 제한 |
 | 10 Billing data with BigQuery | 10 | `bq load`와 versioned SQL fixture/query | row count, schema, query golden result | 실제 Billing export 선택 시 권한과 비동기 데이터 지연을 별도 처리 |
-| 11 Resource Monitoring | 11 | dashboard, alert policy, group, uptime check API | policy JSON, time series, uptime HTTP | 외부 알림 발송은 별도 opt-in; 정책 존재만 기본 검증 |
+| 11 Resource Monitoring | 11 | VM 3개, dashboard, alert policy, group, uptime check API | CPU·uptime time series, group membership, alert 상태 전이 | 외부 알림 발송은 별도 opt-in; MCP는 Extension read-only 교차 검증 |
 | 12 HA VPN | 12 | 양쪽 VPC, HA VPN, routers, tunnels, BGP | tunnel 상태, BGP peer, learned route, private ping | PSK 비밀 처리, VPN 비용, 라우팅 수렴 timeout |
-| 13 Application Load Balancer | 13 | template, MIG, health check, external ALB, autoscaler | backend health, 반복 curl, 부하 후 scale | global IP/forwarding rule 잔여 여부 확인 |
-| 14 Internal Network Load Balancer | 14 | VPC, NAT, MIG, regional backend, internal forwarding | 내부 utility VM의 curl, backend health | 검증 클라이언트도 같은 run 소유 리소스로 정리 |
+| 13 Application Load Balancer | 13 | custom image, regional MIG 2개, dual-stack ALB, autoscaler | image provenance, backend marker, bounded load, scale-out/in | global IPv4·IPv6/forwarding rule 잔여 여부 확인 |
+| 14 Internal Network Load Balancer | 14 | VPC, NAT, template·MIG 각 2개, regional internal forwarding | utility VM의 direct backend와 VIP curl, marker 분산 | 검증 클라이언트도 같은 run 소유 리소스로 정리 |
 | 15 Terraform Deployment | 15 | 모듈 조합과 전체 orchestration | fmt, validate, saved plan, outputs, idempotent plan, destroy | state와 plan 원문은 Git 제외; remote state 접근 분리 |
 
 ## 전체 커버리지 규칙
 
-각 Lab 구현 시 원본의 모든 `Task` 제목을 scenario manifest의 `source_tasks`에 나열하고, 각 항목을 `automated`, `cli-equivalent`, `manual-boundary`, `blocked` 중 하나로 분류한다. 분류가 없는 Task가 하나라도 있으면 Phase gate는 실패한다.
+각 Lab 구현 시 원본의 모든 `Task` 제목을 scenario manifest의 `source_tasks`에 나열하고, `automated`, `cli-equivalent`, `manual-boundary`, `blocked`, `conditional`, `automated-required` 중 하나로 분류한다. 분류가 없거나 원본과 개수·순서·제목이 다른 Task가 하나라도 있으면 Phase gate는 실패한다.

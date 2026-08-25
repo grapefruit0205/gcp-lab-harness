@@ -43,7 +43,7 @@ Command Code `cmd`는 모델 override 없이 Cloud Storage 동작을 수행한�
 
 ## 안전·비용 가드레일
 
-- public ACL을 만들지 않으며 test principal 범위만 사용한다.
+- private ACL을 baseline으로 삼는다. 조직 정책이 허용하고 승인된 action plan과 일치할 때만 `allUsers` read를 짧게 생성해 익명 GET을 확인한 즉시 회수하며, Public Access Prevention이 차단하면 예상된 정책 거부를 증거로 남긴다.
 - CSEK·키 구성·복호화 header를 원시 로그와 Git에서 제외한다.
 - lifecycle 삭제 동작은 run bucket에만 적용하고 시간 의존 삭제를 완료 증거로 삼지 않는다.
 - 모든 version을 포함해 object를 삭제한 뒤 bucket을 정리한다.
@@ -57,6 +57,10 @@ Command Code `cmd`는 모델 override 없이 Cloud Storage 동작을 수행한�
 ## Command Code·Extension handoff 지시
 
 Command Code는 비밀 값을 redaction한 구조화 결과만 반환한다. Extension은 키 자체를 요청하거나 출력하지 않고 metadata, success/denial, hash 증거로만 검증하며 사용자 승인 전 cleanup을 지시하지 않는다.
+
+## 현재 adapter
+
+`phases/08/terraform`은 UBLA를 끈 단일 실습 bucket, versioning, 31일 Delete lifecycle을 소유한다. verifier는 runtime CSEK 두 개로 두 객체를 순차 회전하고 구키 제거 실패를 확인한 뒤 key store와 키 파일을 즉시 삭제하며, 저장 generation 복구와 중첩 recursive sync를 hash/object set으로 판정한다.
 
 ## Git 종료 조건
 

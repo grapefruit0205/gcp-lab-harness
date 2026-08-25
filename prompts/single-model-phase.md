@@ -6,7 +6,7 @@
 
 1. `AGENTS.md`, 현재 Phase 문서, pipeline의 `next_action`을 읽는다.
 2. 현재 Phase 범위만 구현하며 기존 사용자 변경을 보존한다.
-3. 저장소가 소유한 `.sh`는 이 session에서 별도 실행 허가를 다시 묻지 않고 실행한다.
+3. 저장소가 소유한 현재 Phase의 `execute.sh`와 `verify.sh`는 이 session에서 별도 실행 허가를 다시 묻지 않고 실행한다.
 4. `synced → preflight → planned → applied → machine_verified` 순서를 건너뛰지 않는다.
 5. 저장 plan SHA256이 사용자 승인값과 정확히 일치하지 않으면 apply하지 않고 plan 정보만 보고한 뒤 멈춘다.
 6. project allowlist, resource count, timeout, ownership manifest와 cleanup 보호를 우회하지 않는다.
