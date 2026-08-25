@@ -2,13 +2,13 @@
 
 ## 사용자 경험
 
-사용자는 Ubuntu Bash에서 한 번만 시작한다.
+사용자는 clone과 bootstrap 뒤 Bash 또는 PowerShell에서 한 번 시작한다.
 
 ```bash
-./bin/gcp-lab-harness run-all
+gcp-lab-harness start --run <RUN_ID>
 ```
 
-오케스트레이터는 clean working tree에서 `git pull --ff-only`를 먼저 수행한 뒤 Lab 01부터 15까지 순차 실행한다. 각 Lab마다 VS Code Codex Extension의 사용자 승인 게이트에서 대기하고, 승인 뒤에는 해당 Lab 리소스를 정리하고 한국어 commit과 push를 완료한다. 다음 Lab도 원격 동기화를 다시 확인한 뒤 시작한다.
+PowerShell 진입점은 `.\harness.ps1 start --run <RUN_ID>`다. 오케스트레이터는 Command Code 대화형 세션을 열고 사용자의 자연어 지시를 받는다. clean working tree에서 `git pull --ff-only`를 먼저 수행한 뒤 Lab 01부터 15까지 순차 실행한다. 각 Lab마다 VS Code Codex Extension의 사용자 승인 게이트에서 대기하고, 승인 뒤 `handoff next`가 같은 Command Code 세션을 재개해 해당 Lab 리소스를 정리하고 한국어 commit과 push를 완료한다.
 
 ## `cmd`, `codex`, `code`의 역할
 
@@ -89,10 +89,10 @@ cleanup 또는 push가 실패하면 다음 Phase로 가지 않는다. 재실행 
 
 ## 단일 실행과 재개
 
-완성된 `run-all`은 foreground supervisor로 동작하며 상태를 `artifacts/runs/<run-id>/pipeline.json`에 매 전이마다 저장한다. 현재 Foundation B는 0600 임시 JSON을 같은 filesystem에서 atomic rename하고, 프로세스가 종료되어도 다음 명령이 동일 run의 다음 동작을 계산한다.
+대화형 supervisor는 상태를 `artifacts/runs/<run-id>/pipeline.json`에 매 전이마다 저장한다. Foundation B는 0600 임시 JSON을 같은 filesystem에서 atomic rename하고, Command Code나 VS Code가 종료되어도 다음 명령이 동일 run의 다음 동작을 계산한다.
 
 ```bash
-./bin/gcp-lab-harness resume --run <run-id>
+gcp-lab-harness resume --run <run-id>
 ```
 
 승인 대기 중인 run이 있으면 새 `run-all`은 중복 pipeline을 만들지 않고 해당 run ID를 안내한다.

@@ -6,33 +6,71 @@
 
 원격 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (public)
 
-## git clone 후 스크립트로 실행
+## 1. git clone 후 한 번에 준비
 
-누구나 다음 순서로 clone하고 Foundation을 한 번에 구성할 수 있습니다. Google 로그인 창이 열리면 각자의 실습 계정으로 승인합니다.
-
-```bash
-git clone git@github.com:grapefruit0205/gcp-lab-harness.git
-cd gcp-lab-harness
-./scripts/bootstrap-from-clone.sh <GCP_PROJECT_ID>
-```
-
-HTTPS를 사용하려면 첫 명령만 다음과 같이 바꿉니다.
+Linux에서는 저장소를 `$HOME/gcp-lab-harness`에 받고 Bash로 root bootstrap만 실행합니다. Google 로그인 창이 열리면 각자의 실습 계정으로 승인합니다.
 
 ```bash
-git clone https://github.com/grapefruit0205/gcp-lab-harness.git
+git clone https://github.com/grapefruit0205/gcp-lab-harness.git "$HOME/gcp-lab-harness"
+bash "$HOME/gcp-lab-harness/bootstrap.sh" <GCP_PROJECT_ID>
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-bootstrap 스크립트는 사용자 영역에 gcloud·Terraform을 설치하고, gcloud/ADC 로그인 상태를 확인한 뒤 프로젝트 allowlist·billing preflight와 Terraform provider read를 실행합니다. 인증정보와 로컬 project·billing 값은 Git에 올라가지 않습니다.
+`bootstrap.sh`는 `gcp-lab-harness` 사용자 명령을 `$HOME/.local/bin`에 설치하고, gcloud·Terraform 설치, GCP 사용자 로그인·ADC, 프로젝트 allowlist, billing preflight와 Terraform provider 연결까지 실행합니다. 인증정보와 로컬 project·billing 값은 Git에 올라가지 않습니다.
 
-Foundation이 통과한 뒤 canary는 저장 plan부터 단계적으로 실행합니다.
+Windows PowerShell에서는 WSL Ubuntu를 설치한 상태에서 다음 두 파일만 사용합니다. PowerShell 진입점이 같은 Bash 하네스를 WSL에서 실행하므로 별도 구현이 갈라지지 않습니다.
+
+```powershell
+git clone https://github.com/grapefruit0205/gcp-lab-harness.git "$HOME\gcp-lab-harness"
+Set-Location "$HOME\gcp-lab-harness"
+powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1 -ProjectId <GCP_PROJECT_ID>
+```
+
+## 2. Command Code에서 자연어로 단계 구현
+
+Bash에서 다음 명령을 실행하면 저장소를 workspace로 사용하는 Command Code 대화형 세션이 열립니다. `--model`과 `--effort`는 전달하지 않으므로 현재 계정에 고정된 모델을 그대로 사용합니다.
 
 ```bash
-./scripts/foundation-canary.sh plan --run canary001
-# 출력된 plan_sha256을 확인한 다음에만 apply
-./scripts/foundation-canary.sh apply --run canary001 --confirm-plan-sha <PLAN_SHA256>
-./scripts/foundation-canary.sh verify --run canary001
-./scripts/foundation-canary.sh destroy --run canary001
+gcp-lab-harness start --run lab-20260825-01
 ```
+
+PowerShell에서는 같은 명령을 wrapper로 실행합니다.
+
+```powershell
+.\harness.ps1 start --run lab-20260825-01
+```
+
+열린 `cmd` 안에서는 자연어로 지시합니다.
+
+```text
+현재 Phase를 확인하고 구현을 시작해줘. 먼저 저장 plan까지만 만들고,
+생성·변경·삭제 수와 plan SHA256을 보여준 뒤 내 승인을 기다려.
+승인 후 apply와 machine verification을 완료하면 VS Code Codex Extension으로 handoff해줘.
+```
+
+Command Code는 `sync → preflight → plan → apply → machine_verify`를 상태 파일에 기록합니다. apply 전에는 plan hash 승인을 기다리고, 구현·기계 검증이 끝나면 다음 명령을 내부에서 호출해 VS Code와 검증 prompt를 엽니다.
+
+```bash
+gcp-lab-harness handoff review --run <RUN_ID> --plan <저장-plan> --evidence <검증-manifest>
+```
+
+## 3. Extension 검증 후 다음 Phase handoff
+
+VS Code Codex Extension은 열린 `EXTENSION_REVIEW_PROMPT.md`에 따라 diff, plan, evidence와 실제 GCP 상태를 읽기 전용으로 검증합니다. 사용자가 검증 완료를 명시적으로 승인한 경우에만 prompt에 포함된 exact `gate approve` 명령을 실행합니다.
+
+승인 후 Bash에서 다음 명령을 실행하면 같은 Command Code 세션으로 돌아가 cleanup, 잔여 리소스 0 확인, 한국어 commit·push를 수행하고 다음 Phase 구현으로 이어집니다.
+
+```bash
+gcp-lab-harness handoff next --run <RUN_ID>
+```
+
+PowerShell에서는 다음과 같습니다.
+
+```powershell
+.\harness.ps1 handoff next --run <RUN_ID>
+```
+
+반려된 경우에도 같은 `handoff next`가 Extension findings를 기존 Command Code 세션에 전달하며, 다음 Phase로 넘어가지 않고 현재 Phase를 다시 구현합니다.
 
 ## 설계 원칙
 
@@ -57,73 +95,27 @@ Foundation이 통과한 뒤 canary는 저장 plan부터 단계적으로 실행�
 - `lib/harness/`: pipeline 상태 전이와 Extension 승인 gate
 - `schemas/`: pipeline 상태, Command Code 실행 결과, Extension 승인, Phase manifest의 기계 판독 계약
 
-## 시작
+## 선택: Foundation canary
+
+15개 Phase 전에 Terraform의 실제 create/destroy 권한만 작게 확인하려면 단일 custom-mode VPC canary를 사용합니다.
 
 ```bash
-cd /path/to/gcp-lab-harness
-make doctor
-make validate-design
-make test-offline
+"$HOME/gcp-lab-harness/scripts/foundation-canary.sh" plan --run canary001
+# 출력된 plan_sha256을 확인한 다음에만 apply
+"$HOME/gcp-lab-harness/scripts/foundation-canary.sh" apply --run canary001 --confirm-plan-sha <PLAN_SHA256>
+"$HOME/gcp-lab-harness/scripts/foundation-canary.sh" verify --run canary001
+"$HOME/gcp-lab-harness/scripts/foundation-canary.sh" destroy --run canary001
 ```
 
-Foundation에는 `gcloud`, Terraform, 동작하는 Git 원격 인증이 필요합니다. `gh`는 저장소 관리용 선택 도구입니다. 누락 도구와 계정·결제 설정이 있으면 설계 검증과 `run-all --dry-run`까지만 실행합니다.
+예산 한도는 필수 설정이 아닙니다. 대신 허용 프로젝트 exact match, 결제 연결 확인, 저장된 plan 승인, Phase당 리소스 상한, apply timeout과 실패 시 cleanup을 사용합니다. 실제 실행 데이터는 Git에서 제외된 `artifacts/runs/`에 저장됩니다.
 
-Ubuntu x86_64에서는 공식 archive와 고정 SHA-256을 사용하는 사용자 영역 설치를 제공합니다. 이어서 한 번의 Google 로그인으로 gcloud와 Terraform ADC를 연결합니다.
+개발자용 최소 점검은 clone 경로를 직접 입력하지 않고 다음처럼 실행합니다.
 
 ```bash
-make install-toolchain
-make gcp-auth
-./scripts/configure-gcp-project.sh <PROJECT_ID>
-make gcp-preflight
-make terraform-gcp-check
+gcp-lab-harness doctor
+"$HOME/gcp-lab-harness/scripts/validate-design.sh"
+"$HOME/gcp-lab-harness/tests/offline-controller.sh"
 ```
-
-예산 한도는 필수 설정이 아닙니다. 대신 허용 프로젝트 exact match, 결제 연결 확인, 저장된 plan 승인, Phase당 리소스 상한, apply timeout과 실패 시 cleanup을 사용합니다.
-
-15개 Phase의 단일 실행 진입점을 먼저 점검할 수 있습니다.
-
-```bash
-./scripts/run-all.sh --dry-run
-```
-
-Cloud 변경 없이 상태 컨트롤러를 직접 확인할 수도 있습니다. 실제 실행 데이터는 Git에서 제외된 `artifacts/runs/`에 0700 디렉터리와 0600 JSON으로 저장됩니다.
-
-```bash
-./bin/gcp-lab-harness run init --run offline-demo-001 --mode offline
-./bin/gcp-lab-harness status --run offline-demo-001
-./bin/gcp-lab-harness resume --run offline-demo-001
-```
-
-원격 저장소가 연결된 뒤 Phase 시작 전 동기화합니다.
-
-```bash
-./scripts/sync-before-phase.sh
-```
-
-Foundation과 해당 adapter를 구현한 뒤 Phase 실행을 Ubuntu Bash에서 Command Code CLI로 넘깁니다. 스크립트는 모델·effort를 지정하지 않습니다. 현재 골격은 `config/harness.env`와 `phases/NN/execute.sh`가 없으면 안전하게 중단합니다.
-
-```bash
-make handoff-execute PHASE=docs/phases/phase-01-console-cloud-shell.md
-```
-
-Extension에 전달할 검증 prompt를 만들고 VS Code에서 해당 파일을 연 뒤 Codex Extension에 검토를 요청합니다.
-
-```bash
-make prepare-extension-review PHASE=docs/phases/phase-01-console-cloud-shell.md
-make phase-gate PHASE=docs/phases/phase-01-console-cloud-shell.md
-```
-
-생성된 `artifacts/reviews/.../EXTENSION_REVIEW_PROMPT.md`를 VS Code에서 열고 Codex Extension에 “이 prompt에 따라 검증 명령을 실행하고 현재 uncommitted 변경과 evidence를 판정해줘”라고 전달합니다. Extension의 `/review`도 함께 사용할 수 있습니다.
-
-검증 결과를 확인한 뒤 필요한 파일만 직접 stage하고 Phase 커밋을 만듭니다.
-
-```bash
-git add <검증된-파일>
-./scripts/commit-phase.sh docs/phases/phase-01-console-cloud-shell.md "Console과 Cloud Shell"
-./scripts/push-phase.sh --confirm
-```
-
-`push-phase.sh`는 `origin`이 구성된 경우에만 동작하며, `--confirm` 없이는 외부 변경을 만들지 않습니다.
 
 ## 다음 결정
 

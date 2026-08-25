@@ -58,6 +58,21 @@ Checked: 2026-08-25 — GitHub 공개 전환 확인, 공개 clone과 local/remot
 Evidence: `foundation/terraform/apply-canary/`, `scripts/foundation-canary.sh`; run `canary001` plan이 `google_compute_network` create 1·change 0·destroy 0과 SHA256 `2ed0c69f7a2bc7526b3206af08d385637c614a867c728a49d3dfd5546382ecea`를 출력
 Checked: 2026-08-25 — `kdt5-05` allowlist와 저장 plan 정책 통과, 실제 apply는 미실행
 
+## clone 후 Bash 사용자 명령 — state: verified — 2026-08-25
+
+Evidence: `bootstrap.sh`, `scripts/install-home-command.sh`, symlink-safe `bin/gcp-lab-harness`; `$HOME/.local/bin/gcp-lab-harness phase list`가 Phase 01·15를 저장소 밖에서 출력
+Checked: 2026-08-25 — 사용자 명령 설치와 `$HOME` 실행 경로 확인
+
+## PowerShell→WSL 진입점 — state: wired — 2026-08-25
+
+Evidence: `bootstrap.ps1`, `harness.ps1`이 clone 경로를 `wslpath`로 변환하고 같은 `bootstrap.sh`와 `bin/gcp-lab-harness`에 인수를 전달
+Checked: 2026-08-25 — 코드 경로는 연결했으며 현재 Linux 환경에는 PowerShell/Windows 런타임이 없어 실제 Windows 실행은 미검증
+
+## Command Code 대화형 start·Extension review·next handoff — state: wired — 2026-08-25
+
+Evidence: `scripts/start-command-code.sh`, `scripts/handoff-review.sh`, `scripts/prepare-extension-review.sh`, `scripts/handoff-next.sh`, `bin/gcp-lab-harness`
+Checked: 2026-08-25 — state controller와 이름 있는 Command Code session, hash 결합 Extension prompt, 승인 후 session resume를 연결했으며 실제 15개 Phase Cloud E2E는 미실행
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -69,6 +84,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - 실제 `run-all` foreground supervisor와 Command Code·Cloud adapter 자동 연결
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
+- Windows PowerShell→WSL wrapper 실제 Windows 실행 검증
 
 ## Permanently excluded
 

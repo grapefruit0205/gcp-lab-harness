@@ -40,3 +40,4 @@ One short section per working session: what was worked on, what was decided (wit
 - D-013에 따라 `kdt5-05`용 단일 custom-mode VPC canary adapter를 만들고 `canary001` 저장 plan을 생성했다. 결과는 create 1·change 0·destroy 0이며 실제 apply는 승인 전이라 실행하지 않았다.
 - D-014에 따라 공개 clone 후 도구 설치·GCP 인증·preflight·Terraform 연결을 실행하는 bootstrap 스크립트와 README 명령을 추가했다.
 - D-015에 따라 GitHub 저장소를 public으로 전환했고 코드와 커밋 이력을 누구나 열람·clone할 수 있는 상태를 확인했다.
+- D-016에 따라 `$HOME` clone용 root bootstrap, 사용자 PATH 명령, PowerShell→WSL wrapper와 Command Code 대화형 start를 추가했다. machine verification 뒤 Extension review로 넘기고 승인·반려 후 같은 Command Code session을 재개하는 handoff를 CLI에 연결했다.

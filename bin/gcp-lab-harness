@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 export HARNESS_REPO_ROOT="$repo_root"
 source "$repo_root/lib/harness/gate.sh"
 cd "$repo_root"
@@ -9,18 +9,26 @@ cd "$repo_root"
 usage() {
   cat <<'USAGE'
 사용법:
+  gcp-lab-harness install
+  gcp-lab-harness setup <GCP_PROJECT_ID>
+  gcp-lab-harness start --run <id>
+  gcp-lab-harness cmd --run <id>
+  gcp-lab-harness handoff review --run <id> --plan <file> --evidence <file>
+  gcp-lab-harness handoff next --run <id>
   gcp-lab-harness doctor
   gcp-lab-harness phase list
   gcp-lab-harness run-all [--dry-run]
   gcp-lab-harness run init --run <id> [--mode cloud|offline]
   gcp-lab-harness status --run <id>
   gcp-lab-harness resume --run <id>
+  gcp-lab-harness transition <NN> <state> --run <id>
   gcp-lab-harness hash <file>
   gcp-lab-harness gate prepare <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256>
   gcp-lab-harness gate approve <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256> --reviewer <id>
   gcp-lab-harness gate reject <NN> --run <id> --plan-hash <sha256> --diff-hash <sha256> --evidence-hash <sha256> --reviewer <id> --findings <file>
 
-실제 run-all은 Google Cloud adapter와 계정 안전 설정이 준비될 때까지 차단됩니다.
+start/cmd는 Command Code 대화형 구현 세션을 열고, handoff는 Extension 검증과 다음 단계 재개를 연결합니다.
+실제 run-all은 Google Cloud adapter가 모두 준비될 때까지 차단됩니다.
 USAGE
 }
 
@@ -157,7 +165,41 @@ gate_command() {
   esac
 }
 
+transition_command() {
+  local phase="${1:-}"
+  local next_state="${2:-}"
+  local run_id=""
+  shift $(( $# >= 2 ? 2 : $# ))
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --run) [[ "$#" -ge 2 ]] || { usage >&2; return 2; }; run_id="$2"; shift 2 ;;
+      *) usage >&2; return 2 ;;
+    esac
+  done
+  [[ -n "$run_id" ]] || { usage >&2; return 2; }
+  harness_state_transition "$run_id" "$phase" "$next_state"
+}
+
 case "${1:-}" in
+  install)
+    [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
+    exec "$repo_root/scripts/install-home-command.sh"
+    ;;
+  setup)
+    [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }
+    exec "$repo_root/scripts/bootstrap-from-clone.sh" "$2"
+    ;;
+  start|cmd)
+    shift
+    exec "$repo_root/scripts/start-command-code.sh" "$@"
+    ;;
+  handoff)
+    case "${2:-}" in
+      review) shift 2; exec "$repo_root/scripts/handoff-review.sh" "$@" ;;
+      next) shift 2; exec "$repo_root/scripts/handoff-next.sh" "$@" ;;
+      *) usage >&2; exit 2 ;;
+    esac
+    ;;
   doctor)
     [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
     exec "$repo_root/scripts/doctor.sh"
@@ -184,6 +226,10 @@ case "${1:-}" in
     shift
     run_id="$(parse_run_option "$@")"
     harness_state_next_action "$run_id"
+    ;;
+  transition)
+    shift
+    transition_command "$@"
     ;;
   hash)
     [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }

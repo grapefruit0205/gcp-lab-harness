@@ -57,4 +57,4 @@ Foundation B 컨트롤러는 구현됐고, 다음 기반 작업은 Foundation A 
 | Terraform 연결 | 공식 Google provider의 ADC 조회 | `hashicorp/google`, account-check module | refresh-only plan으로 계정 연결 검증 |
 | 실제 apply | plan 승인·수량·timeout·cleanup | Foundation B 상태 controller | 실습 프로젝트 선택 후 첫 Cloud adapter에 연결 |
 
-도구 설치, gcloud 인증, billing preflight, Terraform project read와 1-resource canary 저장 plan까지 채워졌다. 저장소는 public이며 clone bootstrap 사용법도 원격 README에 포함한다. 현재 단일 next leaf는 사용자 승인 hash에 묶인 canary apply다.
+도구 설치, gcloud 인증, billing preflight, Terraform project read와 1-resource canary 저장 plan까지 채워졌다. public 저장소를 Linux `$HOME`에 clone해 Bash bootstrap 후 Command Code 대화형 구현, Extension review, 승인 후 같은 session의 next handoff로 이어지는 진입점도 연결했다. Windows PowerShell은 WSL의 같은 Bash 하네스를 호출한다. 현재 단일 next leaf는 사용자 승인 hash에 묶인 canary apply다.

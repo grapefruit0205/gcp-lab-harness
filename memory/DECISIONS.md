@@ -94,3 +94,9 @@ sweep: README, Foundation A, 아키텍처, goal, config 예시, preflight, check
 Supersedes D-011. `grapefruit0205/gcp-lab-harness`의 코드와 커밋 이력을 누구나 열람·clone할 수 있도록 GitHub 저장소 공개 범위를 public으로 전환한다. 인증정보, 로컬 GCP 설정과 실행 artifact는 계속 Git에서 제외한다.
 
 sweep: GitHub 공개 전환, README clone 안내, workflow, product truth, checkpoint와 open question에 반영함 (2026-08-25)
+
+## D-016 · clone 후 Bash 또는 PowerShell에서 대화형 handoff 흐름을 시작한다 — 2026-08-25 (사용자, 실행 진입점 정정)
+
+사용자는 임의의 `/path/to/...`로 이동해 개발용 `make` 명령을 실행하는 방식 대신, GitHub 저장소를 `$HOME`에 clone한 뒤 root script 하나로 GCP 로그인과 Terraform 연결을 구성하도록 정했다. 이후 Bash에서 Command Code `cmd` 대화형 세션을 열어 자연어로 Phase를 구현하고, 구현 완료 시 VS Code Codex Extension으로 검증 handoff하며, 사용자 승인 후 같은 Command Code session으로 handoff해 cleanup·한국어 commit·push·다음 Phase를 계속한다. Windows PowerShell은 WSL의 동일 Bash 하네스를 호출하는 wrapper를 제공한다.
+
+sweep: README, Bash·PowerShell bootstrap, 사용자 명령 installer, Command Code start, Extension review, next handoff, CLI usage, workflow와 orchestration에 반영함 (2026-08-25)

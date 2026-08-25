@@ -1,8 +1,8 @@
-# Checkpoint — clone 기반 대화형 handoff 진입점 — 2026-08-25 14:00
+# Checkpoint — Canary 1단계 plan 준비 — 2026-08-25 13:51
 
 ## The story so far
 
-public 저장소를 Linux `$HOME`에 clone한 뒤 Bash bootstrap 하나로 사용자 명령 설치, gcloud 로그인·ADC, 프로젝트 allowlist와 Terraform 연결을 구성하도록 진입점을 고쳤다. Command Code 대화형 세션에서 자연어로 현재 Phase를 구현하고 machine verification 뒤 VS Code Codex Extension으로 handoff하며, 승인·반려 뒤 같은 session을 재개하는 CLI를 연결했다. Windows PowerShell은 WSL의 동일 Bash 하네스를 호출한다. canary plan은 create 1·change 0·destroy 0 상태이며 실제 apply는 아직 하지 않았다.
+15개 Lab 자동화 저장소의 GCP 계정·Terraform 연결을 마쳤다. 사용자가 `kdt5-05`를 실제 apply 대상으로 승인해 단일 custom-mode VPC를 만드는 canary 스크립트와 저장 plan을 준비했다. plan은 create 1·change 0·destroy 0이며 실제 apply는 아직 하지 않았다. 공개 clone·bootstrap 사용법을 README에 추가했고 GitHub 저장소를 public으로 전환했다.
 
 ## Decided
 
@@ -10,7 +10,6 @@ public 저장소를 Linux `$HOME`에 clone한 뒤 Bash bootstrap 하나로 사�
 - D-013: `kdt5-05`에서 canary Cloud apply를 단계적으로 진행하고 각 단계가 끝날 때 보고한다.
 - D-014: 누구나 `git clone` 후 bootstrap 스크립트로 실행할 수 있도록 README에 기록한다.
 - D-015: `grapefruit0205/gcp-lab-harness`를 public 저장소로 전환한다.
-- D-016: Linux는 clone 후 Bash, Windows는 PowerShell→WSL로 bootstrap하고 Command Code·Extension·next handoff를 연결한다.
 
 ## Waiting on the user
 
@@ -27,4 +26,3 @@ public 저장소를 Linux `$HOME`에 clone한 뒤 Bash bootstrap 하나로 사�
 
 - 첫 account-check에 `google_project.lifecycle_state`를 가정했지만 provider 7.45.0에 없는 속성이어서 validate가 실패했다. ACTIVE 검사는 gcloud preflight에만 두고 Terraform data 조회로 좁혀 성공했다.
 - 서비스 계정 canary는 삭제 후 복구 가능 기간이 있어 잔존 없는 cleanup 증명에 부적합했다. 즉시 destroy 가능한 빈 custom-mode VPC canary로 변경했다.
-- PowerShell wrapper는 현재 Linux 환경에 Windows/PowerShell 런타임이 없어 실제 실행하지 못했고 코드 경로만 연결했다.

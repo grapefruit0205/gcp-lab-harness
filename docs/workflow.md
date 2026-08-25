@@ -5,76 +5,66 @@
 | 역할 | 실행 위치 | 권한 | 결과 |
 |---|---|---|---|
 | Phase runner | Ubuntu Bash의 Command Code `cmd` | 승인된 Phase 범위의 Cloud 실행 | 실행 evidence와 Extension 대기 상태 |
-| Harness runner | Ubuntu Bash | 승인된 Google Cloud 범위 | plan, 리소스, 원시 evidence |
+| Harness runner | Ubuntu Bash 또는 PowerShell→WSL wrapper | 승인된 Google Cloud 범위 | plan, 리소스, 원시 evidence |
 | Verifier | VS Code Codex Extension | 읽기 전용 | `/review`와 Phase별 심각도 review |
 | Maintainer | 사용자 터미널 | stage, commit, 명시적 push | 한국어 Git 이력 |
 
 ## 1. Phase 시작
 
 ```bash
-git status --short --branch
-./scripts/sync-before-phase.sh
-make doctor
-make validate-design
+gcp-lab-harness start --run <RUN_ID>
 ```
 
-작업 트리에 이전 Phase의 미확인 변경이 있으면 pull하지 않고 먼저 해결한다. 동기화는 `git pull --ff-only`만 허용하며 remote와 local이 분기되면 자동 merge·rebase 없이 중단한다. 새 Phase 문서의 선행 조건과 비용 등급을 읽고, Google Cloud 변경이 필요한 경우 plan 단계까지만 먼저 실행한다.
+PowerShell에서는 clone한 저장소에서 `.\harness.ps1 start --run <RUN_ID>`를 실행한다. 시작 스크립트가 pipeline 상태를 만들고 Command Code 대화형 세션을 연다. 작업 트리에 이전 Phase의 미확인 변경이 있으면 pull하지 않고 먼저 해결한다. 동기화는 `git pull --ff-only`만 허용하며 remote와 local이 분기되면 자동 merge·rebase 없이 중단한다.
 
 ## 2. Ubuntu Bash에서 Command Code 실행 handoff
 
-Foundation과 대상 Phase adapter가 구현된 뒤 실행한다. 현재 설계 골격은 둘 중 하나라도 없으면 Command Code를 호출하기 전에 중단한다.
+Command Code 세션 안에서 자연어로 현재 Phase 구현을 지시한다.
 
-```bash
-make handoff-execute PHASE=docs/phases/phase-NN-name.md
+```text
+현재 Phase를 구현해줘. 저장 plan의 영향과 SHA256을 먼저 보고하고 내 승인을 기다려.
+승인 후 apply와 machine verification을 완료하면 Extension으로 handoff해줘.
 ```
 
-스크립트는 공통 실행 규칙과 Phase 문서를 합쳐 인증된 Command Code `cmd -p`에 전달한다. 이벤트와 최종 JSON은 Git에서 제외된 `artifacts/runs/`에 저장한다. `cmd`에는 `--model`과 `--effort`를 전달하지 않아 현재 계정의 고정 모델을 사용한다. Command Code는 Extension 승인, commit, push, 다음 Phase 전이를 수행하지 않는다.
+`start`는 공통 실행 규칙과 현재 pipeline 상태를 인증된 Command Code `cmd`에 전달한다. `cmd`에는 `--model`과 `--effort`를 전달하지 않아 현재 계정의 고정 모델을 사용한다. Command Code는 Extension 승인 전 commit, push, 다음 Phase 전이를 수행하지 않는다.
 
 반려 finding을 같은 Command Code session에 다시 전달할 때 다음 형태로 이어간다.
 
-```bash
-cmd --session <session-id> -p "Extension 반려 finding을 수정하고 machine verification을 다시 실행해줘"
-```
+반려 finding은 `gcp-lab-harness handoff next --run <RUN_ID>`가 같은 이름의 Command Code session으로 다시 전달한다.
 
 ## 3. 하네스 plan·apply·verify·destroy
 
-Foundation에서 최종 CLI와 안전장치가 구현되면 다음 순서로 실행한다.
+Command Code는 controller의 next action을 읽고 다음 상태만 실행한다.
 
 ```bash
-./bin/gcp-lab-harness preflight NN
-./bin/gcp-lab-harness plan NN
-./bin/gcp-lab-harness apply NN --plan artifacts/<run-id>/plan --approve <run-id>
-./bin/gcp-lab-harness verify NN --run <run-id>
-./bin/gcp-lab-harness destroy NN --run <run-id>
-./bin/gcp-lab-harness inventory NN --run <run-id>
+gcp-lab-harness resume --run <RUN_ID>
+gcp-lab-harness transition <NN> synced --run <RUN_ID>
+gcp-lab-harness transition <NN> preflight --run <RUN_ID>
+gcp-lab-harness transition <NN> planned --run <RUN_ID>
+# 사용자 plan hash 승인 뒤 applied, machine_verified 순으로 기록
 ```
 
 `apply` 전에는 저장된 plan과 예상 비용을 사람이 확인한다. 검증 실패 여부와 관계없이 destroy와 inventory를 실행하되, 소유권 manifest가 손상되었으면 자동 삭제하지 않고 `cleanup_required`로 중단한다.
 
 ## 4. VS Code Codex Extension에서 독립 검증
 
-Extension에 전달할 Phase별 검증 prompt를 생성한다.
+machine verification이 끝난 Command Code가 Phase별 검증 prompt를 생성하고 VS Code에 연다.
 
 ```bash
-make prepare-extension-review PHASE=docs/phases/phase-NN-name.md
-make phase-gate PHASE=docs/phases/phase-NN-name.md
+gcp-lab-harness handoff review --run <RUN_ID> --plan <저장-plan> --evidence <검증-manifest>
 ```
 
-VS Code에서 생성된 `EXTENSION_REVIEW_PROMPT.md`를 열고 Codex Extension에 저장소의 Phase gate와 필요한 CLI 검증을 실행한 뒤 현재 uncommitted changes와 실행 증거를 판정하도록 지시한다. Extension의 `/review`를 함께 사용해도 된다. Verifier는 파일을 고치지 않는다. P0/P1, Phase 목표 누락, 안전장치 우회, 정리 누락을 발견하면 builder로 되돌린다. GCP 통합 테스트를 실행하지 않은 경우 “통과”가 아니라 “미실행”으로 남긴다.
+VS Code Codex Extension은 prompt의 저장 plan·diff·evidence hash와 필요한 CLI 검증을 실행한 뒤 현재 uncommitted changes와 실행 증거를 판정한다. 사용자가 명시적으로 승인한 경우에만 prompt에 포함된 exact `gate approve` 명령을 실행한다. Verifier는 파일을 고치지 않는다. P0/P1, Phase 목표 누락, 안전장치 우회, 정리 누락을 발견하면 builder로 되돌린다.
 
 ## 5. 한국어 commit과 push
 
-검증된 파일만 사용자가 직접 stage한다.
+사용자 승인 뒤 같은 Command Code 세션으로 handoff한다.
 
 ```bash
-git add <phase-산출물>
-git diff --cached --check
-git diff --cached
-./scripts/commit-phase.sh docs/phases/phase-NN-name.md "Phase 요약"
-./scripts/push-phase.sh --confirm
+gcp-lab-harness handoff next --run <RUN_ID>
 ```
 
-커밋 형식은 `Phase NN: <한국어 요약> 완료`다. 한 커밋은 한 Phase의 완료 조건만 담는다. GitHub 생성 전에는 로컬 commit까지만 허용하며, `origin`과 공개 범위가 확인된 뒤 push한다.
+PowerShell에서는 `.\harness.ps1 handoff next --run <RUN_ID>`를 사용한다. Command Code는 승인된 Phase의 리소스만 cleanup하고 잔여 리소스 0을 확인한 뒤 검증된 파일만 stage한다. 커밋 형식은 `Phase NN: <한국어 요약> 완료`다. push까지 성공하면 controller가 다음 Phase로 이동하고 같은 흐름을 반복한다.
 
 GitHub CLI가 설치되고 저장소 이름·공개 범위가 확정된 뒤 최초 1회만 다음 중 하나를 사용한다.
 
