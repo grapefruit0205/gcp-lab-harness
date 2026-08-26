@@ -118,6 +118,23 @@ Checked: 2026-08-25 — 과거 canary는 VM 사양과 cleanup은 확인했지만
 Evidence: `phases/06/terraform/main.tf`, `phases/06/execute.sh`, `phases/06/verify.sh`, `tests/test-phase-06.sh`; 개정 offline 계약 PASS, 과거 run 리소스 destroy와 잔여 0 확인
 Checked: 2026-08-25 — 과거 Cloud run은 리소스 존재만 확인해 guest mount·application·backup·maintenance 완료 증거로 무효다. 개정 verifier의 실제 Cloud 재검증은 아직 하지 않음
 
+## Phase 07 실제 사용자 두 계정 경로 — state: implemented, verified offline — 2026-08-26
+
+Evidence: `phases/07/auth.sh`, `auth.py`, `execute.sh`, `support.sh`, `iam-probe.py`, `verify.sh`, `terraform/main.tf`, `tests/test-phase-07.py`; Python 회귀 47개와 Terraform mock 8개 PASS. 실제 User1의 OAuth userinfo identity와 프로젝트 관리자/IAP 권한 확인 성공, User2 미로그인을 명시적으로 거부함.
+Checked: 2026-08-26 — D-024에 따라 실제 User1/User2 계정과 VM workload SA 하나로 변경했다. 계정은 명시적 `--account`로 선택하고 실제 OAuth identity를 검사한다. 기존 User2 권한을 자동 회수하지 않으며 프로젝트 수준 Viewer/Object Viewer 전이와 workload Viewer→Creator를 코드에 연결했다. 계정2 브라우저 인증·새 plan·새 Cloud E2E는 미수행이다. 원문의 콘솔 UI/Qwiklabs 계정 lifecycle/가상 domain grant를 수행했다는 뜻이 아니다. 개인정보 설정은 `.gitignore`와 mode600으로 Git에서 제외한다.
+
+## Phase 07 사용자별 계정 등록 진입점 — state: implemented, verified offline — 2026-08-26
+
+Evidence: `phases/07/auth.py`, `auth.sh`, `execute.sh`, `bin/gcp-lab-harness`, `tests/test-phase-07.py`; Python 73 tests PASS (`artifacts/phase-07-account-setup-unit.log`).
+Checked: 2026-08-26 — D-025에 따라 `accounts setup`에서 이메일 두 개를 입력·교체하고 원자적으로 로컬 설정을 저장한다. 기존 로그인 재사용, 필요한 사용자만 `gcloud auth login --no-activate`, 로그인 후 실제 OAuth identity 재검사를 연결했다. plan은 터미널이면 설정/로그인을 이어가고 비대화형이면 명시적 준비 안내로 중단한다. 입력 취소/잘못된 계정/손상 설정/저장 실패/인증 override를 회귀 검사했다. 격리된 복사본의 실제 CLI 등록·계정 교체·비대화형 중단과 Linux PTY Enter 기본값 재사용도 통과했다. OAuth 자체는 mock 범위의 검증이며 새 User2 실제 로그인·Cloud E2E와 Windows 실기동은 미수행이다. Google 계정 자체를 생성하거나 setup 단계에서 프로젝트 IAM을 바꾸지 않는다. apply 이후의 IAM 전이는 기존 승인된 action plan 흐름이다.
+
+## Phase 07 Notion 본문·clone 사용자 기준 — state: implemented, verified offline — 2026-08-26
+
+Evidence: `phases/07/execute.sh`, `verify.sh`, `support.sh`, `iam-probe.py`, `plan-guard.py`, `terraform/main.tf`, `tests/test-phase-07.py`; Python 84 tests와 Terraform mock 8 tests PASS (`artifacts/phase-07-notion-unit.log`, `phase-07-notion-mock.log`). 기준은 사용자 지정 Notion 페이지 `3c76d458853781ecbcf3d1c5e12f28dd`의 2026-08-26 본문이다.
+Checked: 2026-08-26 — D-026에 따라 관리자 A의 VM 생성 대체 경로를 제거했다. Terraform 8개 baseline 이후 B의 workload-only actAs·project Compute Instance Admin을 임시 부여하고 B OAuth로 생성, operation actor와 RUNNING/private/workload identity를 검증한다. Viewer 회수 후 sample 읽기 거부, VM Creator 전환 후 쓰기 성공/읽기 거부, B의 4개 임시 역할 회수와 관리자 보존을 연결했다. `lab_completion.complete=false`로 최종 destroy 전에는 Notion 전체 종료 완료를 주장하지 않는다. D-027에 따라 개인 설정이 Git 추적 대상이 아닌지와 새 clone 사용자의 계정 입력/활성 계정 기본값을 회귀 검사했다. 마지막 읽기 전용 `accounts check`에서 실제 A/B OAuth userinfo identity 둘 다 verified=true를 확인했다(`artifacts/phase-07-notion-auth-check.log`). 브라우저 로그인 조작을 대신 수행한 것은 아니며 새 Cloud apply/E2E와 Windows 로그인은 미검증이다.
+
+직전 구현의 추가 관측(2026-08-26): 실제 두 사용자 권한·정책 preflight 및 run `p07-260826-b53c` 저장 plan이 통과했다. Terraform create 8/change 0/destroy 0이며 `artifacts/phase-07-notion-plan.log`와 해당 run manifest가 근거다. 현재 planned이며 새 apply/Cloud E2E는 미수행이다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -128,7 +145,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07–15 실제 Cloud apply·machine verify·destroy
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08–15 실제 Cloud apply·machine verify·destroy
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

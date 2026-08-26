@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 config/harness.env
+config/phase-07-users.json
 .commandcode/settings.json
 .commandcode/taste/
 *.pem

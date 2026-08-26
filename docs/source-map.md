@@ -10,7 +10,7 @@
 | 04 Private Google Access and NAT | 04 | Private Google Access, Router, NAT, 외부 IP 없는 VM | Google API 접근, 외부 egress, NAT 로그/상태 | NAT 비용과 전파 대기 timeout 적용 |
 | 05 Creating Virtual Machines | 05 | Linux·Windows·custom machine VM | describe, serial output, SSH/guest 상태 | RDP GUI는 제외; Windows 비밀번호는 출력·Git 저장 금지 |
 | 06 Working with VMs | 06 | disk attach/format/mount, 앱 설치, firewall | mount·fstab, systemd/process, TCP 연결 | 공개 포트 source range 최소화, 종료 후 disk까지 정리 |
-| 07 Exploring IAM | 07 | 테스트 서비스 계정·가장으로 role 부여/회수 | 허용 동작과 expected-denial 오류 코드 | 실제 두 사용자 로그인 대신 격리된 principal 사용 |
+| 07 Exploring IAM | 07 | 실제 사용자 A/B OAuth, workload SA 하나, project 역할 전이 | B의 VM 생성·최종 RUNNING, guest Viewer read/write 및 Creator write/read 거부, exact rollback | Notion 최신 본문 기준; 콘솔/인증된 브라우저 다운로드는 API 등가, 최종 삭제 별도 |
 | 08 Cloud Storage | 08 | object, ACL/IAM, CSEK, lifecycle, versioning, sync | metadata JSON, hash, generation, 복호화 성공/실패 | CSEK는 임시 파일/프로세스에만 존재 |
 | 09 Cloud SQL | 09 | SQL instance, private IP, proxy, WordPress VM | SQL query, proxy health, HTTP, private 경로 | DB 비밀번호는 ignored runtime secret로 생성·전달·삭제; 비용 높은 인스턴스 제한 |
 | 10 Billing data with BigQuery | 10 | `bq load`와 versioned SQL fixture/query | row count, schema, query golden result | 실제 Billing export 선택 시 권한과 비동기 데이터 지연을 별도 처리 |

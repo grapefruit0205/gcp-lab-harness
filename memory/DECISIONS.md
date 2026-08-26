@@ -126,3 +126,31 @@ sweep: `bootstrap.ps1`, `harness.ps1`, `scripts/bootstrap-windows.sh`, portable 
 사용자 요청: “제한 서버 옵션 풀어서 반영하여 테라폼, 커밋, 푸쉬까지 반영해줘 그리고 다시 apply 해줘.” 후속으로 TCP 25565의 접속 IP 허용을 재요청했다. Phase 06 Minecraft TCP 25565의 source를 전체 IPv4 `0.0.0.0/0`으로 전환한다. SSH IAP 제한, 비공개 backup bucket, 기존 VM·data disk·월드·고정 IP와 다른 Phase의 공개 제한은 유지한다. 해당 변경과 필요한 검증을 Terraform·코드에 반영하고 한국어 commit·push 및 기존 run의 재적용을 수행한다. 기존 source CIDR 제한을 해제하는 예외는 Minecraft 게임 포트에만 적용한다.
 
 sweep: Phase 06 Terraform·execute·verify, 공통 network policy, Phase 01–06 offline 예외 검사, Python·Terraform mock 회귀 테스트와 Phase 06 문서에 반영함 (2026-08-26). 실제 저장 plan 재적용은 D-017의 exact SHA 승인 후 수행한다.
+
+## D-021 · Phase 07 exact plan apply와 IAM 실습 검증을 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
+
+사용자는 Phase 07 bundle SHA `cbadfcca92660a44a40653665e8ad1bc35cb61895b5699eb1467b0908ddd095e`를 제시한 “이 plan으로 apply와 IAM 실습 검증까지 진행해도 될까요?”라는 질문에 “ㅇㅇ”로 승인했다. 허용 project `kdt5-05`, run `p07-260826-72bd`의 Terraform 신규 12개와 해당 action plan의 임시 IAM 전이·private VM 검증을 수행한다. 임시 grant는 검증 종료 시 회수하고, 실패 시 해당 run 소유 리소스만 자동 cleanup한다. 기존 Phase 06 서버는 보존한다. Phase 07 최종 destroy·commit·push 승인을 포함하지 않는다.
+
+## D-022 · Resource Manager API를 포함한 Phase 07 수정 plan 재apply를 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
+
+사용자는 수정 bundle SHA `78871cff6b5edfe12fb965d5f8c032595a52d4bc1c933318adc32fe366c70837`를 제시한 “이 plan으로 재apply와 IAM 검증을 진행할까요?”라는 질문에 “ㄱㄱ”로 승인했다. project `kdt5-05`, run `p07-260826-e6a1`의 Terraform 신규 13개와 고정된 action plan의 IAM 전이·private VM 검증을 수행한다. Resource Manager API는 활성화하고 cleanup 후에도 유지한다. 임시 IAM 권한은 검증 종료 시 회수하며 실패 시 해당 run 소유 리소스만 cleanup한다. 기존 Phase 06 서버 변경, 성공 후 최종 destroy, commit·push는 포함하지 않는다. D-021의 이전 run은 정리 완료된 별도 거래로 보존한다.
+
+## D-023 · 비동기 VM 판정을 보완한 Phase 07 plan 적용·검증을 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
+
+사용자는 bundle SHA `85a107f4f0bd2bbf4ab084d3babb563cc74d15dafb1b2aacdb8c8b1f70e89653`를 제시한 “이 plan으로 재apply와 IAM 검증을 진행할까요?”라는 질문에 “ㅇㅇ”로 승인했다. project `kdt5-05`, run `p07-260826-a9d2`의 Terraform 13개 create와 고정된 action plan의 IAM 전이·비동기 VM 최종 결과·guest 검증을 수행한다. 검증 종료 시 임시 IAM을 회수하며 실패 시 해당 run 소유 리소스만 cleanup한다. 공용 Resource Manager API는 cleanup 후에도 유지한다. Phase 06 서버 변경, 성공 후 최종 destroy, commit·push는 포함하지 않는다.
+
+## D-024 · Phase 07은 원문대로 실제 사용자 두 계정으로 자동화한다 — 2026-08-26 (사용자, 대체 구현 수정 요청)
+
+사용자는 “원문대로 진행할 수 있도록 자동화 구현 수정해줘”라고 요청하고 계정 2의 Google 사용자 이메일을 지정했다. 계정 1은 현재 로그인된 사용자, 계정 2는 사용자가 제공한 별도 사용자로 구성한다. 실제 사용자 두 개의 인증과 프로젝트 수준 Viewer 회수·Storage Object Viewer 부여를 검증하며 SA 가장 두 개를 사용자 로그인 완료로 대체하지 않는다. VM에는 별도 workload SA를 연결한다. 이메일은 ignored 로컬 설정에만 기록한다. 임의의 Google 계정 생성이나 가상 교육 도메인에 대한 실제 권한 부여는 하지 않는다. 구현 변경 후 실제 IAM 변경/apply는 두 계정 인증 확인 및 새 saved plan 승인 뒤 수행한다. D-023의 기존 실행과 cleanup은 역사적 거래로 보존한다.
+
+## D-025 · 각 사용자가 자신의 계정을 추가하는 준비 흐름을 자동화한다 — 2026-08-26 (사용자, 요구사항 명확화)
+
+사용자는 수동 실습 초기 상태만 준비하자는 제안을 거절하고 “각자 계정을 추가할 수 있도록 너가 자동화 해줘야지”라고 요청했다. D-024의 실제 두 사용자 실습은 유지하되 사용하는 사람이 자신의 관리자·실습 계정을 입력/추가하고 각 계정의 Google 브라우저 인증으로 연결할 수 있게 한다. 특정 개인 이메일에 의존하거나 JSON 수동 편집만 안내하는 것으로 완료하지 않는다. 로그인은 사용자가 직접 승인하며 비밀번호·인증 코드를 대신 수집하지 않는다. 이 요청은 새로운 Cloud plan 승인이나 commit·push 승인이 아니다.
+
+## D-026 · Notion 본문을 기준으로 Phase 07 재수정·커밋·푸시·apply를 요청한다 — 2026-08-26 (사용자, 기준 문서 지정과 실행 요청)
+
+사용자는 자신의 Notion `07. Exploring IAM` 페이지를 지정하고 “이거 확인해서 phase 07 재수정 커밋 푸쉬 apply 전부 부탁해”라고 요청했다. 현재 본문의 실제 계정 A/B 흐름을 기준으로 재대조하고 관련 구현·검증·문서를 수정해 커밋과 푸시를 수행한다. Notion Task 6은 B에게 workload-only Service Account User와 project Compute Instance Admin을 임시 부여한 뒤 B가 VM을 생성하며, Task 7은 Creator 전환 후 업로드 성공뿐 아니라 기존 객체 읽기 거부도 요구한다. 이전 User1 생성 대체 경로를 이 요구의 충족으로 주장하지 않는다. 계정 인증과 새로운 exact saved plan 승인 gate는 유지하고, Notion 페이지 자체는 읽기 전용이다. 기존 Minecraft와 다른 사용자 변경은 보존한다.
+
+## D-027 · clone한 사람의 계정으로 준비하고 원 사용자 계정에 고정하지 않는다 — 2026-08-26 (사용자, 재사용 요구 재확인)
+
+사용자는 다른 사람도 GitHub를 clone해 사용할 수 있으므로 로그인 단계를 자신의 계정에 고정하면 안 된다고 명시했다. 배포 코드·예시 설정에는 특정 개인 계정이나 프로젝트를 로그인 기본값으로 넣지 않는다. clone한 사람이 자신의 실제 User1/User2를 입력하고, 최초 User1 제안값은 그 환경의 현재 gcloud 사용자에서만 얻는다. 개인 이메일·프로젝트 설정·자격 증명은 Git에 포함하지 않는다. 이미 승인된 실행의 계정은 해당 실행의 saved inputs로 고정하며 새 사용자로 바꾸려면 새 준비/plan을 만든다.

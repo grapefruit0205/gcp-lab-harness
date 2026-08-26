@@ -10,6 +10,7 @@ Rule: anything unresolved gets a row here the moment it surfaces. A question is 
 | Q-004 | 제안한 `codex-extension-verifier` 프로젝트 pin을 ballast 규칙 카탈로그에 기록할까? | 2026-08-25 | closed — D-007 및 `.claude/ballast.rules.json` |
 | Q-005 | 제안한 `command-code-runner-fixed-model` 프로젝트 pin을 ballast 규칙 카탈로그에 기록할까? | 2026-08-25 | open |
 | Q-006 | 로컬·GitHub 커밋에 사용할 Git 작성자 이름과 이메일은 무엇인가? | 2026-08-25 | closed — 사용자 소유 기존 로컬 저장소 3곳의 일치 설정 사용 |
+| Q-007 | Phase 07을 원문처럼 실제 사용자 두 계정으로 진행할 것인가? | 2026-08-26 | closed — D-024, 사용자 계정 2 지정. 실제 인증·새 plan 승인은 실행 전 별도 확인 |
 
 ## Readings in force — assumed, not decided
 

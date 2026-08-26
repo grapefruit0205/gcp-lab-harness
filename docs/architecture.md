@@ -102,7 +102,7 @@ inventory   생성 전·후·정리 후 잔여 리소스 비교
 
 - 콘솔 탐색, Cloud Shell 편집기, RDP 같은 사용자 경험은 자동 완료로 주장하지 않는다. 같은 상태를 CLI로 만들고 API 결과를 증거로 남긴다.
 - Marketplace VM 제품은 해당 상품이 CLI Terraform 배포를 지원할 때만 정확한 어댑터를 제공한다. 지원하지 않으면 Phase를 `blocked`로 만들고 임의의 대체 배포를 동일 결과로 표시하지 않는다.
-- IAM의 두 사용자 실습은 별도 테스트 서비스 계정과 가장을 사용해 권한 부여·회수·거부를 재현한다.
+- IAM의 두 사용자 실습은 clone한 사람이 입력한 실제 A/B OAuth를 사용한다. A가 권한을 부여·회수하고 B가 workload SA를 연결해 VM을 생성하며, VM 내부는 별도 metadata identity로 검사한다. 특정 개인 계정이나 SA 가장으로 두 사용자를 대체하지 않는다(Phase 07 Notion 본문 기준).
 
 ## 성공 기준
 

@@ -179,6 +179,9 @@ harness_phase_adapter_main() {
         harness_die "plan bundle의 Terraform plan hash가 stale 상태입니다."
       [[ "$(jq -r '.action_plan.sha256' "$plan_bundle")" == "$(harness_sha256_file "$action_plan")" ]] ||
         harness_die "plan bundle의 action plan hash가 stale 상태입니다."
+      if declare -F phase_before_apply >/dev/null; then
+        phase_before_apply "$run_id" || return
+      fi
       if ! harness_tf_apply_saved_plan "$work_dir" "$plan_file" "$manifest_file"; then
         rm -f "$plan_file"
         if [[ "${GCP_CLEANUP_ON_FAILURE:-}" == "true" ]] && \
@@ -221,8 +224,8 @@ harness_phase_adapter_main() {
       "$phase_dir/verify.sh" --run "$run_id"
       harness_require_file "$evidence_file" "Phase machine evidence"
       jq -e --slurpfile contract "$contract_file" '
-        .phase == $contract[0].phase and
-        ([ $contract[0].source_tasks[].id ] | all(. as $id | (.tasks[$id].status // "") == "passed"))
+        . as $evidence | .phase == $contract[0].phase and
+        ([ $contract[0].source_tasks[].id ] | all(. as $id | ($evidence.tasks[$id].status // "") == "passed"))
       ' "$evidence_file" >/dev/null || harness_die "모든 source Task가 machine evidence에서 passed가 아닙니다."
       local temporary
       temporary="$(mktemp "$run_dir/manifest.tmp.XXXXXX")"

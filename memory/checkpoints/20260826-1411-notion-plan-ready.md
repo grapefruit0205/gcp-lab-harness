@@ -1,4 +1,4 @@
-# Checkpoint — Phase 07 Notion 재계획·게시 준비 — 2026-08-26 14:11
+# Checkpoint — Phase 07 Notion·개인별 계정 반영 — 2026-08-26 14:08
 
 ## The story so far
 
@@ -6,7 +6,7 @@
 
 clone한 사람은 `./bin/gcp-lab-harness accounts setup`에서 자신의 두 계정을 입력한다. 최초 A 제안값도 그 환경의 활성 gcloud 사용자뿐이다. 개인 계정 설정/프로젝트 설정/credentials는 Git에서 제외한다. 승인된 run의 계정은 saved inputs로 고정한다.
 
-observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase gate, Phase 01–15 offline와 controller, 개인정보·원문/Phase 06 소스 보존 검사를 통과했다. 문서 리허설의 비차단 `accounts setup --help` 문제도 수정·재검사했다. 마지막 실제 accounts check에서 **A/B 인증 모두 통과**했고 preflight 및 새 run `p07-260826-b53c` 저장 plan을 생성했다. Terraform create 8/change 0/destroy 0, bundle SHA `04f7afb8d5e1e331ae11d6da3ef0eea8936f9a77c26739c6fb97d02388d9043a`다. 아직 planned 상태이며 apply/E2E는 실행하지 않았다. D-026으로 승인된 관련 커밋·푸시는 최종 게시 준비 중이다.
+observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase gate, Phase 01–15 offline와 controller, 개인정보·원문/Phase 06 소스 보존 검사를 통과했다. 문서 리허설은 인증 경계 전 차단 막힘이 없었고 비차단 `accounts setup --help` 문제를 발견해 수정·회귀 검사했다. 실제 B 인증은 아직 없고 새 plan/apply/Cloud E2E는 실행하지 않았다. 관련 커밋·푸시는 D-026으로 승인됐으며 현재 최종 검토/게시 전이다.
 
 ## Decided
 
@@ -18,7 +18,7 @@ observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase ga
 
 ## Waiting on the user
 
-새 bundle SHA `04f7afb8d5e1e331ae11d6da3ef0eea8936f9a77c26739c6fb97d02388d9043a`의 apply·IAM 실습 검증 승인이 필요하다. 계정 인증은 현재 모두 확인됐다. Terraform 8개 준비 외에 action plan으로 B의 VM 생성·임시 IAM 전이를 수행한다. B Compute 역할은 기존 Minecraft를 포함한 프로젝트 VM에도 적용되고 Storage 역할은 기존 버킷에도 적용되므로 범위를 함께 고지한다. 성공 후 최종 destroy는 별도 승인이다.
+계정 B의 Google 브라우저 인증이 필요하다. 저장소에서 `./bin/gcp-lab-harness accounts setup`을 실행하면 자신의 기존 설정을 유지/교체하고 미인증 계정 로그인을 이어간다. 이후 생성한 새 plan의 범위·정확한 SHA를 제시하고 적용 승인을 받는다.
 
 ## Next first action
 

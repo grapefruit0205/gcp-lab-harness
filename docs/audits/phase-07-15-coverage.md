@@ -20,7 +20,7 @@
 
 | Phase | 원본에서 반드시 남겨야 할 동작 | 구현 위치와 실제 판정 |
 |---:|---|---|
-| 07 IAM | 두 사용자 역할, Viewer 회수, Storage 범위, service account `actAs`, VM 권한 | 격리 SA 3개, exact IAM tuple, 가장 VM, guest allow/deny matrix, Viewer→Creator 전이를 Terraform+Bash로 분리 |
+| 07 IAM | 두 사용자 역할, Viewer 회수, Storage 범위, service account `actAs`, VM 권한 | 2026-08-26 개정: 실제 A/B와 workload SA 하나, **B가** VM 생성, Creator 쓰기 성공/읽기 거부, 4개 임시 역할 회수. [Notion 최신 대조표](phase-07-notion-coverage.md) 참조 |
 | 08 Storage | private/public ACL, CSEK, key rotation, lifecycle, versioning, recursive sync | 조건부 공개 ACL 즉시 회수, runtime CSEK 2개, 구키 expected failure, 31일 lifecycle, generation hash 복구, 중첩 object set 검증 |
 | 09 Cloud SQL | WordPress, Auth Proxy 기본 public 경로, private IP 직접 경로 | MySQL 8 public+private address, pinned WordPress/proxy/wp-cli, 두 VM의 같은 SQL marker read/write와 제한 CIDR HTTP probe |
 | 10 BigQuery | 원본 AVRO fixture와 415,602행, SQL 8개 | generation·CRC32C 고정, exact row count, 8개 SQL dry-run과 1 GiB 상한, 결과 hash 요약 |

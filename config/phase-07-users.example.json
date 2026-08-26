@@ -1,0 +1,5 @@
+{
+  "identity_mode": "two-users",
+  "user1": "administrator@example.com",
+  "user2": "lab-user@example.com"
+}

@@ -125,6 +125,30 @@ export PATH="$HOME/.local/bin:$PATH"
 
 bootstrap은 GCP 사용자 로그인·ADC, exact project allowlist, billing preflight와 Terraform provider 연결을 준비합니다. 인증정보와 로컬 project·billing 값은 Git에서 제외됩니다.
 
+### Phase 07: 각자의 관리자·실습 계정 추가
+
+Phase 07은 서로 다른 실제 Google 사용자 두 계정으로 IAM 권한을 비교합니다. 사용하는 사람마다 자신의 계정을 입력하면 됩니다. JSON 수동 편집이나 IAM 콘솔에서의 사전 계정 추가는 필요하지 않습니다.
+
+Linux/Git Bash에서 저장소 루트 기준:
+
+```bash
+./bin/gcp-lab-harness accounts setup
+```
+
+Windows PowerShell:
+
+```powershell
+.\harness.ps1 accounts setup
+```
+
+관리자 이메일과 실습 이메일을 입력하면 기존 로그인은 재사용하고 필요한 계정만 Google 브라우저 로그인으로 연결합니다. 이미 저장한 이메일은 Enter로 유지하거나 다른 계정으로 바꿀 수 있습니다. 계정 소유자가 직접 인증하며 비밀번호를 모델에 전달하지 않습니다. 로컬 이메일 설정은 Git에서 제외됩니다.
+
+관리자는 기존 허용 프로젝트의 관리 권한을 갖고 있어야 하며, 두 번째 계정은 해당 프로젝트에 기존 권한이 없는 실습 계정을 사용합니다. `setup`은 계정 등록·인증만 처리하고, **프로젝트 계정 추가와 역할 부여·회수는 새 plan 승인 뒤 apply/verify 흐름에서 자동 수행**합니다. 새 Google 계정이나 프로젝트를 만들지는 않습니다. 역할의 프로젝트 전체 범위·실행 순서는 [Phase 07 안내](docs/phases/phase-07-iam.md)를 확인하세요.
+
+개인 계정/프로젝트 설정은 clone에 포함되지 않으며, 다른 사용자는 자신의 계정으로 준비합니다. 최신 Notion 본문에 따라 관리자 A가 B의 권한을 부여하고 **B가 VM을 생성**합니다. B에게 임시로 주는 Compute Instance Admin은 프로젝트의 기존 VM에도 적용되므로 실습 전용 프로젝트를 사용하세요. [Notion 대조표](docs/audits/phase-07-notion-coverage.md)에 구현 범위와 Cloud 미검증 부분을 구분했습니다.
+
+읽기 전용 확인은 `./bin/gcp-lab-harness accounts check`입니다. 터미널의 Phase 07 `plan`도 준비가 빠져 있으면 계정 설정/로그인으로 연결합니다. 비대화형 AI/CI 실행은 인증이 없을 때 안내 후 중단하고, 자동 apply로 넘어가지 않습니다.
+
 ## 3. Windows VS Code에서 Codex 또는 Claude로 실행
 
 PowerShell에서 저장소를 열고 VS Code Extension 하나를 선택합니다.

@@ -11,6 +11,8 @@ usage() {
 사용법:
   gcp-lab-harness install
   gcp-lab-harness setup <GCP_PROJECT_ID>
+  gcp-lab-harness accounts setup [--user1 <관리자 이메일> --user2 <실습 이메일>] [--no-login]
+  gcp-lab-harness accounts check
   gcp-lab-harness start --run <id>
   gcp-lab-harness cmd --run <id>
   gcp-lab-harness single-model run --run <id> [--confirm-plan-sha <sha256>]
@@ -266,6 +268,13 @@ case "${1:-}" in
   phase-gate)
     [[ "$#" -eq 2 ]] || { usage >&2; exit 2; }
     exec "$repo_root/scripts/phase-gate.sh" "$2"
+    ;;
+  accounts)
+    case "${2:-}" in
+      setup) shift 2; exec "$repo_root/phases/07/auth.sh" --setup "$@" ;;
+      check) shift 2; exec "$repo_root/phases/07/auth.sh" --check "$@" ;;
+      *) usage >&2; exit 2 ;;
+    esac
     ;;
   phase)
     [[ "${2:-}" == "list" && "$#" -eq 2 ]] || { usage >&2; exit 2; }
