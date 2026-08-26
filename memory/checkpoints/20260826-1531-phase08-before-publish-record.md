@@ -1,4 +1,4 @@
-# Checkpoint — Phase 08 수정본 게시·새 plan 승인 대기 — 2026-08-26 15:31
+# Checkpoint — Phase 08 첫 실행 정리·수정본 게시 준비 — 2026-08-26 15:27
 
 ## The story so far
 
@@ -6,7 +6,7 @@ D-030 승인 run `p08-260826-8c1d`는 Terraform bucket 1개 생성과 정책 rea
 
 다운로드 오류를 JSON으로만 가정하던 처리를 수정했다. 익명 거부에는 인증 다운로드 전후 대조를, 비정형 CSEK 오류에는 동일 세대·키 metadata의 정확한 거부 검사를 추가했다. Python44·Terraform mock4/JSON guard3·Phase08 gate·Phase07–15 suite가 통과했다. 원래401의 정확한 요청 위치는 이전 로그만으로 확정할 수 없다.
 
-수정본 새 run `p08-260826-c924` plan은 bucket `gcp-lab-p08-p08-260826-c924` 1개 create/change0/destroy0, bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`다. hash/scope/manifest planned를 재검사했으며 아직 apply하지 않았다. 관련 24개 파일은 한국어 commit `33eae83edf73ccf272b6a8f352de4ecd3e14cd95`로 게시했고 15:30에 원격 main SHA 일치를 확인했다. 개인 설정·CSEK·state·원시 로그는 게시하지 않았다.
+수정본 새 run `p08-260826-c924` plan은 bucket `gcp-lab-p08-p08-260826-c924` 1개 create/change0/destroy0, bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`다. 아직 apply하지 않았다. 관련 변경의 stage·commit·push는 D-030 승인 범위이며 현재 게시 전 점검 중이다. HEAD/원격은 마지막 확인 시 `7e6df290`이다.
 
 ## Decided
 
@@ -16,11 +16,11 @@ D-030 승인 run `p08-260826-8c1d`는 Terraform bucket 1개 생성과 정책 rea
 
 ## Waiting on the user
 
-Q-009: 새 SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`의 apply·실습 재검증 승인 대기. 새 bucket 1개, fixture 임시 공개/회수, soft-delete=0, CSEK 암호화 세대 삭제와 실패 cleanup은 동일한 범위다.
+새 SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`의 apply·실습 재검증 승인 대기. 새 bucket 1개, fixture 임시 공개/회수, soft-delete=0, CSEK 암호화 세대 삭제와 실패 cleanup은 동일한 범위다.
 
 ## Next first action
 
-Q-009에 대한 사용자 승인을 확인한 뒤에만 `cd /home/grapefruit/gcp-lab-harness && ./phases/08/execute.sh apply --run p08-260826-c924 --confirm-plan-sha 1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`를 실행한다.
+`cd /home/grapefruit/gcp-lab-harness && git diff --check && git status --short`로 게시 대상 변경을 점검한다. 새 Cloud apply는 새 SHA 승인 전 수행하지 않는다.
 
 ## Tried
 
