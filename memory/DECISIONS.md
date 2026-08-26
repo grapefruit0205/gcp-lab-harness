@@ -123,6 +123,8 @@ sweep: `bootstrap.ps1`, `harness.ps1`, `scripts/bootstrap-windows.sh`, portable 
 
 ## D-020 · Phase 06 Minecraft 게임 포트를 공개하고 Terraform·Git에 반영한다 — 2026-08-26 (사용자, 접속 제한 해제 요청)
 
+→ Minecraft 보존 방침에 한해 superseded by D-028 (2026-08-26)
+
 사용자 요청: “제한 서버 옵션 풀어서 반영하여 테라폼, 커밋, 푸쉬까지 반영해줘 그리고 다시 apply 해줘.” 후속으로 TCP 25565의 접속 IP 허용을 재요청했다. Phase 06 Minecraft TCP 25565의 source를 전체 IPv4 `0.0.0.0/0`으로 전환한다. SSH IAP 제한, 비공개 backup bucket, 기존 VM·data disk·월드·고정 IP와 다른 Phase의 공개 제한은 유지한다. 해당 변경과 필요한 검증을 Terraform·코드에 반영하고 한국어 commit·push 및 기존 run의 재적용을 수행한다. 기존 source CIDR 제한을 해제하는 예외는 Minecraft 게임 포트에만 적용한다.
 
 sweep: Phase 06 Terraform·execute·verify, 공통 network policy, Phase 01–06 offline 예외 검사, Python·Terraform mock 회귀 테스트와 Phase 06 문서에 반영함 (2026-08-26). 실제 저장 plan 재적용은 D-017의 exact SHA 승인 후 수행한다.
@@ -149,8 +151,24 @@ sweep: Phase 06 Terraform·execute·verify, 공통 network policy, Phase 01–06
 
 ## D-026 · Notion 본문을 기준으로 Phase 07 재수정·커밋·푸시·apply를 요청한다 — 2026-08-26 (사용자, 기준 문서 지정과 실행 요청)
 
+→ 기존 실습 유지·Phase 07 새 apply 대기에 한해 superseded by D-028 (2026-08-26)
+
 사용자는 자신의 Notion `07. Exploring IAM` 페이지를 지정하고 “이거 확인해서 phase 07 재수정 커밋 푸쉬 apply 전부 부탁해”라고 요청했다. 현재 본문의 실제 계정 A/B 흐름을 기준으로 재대조하고 관련 구현·검증·문서를 수정해 커밋과 푸시를 수행한다. Notion Task 6은 B에게 workload-only Service Account User와 project Compute Instance Admin을 임시 부여한 뒤 B가 VM을 생성하며, Task 7은 Creator 전환 후 업로드 성공뿐 아니라 기존 객체 읽기 거부도 요구한다. 이전 User1 생성 대체 경로를 이 요구의 충족으로 주장하지 않는다. 계정 인증과 새로운 exact saved plan 승인 gate는 유지하고, Notion 페이지 자체는 읽기 전용이다. 기존 Minecraft와 다른 사용자 변경은 보존한다.
 
 ## D-027 · clone한 사람의 계정으로 준비하고 원 사용자 계정에 고정하지 않는다 — 2026-08-26 (사용자, 재사용 요구 재확인)
 
 사용자는 다른 사람도 GitHub를 clone해 사용할 수 있으므로 로그인 단계를 자신의 계정에 고정하면 안 된다고 명시했다. 배포 코드·예시 설정에는 특정 개인 계정이나 프로젝트를 로그인 기본값으로 넣지 않는다. clone한 사람이 자신의 실제 User1/User2를 입력하고, 최초 User1 제안값은 그 환경의 현재 gcloud 사용자에서만 얻는다. 개인 이메일·프로젝트 설정·자격 증명은 Git에 포함하지 않는다. 이미 승인된 실행의 계정은 해당 실행의 saved inputs로 고정하며 새 사용자로 바꾸려면 새 준비/plan을 만든다.
+
+## D-028 · Phase 8 준비를 위해 이전 실습을 백업 없이 전부 정리한다 — 2026-08-26 (사용자, 명시적 삭제 요청)
+
+사용자는 Phase 6 destroy가 Minecraft 서버·월드 디스크·기존 백업 버킷·고정 IP를 삭제한다는 설명 후 “백업 하지말고 전부 destroy 해줘.”라고 지시했다. D-020/D-026의 기존 Minecraft 보존 방침을 이번 정리에 한해 대체한다. 허용 프로젝트의 이전 하네스 실습에 소유권이 확인되는 리소스와 임시 IAM을 모두 정리하고 새 백업/스냅샷은 만들지 않는다. GCP 프로젝트·결제 연결·사용자 로그인·공통 API와 실습 밖 기존 리소스는 유지한다. Phase 07의 미적용 plan은 이번 정리로 apply하지 않으며, 이후 재개하려면 새 계획을 검토한다. 저장된 삭제 계획과 실제 inventory로 범위를 검사하고 삭제 후 잔여를 재조회한다. 이 요청은 새 실습 apply나 Git commit/push 승인이 아니다.
+
+sweep: 현행 checkpoint·실행 로그의 Minecraft 유지/Phase 07 apply 대기를 이번 정리 상태로 갱신한다. 과거 증거·archive와 실습 코드는 역사/재실행용으로 보존한다 (2026-08-26).
+
+## D-029 · 남겨둔 관리 밖 5개도 백업 없이 삭제한다 — 2026-08-26 (사용자, 대상 목록 확인 후 추가 삭제 승인)
+
+사용자는 `junseok-lab` bucket, `mynet-us-vm-us-central1-a-20260825000711-ynklv6qi` snapshot, `lampstack`·`read-bucket-objects` 서비스 계정, `privatenet-allow-ssh` firewall의 삭제 여부 질문에 “전부 삭제해 ㅇㅇ”라고 명시했다. Q-008의 5개를 이전 실습 정리 대상으로 확정하고, bucket 내용/버전과 두 서비스 계정에 연결된 프로젝트 IAM 부여도 정확한 principal/role 범위에서 회수한다. 새 백업/스냅샷은 만들지 않는다. 프로젝트·결제·사용자 로그인·기본 네트워크/기본 방화벽·공통 서비스 계정/API는 계속 유지한다. 실제 식별자를 재확인하고 저장된 cleanup action plan과 사후 inventory로 검증한다. Git commit/push 또는 새 Phase apply 승인은 아니다.
+
+## D-030 · Phase 08 저장 plan 적용·실습 검증·관련 변경 게시를 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
+
+사용자는 bundle SHA `6d8a5c88f64c982508ff900f80aa632810a300d69f4b8fb302741154369499a3`를 제시한 “이 계획으로 apply·실습 검증 후 관련 변경을 스테이징·커밋·푸시할까요?”에 “ㅇㅇ”로 승인했다. run `p08-260826-8c1d`의 새 region bucket 1개와 고정된 action plan을 적용한다. fixture 하나의 임시 공개·즉시 회수, 새 bucket soft-delete=0, CSEK 암호화 전체 세대 삭제, 실패 시 해당 run 자동 cleanup을 포함한다. 관련 코드·테스트·문서·기록을 검사 후 stage·한국어 commit·push한다. 기존 다른 Cloud 리소스 변경과 정상 종료 후 전체 bucket destroy는 포함하지 않는다. A-004를 확정하며 같은 exact plan 승인은 반복 질문하지 않는다.

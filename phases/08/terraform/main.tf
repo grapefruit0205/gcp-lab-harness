@@ -5,6 +5,9 @@ terraform {
   }
 }
 variable "project_id" { type = string }
+variable "region" { type = string }
+# 로컬 saved inputs에만 기록하며 로그인 자체를 만들거나 바꾸지 않는다.
+variable "runner" { type = string }
 variable "run_id" {
   type = string
   validation {
@@ -16,10 +19,13 @@ provider "google" { project = var.project_id }
 resource "google_storage_bucket" "lab" {
   project                     = var.project_id
   name                        = "gcp-lab-p08-${var.run_id}"
-  location                    = "US"
+  location                    = upper(var.region)
   force_destroy               = true
   uniform_bucket_level_access = false
   public_access_prevention    = "inherited"
+  # 일회성 CSEK fixture: 키 폐기 뒤 복호화 불가능한 soft-deleted 데이터가 남지 않게 한다.
+  # 기존 버킷에는 적용하지 않으며, 새 bucket의 saved plan 승인 범위에 포함한다.
+  soft_delete_policy { retention_duration_seconds = 0 }
   versioning { enabled = true }
   lifecycle_rule {
     condition { age = 31 }
