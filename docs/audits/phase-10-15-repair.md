@@ -1,6 +1,16 @@
 # Phase 10–15 오류 보완·상세 콘솔 안내 감사
 
-판정일: 2026-08-26. 최초 범위는 로컬 코드·회귀·Terraform mock/정적 검사이며 이후 Phase10 실제 실행에서 발견한 오류를 아래 별도 항목에 추가했다. **전체 Phase10–15 Cloud 실습·실제 콘솔 UI·통신 성공 기록은 아니다.** 과거 [07–15 감사](phase-07-15-coverage.md)는 당시 기록이며 현재 변경은 아래를 따른다.
+판정일: 2026-08-26. 최초 로컬 검사 이후 Phase10–15 모두 실제 apply와 기계 검증을 통과했다(각 run 성공 n=1). 아래는 중간 실패·보존 복구·최종 관측을 구분한 기록이다. **원문 모든 수동 단계·실제 콘솔 UI·종료 destroy까지 완료한 기록은 아니다.** 과거 [07–15 감사](phase-07-15-coverage.md)는 당시 기록이며 현재 변경은 아래를 따른다.
+
+## 최종 실기 결과
+
+Phase10 쿼리8개, Phase11 VM3 metrics/uptime/정책 전이, Phase12 BGP/라우팅/단일 경로 장애 후 ping, Phase13 부하 분산/자동 확장·축소, Phase14 backend2/VIP60응답/clientIP, Phase15 privateping/재plan0변경을 실제로 확인했다. 최종 manifest는6개 모두 verified다. Phase12 Task8은 manual-boundary이며 IPv6 실제HTTP·메일수신·UI·최종destroy는 별개다.
+
+Phase13은 NAT64포트에서 timeout/OUT_OF_RESOURCES893을 진단하고 부하NAT8192포트·keepalive로 수정했다. 최종 f5c0dead…는24no-op/1update/삭제교체0, apply/verify exit0이다. 최초 확장 관측은3대, 후속 snapshot은4대, 부하 종료 뒤 목표합계2로 복귀했다. marker4개·LB로그20개를 확인했다. 중지 builder 증거는 같은 ID의 후속 재수집임을 유지한다.
+
+Phase14는 INTERNAL backend400→CONNECTION, gcloud 표시변환→원시JSON VM주소, Apache DirectoryIndex 누적→별도 p14-php-index.conf로 복구했다. 마지막9af07dc…18no-op apply/verify exit0이며 VM/template교체0이다. 향후 startup의 기존conf 덮어쓰기와 분리했지만 실제 VM reboot는 시험하지 않았다.
+
+최종54개 회귀·TF mock9개·Bash/fmt/init/validate/각gate·전체 make test-offline(Phase09 기존70개 포함) exit0. 근거는 ignored `artifacts/phase10-15-final-verified-{local-tests,full-offline}.log`와 [실행 근거](../../memory/PRODUCT-TRUTH.md)·각 run evidence다. 다른 환경의 무오류나 Cloud cleanup 성공을 보장하지 않는다.
 
 ## 발견한 오류와 수정
 
@@ -10,8 +20,8 @@
 | 10 BigQuery | 비구조화 bq dry-run 파싱 제거. jobs API의 dryRun·maximumBytesBilled·DONE/error·totalRows 검사. job ID로 콘솔 작업 기록 연결 |
 | 11 Monitoring | uptime group enum INSTANCE 수정. 실제 checker IP /32 방화벽. 시계열 존재가 아닌 각 VM의 최신 true 검사. VM1/2 각각20%·60초 조건, 정확한 group ID집합, alert 활성→비활성 증거. MCP 필수 preflight 제거 |
 | 12 HA VPN | 실패 자동 destroy 제거. baseline/라우팅 전이/장애/완료 단계 저장. 이미 tunnel0이 삭제된 재시도에서4터널 대기하지 않음. 삭제 직전 baseline Cloud ID 대조. Task8 정리 완료 오판 제거 |
-| 13 ALB | builder 외부 삭제 대신 stopped 상태 보존, image 준비 종속성의 실제 instance ID. autoscaler target_size 충돌 방지. 각 리전별 health 확인, frontend readback, 정확한 systemd load unit360초 제한 |
-| 14 ILB | NAT 준비 전 MIG startup 경쟁 방지, apt 유한 재시도, PHP의 실제 REMOTE_ADDR. 중간 curl 실패 전파·VIP60회 성공·정확한 두 backend. 삭제 inventory 전체 zone 조회·조회 오류 fail-closed |
+| 13 ALB | builder 외부 삭제 대신 stopped 상태 보존, image 준비 종속성의 실제 instance ID. autoscaler target_size 충돌 방지. 각 리전별 health 확인, frontend readback, 정확한 systemd load unit360초 제한. 실측 NAT64포트/드롭893을8192·keepalive로보완하고부하journal/조기종료·baseline수렴·진행증거추가 |
+| 14 ILB | NAT 준비 전 MIG startup 경쟁 방지, apt 유한 재시도, PHP의 실제 REMOTE_ADDR. a2enconf 후 configtest/Apache restart로 설정 반영. 실제400을CONNECTION backend명시로수정·plan guard/API readback/mock회귀추가. 중간 curl 실패 전파·VIP60회 성공·정확한 두 backend. 삭제 inventory 전체 zone 조회·조회 오류 fail-closed |
 | 15 Terraform | data source를 managed4개에 잘못 포함하던 검사 수정. 서로 다른 region의 zone 강제, ping readiness, 멱등성 plan의 lock timeout·로그 |
 | 콘솔 문서 | Phase01–15의90개 Task·Task 안의 원문 하위 제목167개. P09 번호 절차와 P10 분석7개 질문도 상세 분할해 안내 하위 항목은221개다. 단일 Task 출력에 준비·증거 경로 포함. 중복/누락 하위 제목 회귀 검사 |
 
@@ -43,6 +53,7 @@ Phase gate는11–15에도 각각 수행한다. 검사는 Cloud apply를 포함�
 - Phase12: on-prem VM을 같은region의다른활성zone에배치하도록보완했다. 최종 topology는 터널 하나가 삭제된 장애 실험 상태다. Task8 cleanup은 별도 승인 전 미완료다.
 - Phase13: reset 전후 Apache 자동기동·서로 다른boot 검증, primary RATE50/secondary UTILIZATION80, 세 번째region의customimage loadgen을 보완했다. 원문 builder 삭제는 수행하지 않고 stopped builder/disk를 보존한다. autoscaler는원문과같은min1/max2이며 marker2개가양쪽리전트래픽분산을증명하지는않는다. IPv6 route가없는환경의HTTP검사는unavailable이다. 실제실기결과는별도기록한다. 이전의규모축소설명은원문286/321–322행대조로정정했다.
 - 공통: 자동 만료·비용 종료 스케줄러는 없다. `diagnose`는 최소 state/log 안내이며 서비스 원인 자동 분석기는 아니다. 구형 run 자동 이관과 일반 복구의 삭제/교체는 지원하지 않는다.
+- 종료 전 추가 보완: Phase11의별도삭제후inventory에는dashboard list를v3로조회하는정적간극(Q024)이남아있다. 실제apply/verify의v1경로와다르며,종료요청시이읽기조회부터보완·검증한뒤새destroy계획을만들어야한다. 이번apply성공을destroy성공으로해석하지않는다.
 - Phase03/04/06의 코드는 이번에 변경하지 않았다. 문서에는 각각 auto→custom/유럽 private subnet 미구현, 두 VM 동시 대조와 HTTPS probe, Minecraft TCP-only 검증 한계를 표시했다.
 
 따라서 **로컬 구현·검사 완료**, **실제 Cloud 실습 완료**, **원문 모든 수동 단계 완료**, **종료 삭제 완료**를 구분한다. 새로운 배포에는 [보존형 실행 안내](../phase-10-15-execution.md)의 저장 계획 승인이 필요하다.
@@ -56,6 +67,8 @@ Phase13 후속 실기(2026-08-26): Terraform25개 생성 후 stopped builder 직
 - [Terraform data source](https://developer.hashicorp.com/terraform/language/data-sources), [Google provider7.45 MIG target_size](https://raw.githubusercontent.com/hashicorp/terraform-provider-google/v7.45.0/website/docs/r/compute_region_instance_group_manager.html.markdown).
 
 ## 처음 보는 사용자 리허설
+
+Phase14 최종 안내(observed,2026-08-26,새 독자1회): `console-checks.py --phase 14 --task 3/4/5` 세 명령, `--check-all`, `tests/test-console-checks.py`의5명령을 실행해 모두exit0(안내13tests PASS), 차단되는 막힘0이었다. persistent_drop_in/index-repair.json·CONNECTION/backend-configuration.json·privateVIP·60응답/clientIP 기준을 문서에서 찾고 자동verified와 사용자UI/종료정리·clone에없는artifacts를 구분했다. 두 안내문서만 읽은 범위이며 전체README 온보딩·원문일치 독립검증·Cloud/API/SSH/부하/Git/파일변경·실제UI클릭·원시artifact열람은 하지 않았다.
 
 Phase13 후속3차(observed,2026-08-26): 새 clone 독자가 Task3/4·전체coverage·안내13tests의4명령을 실제 실행해 모두exit0·차단/추측/오독0이었다. 중지VM 대신 저장receipt를 읽는 경로와 recovered_after_image=true가 나중 재수집이지 최초 이미지 제작 로그가 아니라는 경계를 문서만으로 구분했다. Cloud/API/auth/Git/파일변경·원시artifacts 열람·실제 콘솔 클릭은 하지 않았다. 전체 Phase10–15 최종 로컬49회귀/Bash/fmt/init/validate/TF mock/gate도 주실행자 exit0이었다.
 

@@ -16,7 +16,7 @@
 ### Cloud Router 인스턴스 생성하기
 
 1. **Cloud NAT → p13-nat → p13-router**에서 network p13, primaryregion, AUTO_ONLY, 해당 region 의모든 subnet egress 를 확인합니다.
-2. 부하 VM의 세 번째 region에는 `p13-load-nat`/`p13-load-router`가 별도로 있습니다. secondary backend는 customimage에서 패키지 재설치 없이 부팅합니다.
+2. 부하 VM의 세 번째 region에는 `p13-load-nat`/`p13-load-router`가 별도로 있습니다. 해당 NAT의 최소 VM당 포트는8192입니다. 기본64포트로동시100개연결을보내면부하생성기쪽에서고갈될수있습니다. secondary backend는 customimage에서 패키지 재설치 없이 부팅합니다.
 
 ## Task 3. 웹 서버용 커스텀 이미지 생성하기
 
@@ -99,7 +99,8 @@
 ### Application Load Balancer(HTTP) 부하 테스트하기
 
 1. 각 **MIG → Monitoring/Autoscaling**에서검증 시각범위를선택해합계 baseline2→peak3/4→2 복귀와 evidence 를 대조합니다.
-2. loadunit360 초상한·종료기록을 확인합니다. ab 를재실행하지않으며현재 2 대만으로과거 scale-out 을입증하지 않습니다.
+2. loadunit360초상한(ab keepalive·동시100·350초한도)·종료기록을 `evidence/load-journal.log`에서 확인합니다. 진행/최종합계는 `evidence/autoscale-progress.json`과 `phase-13-machine.json`을 대조합니다. ab를재실행하지않으며현재2대만으로과거scale-out을입증하지않습니다.
+   `peak_target_total`은 첫 scale-out 감지 시점의 목표합계로, 전체 시간의 최대값을 계속 표본화한 값이 아닙니다. `final_target_total=2` 이후에도 실제 VM 삭제가 잠시 진행될 수 있으므로 MIG의 현재 작업과 안정화 상태를 함께 봅니다.
 3. **VM instances → p13-loadgen → zone/boot disk → source image**에서 세 번째 region(기본us-west1)의 zone과 `p13-webserver` customimage를 확인합니다. backend 두 region과 달라야 합니다. clone 사용자는 계획 전에 `P13_LOAD_REGION`/`P13_LOAD_ZONE`으로 선택할 수 있습니다. 로컬 `artifacts/runs/<RUN_ID>/phase-13/work/phase-13.auto.tfvars.json`의 `load_region`·`load_zone` 값을 콘솔 zone과 대조하며 파일을 공유하거나 수정하지 않습니다.
 
 ## Task 7. Review
@@ -111,4 +112,4 @@
 
 ## 출처·검증 범위
 
-2026-08-26 원문 13·코드 대조(observed), 실제 UI/Cloud 미검증. [상태 확인](https://docs.cloud.google.com/load-balancing/docs/health-checks), [Autoscaler 그래프 해석](https://docs.cloud.google.com/compute/docs/autoscaler/understanding-autoscaler-decisions).
+2026-08-26 원문 13·코드 대조(observed). 실제 UI 클릭은 별도이며 Cloud 기계 검증 결과·한계는 [실행 근거](../../memory/PRODUCT-TRUTH.md)를 따릅니다. [상태 확인](https://docs.cloud.google.com/load-balancing/docs/health-checks), [Autoscaler 그래프 해석](https://docs.cloud.google.com/compute/docs/autoscaler/understanding-autoscaler-decisions).

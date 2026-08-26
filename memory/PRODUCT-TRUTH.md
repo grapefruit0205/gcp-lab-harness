@@ -289,6 +289,28 @@ manifest verified, Task1–7/9 passed, 선택Task8 manual-boundary/destroy_pendi
 
 Phase13 직렬 증거 보완 관측(2026-08-26): 초기25개 생성 후 stopped VM 직렬조회가 resource-not-ready로 실패했다. RUNNING 중 receipt 작성·정확한 기존 builder만 재시작하여 증거 재수집·stop하는 코드와49회귀를 통과했다. 재수집은 원래 이미지 제작시점 로그 복원이 아니며 표시를 후속 no-op에도 유지한다.25no-op의2fc9f4… 복구 apply/verify가 진행 중이다. 근거: `memory/knowledge/gcp-compute-serial-receipts.md`, ignored `artifacts/phase13-receipt-{replan,cloud-apply,cloud-verify}.log`. 아직 Phase13 전체 성공을 주장하지 않는다.
 
+## Phase15 실제 모듈·통신·멱등성 — state: observed, 리소스 유지 — 2026-08-26
+
+run p15-260826-2300의882a7abe…4create계획을D047로apply/verify하여exit0·manifest verified·Task1–4passed였다. autoVPC/firewall/두region privateVM RUNNING,정확한managed주소4개(data image제외),VM1→VM2 privateping,후속Terraform plan detailed-exitcode0을확인했다(n=1). 근거: ignored `artifacts/phase15-cloud-{plan,apply,verify}.log`, 해당run `evidence/phase-15-machine.json`과`idempotency.log`. 현재리소스를유지하며최종destroy/사용자UI조작/다른환경무조건성공은주장하지않는다. Task1–4콘솔출력을읽고사용자에게상세하위안내와멱등성의로컬증거경계를전달했다.
+
+## Phase14 실제 내부 LB 통신·보존 복구 — state: observed, 리소스 유지 — 2026-08-26
+
+run p14-260826-2300의초기16개생성후backend UTILIZATION400을CONNECTION으로고쳐나머지2개를생성했다. 이후gcloud 표시transform의VM이름오독을JSON URL/소유권검사로수정했고,실제Apache기본페이지는DirectoryIndex누적을명시초기화하여복구했다. 기존18개Terraform리소스/immutabletemplate/VM교체0·전체삭제0이다.
+
+마지막9af07dc9cf7fc3e9bf3294fc51d6576a4fb32065d349b96f25cec055bc467d30의18no-op·정확한MIG member ID/라벨을확인한Apache수렴action을D047로apply/verify하여exit0·Task1–5passed였다. 후순위p14-php-index.conf는초기스크립트의p14-index.conf와분리했다. n=1실측: 두backend각각HEALTHY/직접HTTP,VIP60성공/정확한2hostname/clientIP10.10.20.50보존,INTERNAL/CONNECTION readback·VM외부IP0. persistent drop-in/localhost검사도성공했다. 재부팅실험·실제Console클릭·최종destroy는미수행이다.
+
+근거: ignored `artifacts/phase14-persistent-index-cloud-{apply,verify}.log`, 해당run manifest·evidence/index-repair.json/backend-configuration.json/backend-health.json/phase-14-machine.json. 이전400/404/기본페이지진단로그와중간plan은보존했다. Task별콘솔출력과하위안내·privateVIP외부브라우저검증불가경계를사용자에게전달했다.
+
+## Phase13 실제 외부 LB·자동 확장/축소 — state: observed, 리소스 유지 — 2026-08-26
+
+run `p13-260826-2243`의 최종 bundle `f5c0dead0e61b28ebb570ddc5cf35ad966f6dae41692cf67a7787d64098fc446`는24no-op/부하NAT1update/추가삭제교체0이었다. NAT64포트·OUT_OF_RESOURCES893 진단 후8192포트/keepalive를 적용하여 apply/verify exit0, manifest verified/Task1–7passed를 확인했다(n=1).
+
+실측: baseline 목표합계2→최초확장3→후속snapshot4→부하종료 후 목표합계2 복귀, 서로 다른backend marker4·현재LB로그20·IPv4 HTTP 성공이다. machine.json의 peak_target_total=3은 첫 확장 감지값이며 전체 최대치를 지속 표본화한 값이 아니다. 후속4대 관측은 별도 snapshot에 있다. 두 리전backend의HEALTHY는 별도 health조회로 확인했다. IPv6 forwarding-rule 구성검사는 통과했으나 실제HTTP는 경로 부재로unavailable이다. builder receipt는 같은VM의 나중재수집이며 readiness_recovered_after_image=true를 유지한다. 이를 최초이미지제작시점원시로그 복구로 주장하지 않는다.
+
+근거: ignored `artifacts/phase13-nat-cloud-{apply,verify}.log`, `artifacts/phase13-scale-in-observation.json`, 해당run의manifest·evidence/{phase-13-machine,autoscale-progress,image-provenance,final-mig-readback,final-backend-health}.json·load-journal.log. 중지builder/이미지/부하VM/LB/네트워크·실패state/로그를 보존했다. autoscaler의실습내축소와 전체destroy는 다르며 원문builder삭제·UI클릭·전체정리는 미수행이다.
+
+최종 로컬검증 observed:54회귀·TFmock9개·Bash/fmt/init/validate/각gate·전체make test-offline(Phase09 기존70개 포함) exit0, 안내13tests/15Phase90Task167원문제목 coverage PASS. 근거 `artifacts/phase10-15-final-verified-{local-tests,full-offline}.log`. Phase14 최종 안내 fresh-reader의5로컬명령도exit0/차단0이며Cloud/UI독립검증은 아니다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -299,7 +321,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10–12 최종destroy, Phase13–15 실제 Cloud machine verify·최종destroy (Phase10–12 실제apply/machine verify는위관측과구분)
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10–15 최종destroy (Phase10–15 실제apply/machine verify는위관측과구분). Phase11 종료inventory의dashboard API 버전 보완은Q024에 남아 있음.
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

@@ -40,7 +40,10 @@ jq -e '.builder_ready==true and .builder_stopped_before_image==true and .reset_a
 load_zone="$(terraform -chdir="$run_dir/work" output -raw load_zone)"
 loadgen="p13-loadgen-$run_id"; load_pid_started=false
 cleanup_load() {
-  if [[ "$load_pid_started" == true ]]; then timeout 60 gcloud compute ssh "$loadgen" --zone="$load_zone" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command="sudo systemctl stop 'p13-load-$run_id.service'" >/dev/null 2>&1 || true; fi
+  if [[ "$load_pid_started" == true ]]; then
+    timeout 60 gcloud compute ssh "$loadgen" --zone="$load_zone" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command="sudo systemctl stop 'p13-load-$run_id.service'; sudo journalctl -u 'p13-load-$run_id.service' --no-pager -n 80" >"$evidence_dir/load-journal.log" 2>&1 || true
+    chmod 600 "$evidence_dir/load-journal.log"
+  fi
 }
 trap cleanup_load EXIT
 guest() { timeout 180 gcloud compute ssh "$loadgen" --zone="$load_zone" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command="$1"; }
@@ -80,15 +83,21 @@ if ip -6 route get "$ipv6" >/dev/null 2>&1; then
 fi
 
 initial_total=0
-for region in "$GCP_REGION" "$GCP_SECONDARY_REGION"; do
-  name="$([[ "$region" == "$GCP_REGION" ]] && printf 'us-1-mig-%s' "$run_id" || printf 'notus-1-mig-%s' "$run_id")"
-  size="$(gcloud compute instance-groups managed describe "$name" --region="$region" --project="$GCP_PROJECT_ID" --format='value(targetSize)')"
-  initial_total=$((initial_total + size))
-done
-[[ "$initial_total" -eq 2 ]] || harness_die "MIG baseline target size 합이 2가 아닙니다."
+baseline_ready() {
+  local region name size
+  initial_total=0
+  for region in "$GCP_REGION" "$GCP_SECONDARY_REGION"; do
+    name="$([[ "$region" == "$GCP_REGION" ]] && printf 'us-1-mig-%s' "$run_id" || printf 'notus-1-mig-%s' "$run_id")"
+    size="$(gcloud compute instance-groups managed describe "$name" --region="$region" --project="$GCP_PROJECT_ID" --format='value(targetSize)')" || return 1
+    initial_total=$((initial_total + size))
+  done
+  [[ "$initial_total" -eq 2 ]]
+}
+harness_wait_until 1200 30 baseline_ready || harness_die "MIG baseline target size 합이 2로 돌아오지 않았습니다."
+jq -n '{stage:"baseline",initial_target_total:2}' >"$evidence_dir/autoscale-progress.json"
 
 load_pid_started=true
-guest "sudo systemd-run --unit='p13-load-$run_id' --property=RuntimeMaxSec=360 --collect /bin/bash -c 'while :; do ab -n 5000 -c 100 -H \"X-Harness: p13\" http://$ipv4/ >/dev/null 2>&1 || exit 1; done'"
+guest "sudo systemd-run --unit='p13-load-$run_id' --property=RuntimeMaxSec=360 --collect /bin/bash -c 'ab -k -l -r -s 10 -t 350 -n 10000000 -c 100 -H \"X-Harness: p13\" http://$ipv4/'"
 scale_out_total=0
 scale_out() {
   local total=0 region name size
@@ -98,9 +107,12 @@ scale_out() {
     (( total += size ))
   done
   scale_out_total=$total
-  (( total > initial_total && total <= 4 ))
+  if (( total > initial_total && total <= 4 )); then return 0; fi
+  guest "sudo systemctl is-active --quiet 'p13-load-$run_id.service'" || harness_die "scale-out 전에 부하 unit이 종료됨; load-journal.log 확인"
+  return 1
 }
 harness_wait_until 900 20 scale_out || harness_die "제한 시간 내 autoscale scale-out을 관찰하지 못했습니다."
+jq -n --argjson peak "$scale_out_total" '{stage:"scale-out",initial_target_total:2,peak_target_total:$peak}' >"$evidence_dir/autoscale-progress.json"
 
 markers=""
 for _ in $(seq 1 120); do markers+="$(curl -fsS --max-time 10 "http://$ipv4/" || true)"$'\n'; done
@@ -115,6 +127,7 @@ lb_log_ready() {
 }
 harness_wait_until 600 15 lb_log_ready || harness_die "현재 backend service의 실제 HTTP load balancer log 미도착"
 lb_log_count="$(jq 'length' <<<"$lb_log_json")"
+jq -n --argjson peak "$scale_out_total" --argjson markers "$distinct_markers" --argjson logs "$lb_log_count" '{stage:"waiting-scale-in",initial_target_total:2,peak_target_total:$peak,distinct_backend_markers:$markers,lb_log_count:$logs}' >"$evidence_dir/autoscale-progress.json"
 
 scaled_in() {
   local total=0 region name size
@@ -126,6 +139,8 @@ scaled_in() {
   (( total == 2 ))
 }
 harness_wait_until 1200 30 scaled_in || harness_die "autoscale scale-in baseline 복귀를 관찰하지 못했습니다."
+jq '.stage="verified"|.final_target_total=2' "$evidence_dir/autoscale-progress.json" >"$evidence_dir/autoscale-progress.tmp.json"
+mv "$evidence_dir/autoscale-progress.tmp.json" "$evidence_dir/autoscale-progress.json"
 
 jq -n --arg phase 13 --arg run_id "$run_id" --arg ipv6_probe "$ipv6_probe" --arg provenance_sha256 "$(harness_sha256_file "$provenance")" --argjson initial_total "$initial_total" --argjson scale_out_total "$scale_out_total" --argjson distinct_markers "$distinct_markers" --argjson lb_log_count "$lb_log_count" '{phase:$phase,run_id:$run_id,tasks:{
  "task-1":{status:"passed",detail:"공식 health-check source range와 target tag 확인"},

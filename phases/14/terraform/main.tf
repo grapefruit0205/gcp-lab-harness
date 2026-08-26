@@ -49,7 +49,9 @@ locals {
     printf '%s\n' '<?php printf("<h1>Internal Load Balancing Lab</h1><h2>Client IP</h2>%s<h2>Hostname</h2>backend=%s<h2>Server Location</h2>%s", htmlspecialchars($_SERVER["REMOTE_ADDR"]), htmlspecialchars(gethostname()), htmlspecialchars(file_get_contents("/var/www/p14-zone"))); ?>' >/var/www/html/index.php
     printf 'DirectoryIndex index.php\n' >/etc/apache2/conf-available/p14-index.conf
     a2enconf p14-index
-    systemctl enable --now apache2
+    apache2ctl configtest
+    systemctl enable apache2
+    systemctl restart apache2
   EOT
 }
 
@@ -229,8 +231,14 @@ resource "google_compute_region_backend_service" "ilb" {
   protocol              = "TCP"
   load_balancing_scheme = "INTERNAL"
   health_checks         = [google_compute_region_health_check.ilb.id]
-  backend { group = google_compute_instance_group_manager.a.instance_group }
-  backend { group = google_compute_instance_group_manager.b.instance_group }
+  backend {
+    group          = google_compute_instance_group_manager.a.instance_group
+    balancing_mode = "CONNECTION"
+  }
+  backend {
+    group          = google_compute_instance_group_manager.b.instance_group
+    balancing_mode = "CONNECTION"
+  }
 }
 
 resource "google_compute_address" "ilb" {

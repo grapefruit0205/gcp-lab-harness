@@ -369,3 +369,29 @@ One short section per working session: what was worked on, what was decided (wit
 - observed 22:52 KST: 초기 Terraform은25added/0changed/0destroyed 완료했지만 post-apply가 중지 builder의 직렬 로그를 읽어 실패했다. 실제 get-serial-port-output의 resource-not-ready와 공식 RUNNING 조회 제한을 대조했다. LB·image·MIG·state·실패 로그를 보존했다.
 - implemented: wait-builder가 RUNNING 중 서로 다른 boot/Apache version/Cloud ID를0600 receipt로 저장한 뒤 stop한다. 기존 run은 정확한 ID/라벨/image sourceDisk를 검사해 동일 builder만 start/reset/capture/stop한다. recovered_after_image를 receipt에 저장하여 후속 no-op에서도 원본 제작시점 증거로 오인하지 않는다.49회귀 통과.
 - observed 22:57 KST: 최종 재계획2fc9f4353a4e6021bf1427c23328f79a903ca4feff0cdb9438534a6fd34106a6은25no-op·resource 추가변경삭제교체0, builder ID output만 추가한다. 조건부 builder 복구·기존 bounded 부하 action/기존 계정·프로젝트/과금 유지 검토 후 D047 apply/verify를 시작했다. 중간225041… 계획은 미적용으로 보존했다. Phase14/15 실행 전이며 새 승인 질문은 필요하지 않다.
+- observed: 중지 전 증거 보완의49회귀/Bash/fmt/init/validate/TF mock/전체10–15 suite와3차안내리허설4명령·13tests가exit0이었다.88cbe3909cb17382958fc1081af6aacf80877e03을main게시·원격SHA일치·clean FF pull한 뒤 Phase14/15 각각새plan을시작했다.
+- observed: Phase13 복구 apply exit0·기존25개0/0/0, Apache2.4.68-1~deb12u1·서로다른2boot·중지beforeimage·receiptSHA·readiness_recovered_after_image=true를확인했다. 현재dual-region/backend/HTTP를거쳐bounded load/scale검증중이며전체완료는아니다.
+
+## 2026-08-26 — Phase14/15 신규 배포
+
+- implemented: Phase14 Apache가설치중이미시작된경우 a2enconf만으로새DirectoryIndex를반영하지못할수있는경로를배포전에발견했다. 공식Apache재기동/설정재읽기와Debian a2enconf링크생성계약을대조해configtest→enable→restart로보완하고50회귀·Phase14gate/TFmock을통과했다. 최초35b7de… 계획은미적용보존했다. Cloud에서해당오류가발생했다고주장하지않는다.
+- observed: p14-260826-2300 최종eeb808c9bfb9416583df459758540f80adb41170f0915953e2eed92c26b71f1f는18create/기존변경삭제0. private e2-micro VM3·30GBdisk·NAT1·INTERNAL LB1·같은region다른zone2·IAP/내부/health ingress와VIP60HTTP action을검토해D047apply/verify를시작했다. 해당VM/disk/NAT/LB유지비용이있고자동종료없음.
+- observed: p15-260826-2300의882a7abedca9495caed530c62820b1769d26dd40eab248afd9a4ddfff4df9427은4create/기존변경삭제0. 별도autoVPC/firewall·private e2-micro VM2·20GBdisk·두region과privateping/0변경재plan action을검토해D047apply/verify를시작했다. 기존계정/project·이전리소스보존·VM/disk유지비용을확인했다. Phase13scale검증대기와독립VPC배포를병행하며공유승인lib를변경하지않았다.
+- observed: Phase15 apply4개/verify exit0·Task1–4passed·managed주소4·cross-region privateping·idempotency detailed-exitcode0을확인했다. 콘솔출력을읽고Task1CloudShell/2VPC·방화벽·VM/3상세대조/4로컬멱등성증거와하위안내를사용자에게전달했다. 리소스유지·destroy미수행.
+- observed: Phase14는16개생성후backend 기본UTILIZATION 때문에400이었다. 공식INTERNAL passthrough CONNECTION계약과API응답을대조하여두backend를명시CONNECTION으로보완했다. TFmock은plan시unknown set문제를실제Cloud성공으로오인하지않고추가mock apply assertion으로해결했다. gate/TFmock2/회귀통과후6c7cae0382d52983abd4e1b322cd4710cef16f93df3c3f3c6e117b6f548f9555의16no-op/2create/삭제교체0을검토해동일run재apply했다.
+- observed: Phase13부하unit이30초exit1로종료한것을journal로확인했다. 유한ab재현은43요청후timeout,단순curl/동시2는정상. NAT mapping64포트와OUT_OF_RESOURCES893드롭으로원인을좁혔다. 비어있는부하를기다리던기존verifier만TERM하여rc143/실패로그를보존했고Cloud리소스삭제없음.
+- implemented: 부하NAT8192포트·ab keepalive/동시100/350초(systemd360초)·journal보존/조기종료검사/scale진행evidence/재시도baseline수렴대기추가.51회귀·Phase13gate/TFmock2통과. f5c0dead0e61b28ebb570ddc5cf35ad966f6dae41692cf67a7787d64098fc446은기존24no-op/NAT1update·추가삭제교체0이며기존VM/이미지/LB를유지한다. action/비용/대상을검토해D047재apply/verify시작. 부하전용NAT외수정없음,무제한ingress없음.
+- observed: P13 NAT재apply0/1/0·P14 CONNECTION재apply2/0/0이성공했다. P13재시도provenance의recovered=true유지와NAT mapping8256(최소8192·이전매핑포함)을확인했고실제MIG2→3 scale-out을관측했다. scale-in은진행중이다.
+- observed: P14검증의gcloud value(instance)가zone을출력해잘못된VM조회404였다. 같은명령의JSON URL은올바른VM이므로원시JSON/project/zone/run검사로수정했다. 추가utility 직접HTTP로두backend/VIP가Debian기본페이지를반환함을확인했고DirectoryIndex누적규칙과대조했다. 실패후18개모두보존했다.
+- implemented: P14post-apply의정확한memberID/라벨확인후DirectoryIndex disabled→index.php/configtest/reload/localhost본문검사를추가했다. 기존immutabletemplate/VM/state를교체하지않고새run도동일수렴action을사용한다.54회귀·TFmock2·gate통과;코드보완전중간JSON수정계획은미적용보존하고최종18no-op계획을준비중이다.
+- observed: 최종7652d55ede1f18bfe48de3a12939e0e440517ed509ac799ceec9fe62a8b5f79f/18no-op 및정확한VM두개Apache수렴action을D047검토·apply/verify해모두exit0이었다. Task1–5passed·양쪽healthy·direct HTTP·VIP60성공/정확한두marker/clientIP보존·VM외부IP0을확인하고Task별콘솔안내를전달했다. 실제리소스교체/삭제0.
+- implemented: 성공후지속성검토에서기존startup이같은p14-index.conf를다시쓰는경로를발견했다. 별도후순위p14-php-index.conf로분리하여기존파일을수정하지않고재기동시에도설정이남도록보완했다.54회귀의반복수렴/기존파일보존·gate통과후새18no-op계획을준비한다. 실제VM재부팅시험을했다고주장하지않는다.
+- observed 23:16 KST: 최종9af07dc9cf7fc3e9bf3294fc51d6576a4fb32065d349b96f25cec055bc467d30의18no-op/action범위·비용유지를검사하여D047 apply/verify exit0을확인했다. persistent_drop_in=p14-php-index.conf·소유backend2/configtest/localHTTP·Task1–5passed/VIP60/marker2/clientIP/외부IP0이통과했다. 현재source/work가저장binding과일치하며재부팅/전체destroy는수행하지않았다.
+
+## 2026-08-26 — Phase10–15 최종 실기 완료·게시 준비
+
+- observed 23:22 KST: Phase13 최종f5c0dead…apply/verify exit0, manifest verified/Task1–7passed. 최초확장관측3·별도snapshot4,부하23:09:50종료후목표합계2복귀. marker4/LB로그20·IPv4HTTP성공,IPv6HTTP는route부재로unavailable이다. 수동resize/전체destroy없이자동축소를관측했다. 당시MIG는각1target/자동삭제처리중이므로실제settled VM수는후속readback으로구분한다.
+- observed: Phase14 최종문서fresh-reader가Task3/4/5출력·전체coverage·안내13tests의5명령exit0/차단0이었다. 별도persistent설정·CONNECTION·privateVIP·60응답/clientIP·verified와UI/cleanup/clone증거부재경계를문서에서찾았다. 전체onboarding/원문일치/Cloud/API/SSH/부하/Git/UI검증은아니다.
+- observed: 최신코드54회귀/TFmock9/Bash/fmt/init/validate/각gate·make test-offline(Phase09기존70포함)exit0. 안내13tests와15Phase90Task167원문제목coverage도재통과했다. 로그artifacts/phase10-15-final-verified-{local-tests,full-offline}.log. 기존shared6lib/Phase08/09/원문은유지한다.
+- static-gap: 요청받지않은Phase11종료inventory의dashboard list v3경로를발견해Q024로분리했다. 현재성공한별도v1apply/verify와다르며다음명시적destroy전에v1조회보완/새계획이필요하다. 현재전체destroy검증완료로과장하지않고기존binding을유지했다.
+- record: Phase10–15 최신실기표·Task하위콘솔링크·실제/수동/정리경계를실행안내/감사/truth/Q021/goal/checkpoint에반영한다. D047는이번결과게시후종료하며새실행/cleanup을자동승계하지않는다. 비밀·개인설정·state·원시로그를제외한관련변경만D045한국어commit/push대상이다.

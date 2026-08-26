@@ -112,6 +112,8 @@ resource "google_compute_router_nat" "load" {
   region                             = var.load_region
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+  # 동시100개 연결과 TIME_WAIT가 기본64포트를 고갈시키지 않도록 부하 VM만 확장한다.
+  min_ports_per_vm = 8192
 }
 
 resource "google_compute_instance" "builder" {

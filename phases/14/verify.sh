@@ -6,7 +6,7 @@ source "$repo_root/lib/harness/config.sh"; source "$repo_root/lib/harness/terraf
 mode=offline; run_id=""
 while [[ "$#" -gt 0 ]]; do case "$1" in --offline)mode=offline;shift;;--destroyed)mode=destroyed;shift;;--run)[[ "$mode" == destroyed ]]||mode=cloud;run_id="${2:-}";shift 2;;*)exit 2;;esac;done
 if [[ "$mode" == offline ]]; then
-  bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh"; terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
+  bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh" "$phase_dir/terraform/ensure-index.sh"; terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   [[ "$(grep -Ec '^resource "google_compute_region_instance_template"' "$phase_dir/terraform/main.tf")" -eq 2 ]] || harness_die "instance template 2개 필요"
   [[ "$(grep -Ec '^resource "google_compute_instance_group_manager"' "$phase_dir/terraform/main.tf")" -eq 2 ]] || harness_die "MIG 2개 필요"
   ! grep -Eq 'access_config|0\.0\.0\.0/0|google_compute_global_forwarding_rule' "$phase_dir/terraform/main.tf" || harness_die "external access 경로가 있습니다."
@@ -26,10 +26,20 @@ guest(){ timeout 180 gcloud compute ssh "$utility" --zone="$zone_one" --project=
 harness_wait_until 600 10 guest 'command -v curl >/dev/null' || harness_die "utility VM readiness 실패"
 
 backend_names=()
+backend_instance_name() {
+  # gcloud value(instance)는 내장 display transform으로 zone을 반환할 수 있다.
+  # 원시 JSON의 URL에서 이름을 읽고 소유 project/zone/run까지 검사한다.
+  local group="$1" zone="$2" instances
+  instances="$(gcloud compute instance-groups managed list-instances "$group" --zone="$zone" --project="$GCP_PROJECT_ID" --format=json)" || return 1
+  jq -er --arg prefix "https://www.googleapis.com/compute/v1/projects/$GCP_PROJECT_ID/zones/$zone/instances/" --arg run "$run_id" '
+    if length==1 and .[0].instanceStatus=="RUNNING" and (.[0].instance|startswith($prefix)) then
+      (.[0].instance|split("/")|last)|select(contains($run))
+    else empty end' <<<"$instances"
+}
 for spec in "instance-group-1-$run_id:$zone_one" "instance-group-2-$run_id:$zone_two";do
   group="${spec%%:*}";zone="${spec#*:}"
-  instance_url="$(gcloud compute instance-groups managed list-instances "$group" --zone="$zone" --project="$GCP_PROJECT_ID" --format='value(instance)' | head -n1)"
-  name="${instance_url##*/}";[[ -n "$name" ]]||harness_die "$group backend instance 누락";backend_names+=("$name:$zone")
+  harness_wait_until 300 10 backend_instance_name "$group" "$zone" >/dev/null || harness_die "$group backend instance 준비 실패"
+  name="$(backend_instance_name "$group" "$zone")";backend_names+=("$name:$zone")
 done
 
 for spec in "${backend_names[@]}";do
@@ -42,6 +52,8 @@ healthy() {
   python3 "$repo_root/lib/harness/advanced.py" health --file "$evidence_dir/backend-health.json" --expected "instance-group-1-$run_id" "instance-group-2-$run_id"
 }
 harness_wait_until 600 10 healthy || harness_die "ILB 양쪽 backend health 수렴 실패"
+gcloud compute backend-services describe "my-ilb-backend-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" --format=json >"$evidence_dir/backend-configuration.json"
+jq -e '.loadBalancingScheme=="INTERNAL" and (.backends|length)==2 and all(.backends[]; .balancingMode=="CONNECTION")' "$evidence_dir/backend-configuration.json" >/dev/null || harness_die "INTERNAL backend CONNECTION 모드 불일치"
 responses="$(guest "set -eu; for i in \$(seq 1 60); do curl -fsS --max-time 5 'http://$vip/'; printf '\\n'; done")"
 markers="$(grep -o 'backend=[^ <]*'<<<"$responses")"
 [[ "$(wc -l<<<"$markers")" -eq 60 ]] || harness_die "VIP 성공 응답 marker가 정확히60개가 아님"

@@ -15,3 +15,11 @@ run "original_contract" {
     error_message = "내부 VIP·다른 zone 계약"
   }
 }
+
+run "connection_backend_contract" {
+  command = apply
+  assert {
+    condition     = length(google_compute_region_backend_service.ilb.backend) == 2 && alltrue([for backend in google_compute_region_backend_service.ilb.backend : backend.balancing_mode == "CONNECTION"])
+    error_message = "INTERNAL passthrough backend는 CONNECTION 모드여야 함"
+  }
+}

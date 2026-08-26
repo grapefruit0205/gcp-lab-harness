@@ -252,6 +252,69 @@ class BillingTests(unittest.TestCase):
 
 
 class IntegrationTests(unittest.TestCase):
+    def test_ilb_apache_reloads_new_directory_index(self):
+        source = (ROOT / "phases/14/terraform/main.tf").read_text()
+        startup = source.split("startup_script = <<-EOT", 1)[1].split("\n  EOT", 1)[0]
+        commands = ["a2enconf p14-index", "apache2ctl configtest", "systemctl enable apache2", "systemctl restart apache2"]
+        offsets = [startup.index(command) for command in commands]
+        self.assertEqual(offsets, sorted(offsets))
+        self.assertNotIn("systemctl enable --now apache2", startup)
+
+    def test_ilb_instance_name_uses_owned_json_url_not_display_transform(self):
+        source = (ROOT / "phases/14/verify.sh").read_text()
+        function = "backend_instance_name() {" + source.split("backend_instance_name() {", 1)[1].split("\n}\n", 1)[0] + "\n}\n"
+        instance = {"instanceStatus": "RUNNING", "instance": "https://www.googleapis.com/compute/v1/projects/lab-project/zones/us-central1-a/instances/p14-group1-p14-test-001-abcd"}
+        for label, fixture, accepted in (("owned", [instance], True), ("missing", [], False),
+                ("foreign", [dict(instance, instance=instance["instance"].replace("lab-project", "other-project"))], False),
+                ("starting", [dict(instance, instanceStatus="STAGING")], False)):
+            script = 'set -Eeuo pipefail\nGCP_PROJECT_ID=lab-project; run_id=p14-test-001\ngcloud(){ [[ "$*" == *--format=json* ]] || return 99; printf %s "$TEST_INSTANCES"; }\n' + function + 'backend_instance_name group us-central1-a\n'
+            result = subprocess.run(["bash", "-c", script], capture_output=True, text=True,
+                                    env=dict(os.environ, TEST_INSTANCES=json.dumps(fixture)))
+            with self.subTest(label=label):
+                self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                if accepted: self.assertEqual(result.stdout.strip(), "p14-group1-p14-test-001-abcd")
+
+    def test_ilb_directory_index_reset_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "conf").mkdir(); (root / "www").mkdir()
+            (root / "conf/p14-index.conf").write_text("DirectoryIndex index.php\n")
+            (root / "www/index.php").write_text("<?php echo 'test'; ?>")
+            source = (ROOT / "phases/14/terraform/ensure-index.sh").read_text().replace("/etc/apache2/conf-available", str(root / "conf")).replace("/var/www/html", str(root / "www"))
+            prefix = '''a2enconf(){ :; }
+apache2ctl(){ [[ "$1" == configtest ]]; }
+systemctl(){ [[ "$1 $2" == 'reload apache2' ]]; }
+hostname(){ printf test-host; }
+curl(){ printf 'backend=test-host'; }
+'''
+            for _ in range(2):
+                result = subprocess.run(["bash", "-c", prefix + source], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual((root / "conf/p14-php-index.conf").read_text(), "DirectoryIndex disabled\nDirectoryIndex index.php\n")
+                self.assertEqual((root / "conf/p14-index.conf").read_text(), "DirectoryIndex index.php\n")
+
+    def test_ilb_index_repair_rejects_foreign_instance_before_ssh(self):
+        source = (ROOT / "phases/14/execute.sh").read_text()
+        function = "phase_after_apply() {" + source.split("phase_after_apply() {", 1)[1].split('\nsource "$repo_root/', 1)[0]
+        with tempfile.TemporaryDirectory() as temp:
+            script = '''set -Eeuo pipefail
+repo_root="$TEST_ROOT"; GCP_PROJECT_ID=lab-project
+terraform(){ printf us-central1-a; }
+harness_die(){ exit 1; }
+harness_wait_until(){ shift 2; "$@"; }
+gcloud(){
+  printf '%s\\n' "$1 $2 $3" >>"$TEST_ROOT/calls"
+  case "$1 $2 $3" in
+    'compute instance-groups managed') printf '[{"id":"123","instanceStatus":"RUNNING","instance":"https://www.googleapis.com/compute/v1/projects/lab-project/zones/us-central1-a/instances/p14-group-p14-test-001"}]' ;;
+    'compute instances describe') printf '{"id":"999","labels":{"run":"other","phase":"14"},"status":"RUNNING"}' ;;
+    *) return 99 ;;
+  esac
+}
+''' + function + '\nphase_after_apply p14-test-001\n'
+            result = subprocess.run(["bash", "-c", script], capture_output=True, text=True, env=dict(os.environ, TEST_ROOT=temp))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("compute ssh", (Path(temp) / "calls").read_text())
+
     def test_stopped_builder_uses_receipt_and_rejects_wrong_identity(self):
         source = (ROOT / "phases/13/execute.sh").read_text()
         function = 'phase_after_apply() {' + source.split('phase_after_apply() {', 1)[1].split('\nsource "$repo_root/', 1)[0]
@@ -324,6 +387,15 @@ bash "$1/phases/13/terraform/wait-builder.sh" lab-project us-central1-a p13-buil
             self.assertNotEqual(receipt["first_boot"], receipt["second_boot"])
             self.assertEqual(receipt["apache_package_version"], "2.4.test")
             self.assertEqual(receipt["instance_id"], "1234567")
+
+    def test_bounded_load_preserves_logs_and_detects_early_exit(self):
+        source = (ROOT / "phases/13/verify.sh").read_text()
+        self.assertIn("RuntimeMaxSec=360", source)
+        self.assertIn("ab -k -l -r -s 10 -t 350 -n 10000000 -c 100", source)
+        self.assertIn("load-journal.log", source)
+        self.assertIn("systemctl is-active --quiet", source)
+        self.assertIn("harness_wait_until 1200 30 baseline_ready", source)
+        self.assertIn("autoscale-progress.json", source)
 
     def test_loadgen_uses_custom_image_third_region(self):
         source = (ROOT / "phases/13/terraform/main.tf").read_text()

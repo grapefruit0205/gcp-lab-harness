@@ -59,4 +59,4 @@
 
 ## 출처·검증 범위
 
-2026-08-26 원문 15·코드 대조(observed), 실제 UI/Cloud 미검증. [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details), [Terraform data source](https://developer.hashicorp.com/terraform/language/data-sources).
+2026-08-26 원문 15·코드 대조(observed). 실제 UI 클릭은 별도이며 Cloud 기계 검증 결과·한계는 [실행 근거](../../memory/PRODUCT-TRUTH.md)를 따릅니다. [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details), [Terraform data source](https://developer.hashicorp.com/terraform/language/data-sources).

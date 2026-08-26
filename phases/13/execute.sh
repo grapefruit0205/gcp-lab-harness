@@ -26,7 +26,7 @@ phase_write_action_plan() {
     {id:"builder-preserve",kind:"gcloud",target:("p13-builder-"+$run_id),mutation:"read saved pre-stop readiness; if missing, identity-check existing builder then start if stopped, reset/capture/stop without rebuilding image; retry can resume running builder",rollback:"preserve builder/image/state; explicit destroy only",timeout_seconds:1500,contains_secret:false},
     {id:"backend-health",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"bounded health polling",rollback:"read-only",timeout_seconds:900,contains_secret:false},
     {id:"lb-log-readback",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"verify logConfig and bounded current-backend log polling",rollback:"read-only",timeout_seconds:600,contains_secret:false},
-    {id:"bounded-load",kind:"guest",target:("p13-loadgen-"+$run_id),mutation:"maximum 360-second ApacheBench loop",rollback:"kill exact ab processes",timeout_seconds:420,contains_secret:false},
+    {id:"bounded-load",kind:"guest",target:("p13-loadgen-"+$run_id),mutation:"maximum 360-second systemd unit; ApacheBench keepalive, concurrency100, timelimit350; persist journal and fail fast if stopped before scale-out",rollback:"stop exact systemd load unit",timeout_seconds:420,contains_secret:false},
     {id:"scale-observation",kind:"gcloud",target:"two regional MIGs min=1 max=2",mutation:"observe scale-out and return to baseline",rollback:"autoscaler and MIG destroy",timeout_seconds:1200,contains_secret:false}
   ]}' >"$1"
 }

@@ -44,6 +44,7 @@
 
 1. **VM → utility-vm-run → NIC**에서 private10.10.20.50/외부 IP 없음을확인하고 MIG 두 VM 의 privateIP·hostname 을 읽습니다.
 2. `phase-14-machine.json`의각 backend 직접 HTTP 성공을 대조합니다. 원문응답의 Client IP 는 utility 주소이며서버자신의 IP 와다릅니다.
+3. `evidence/index-repair.json`에서대상2개·configtest/localhost HTTP 성공과`persistent_drop_in=p14-php-index.conf`를읽습니다. 초기스크립트의설정과별도로이drop-in이PHP우선순위를유지합니다. 확인을위한VM교체/재부팅/설정수정은하지않습니다.
 
 ## Task 4. Internal Network Load Balancer 구성하기
 
@@ -54,7 +55,7 @@
 
 ### 리전 백엔드 서비스 구성하기
 
-1. **LB → Backends → my-ilb-backend-run**에서 TCP·INTERNAL·두 instancegroup 과 regionalTCP80 healthcheck 를 읽습니다.
+1. **LB → Backends → my-ilb-backend-run**에서 TCP·INTERNAL·두 instancegroup의 CONNECTION 모드와 regionalTCP80 healthcheck 를 읽습니다. `evidence/backend-configuration.json`의동일값과대조합니다. 이LB에UTILIZATION 모드를설정하지않습니다.
 2. **Backend health**에서두예상 group 각각 HEALTHY 인지 backend-health.json 과대조합니다. 단발기동직후에는수렴지연이있을수있습니다.
 
 ### 프런트엔드 구성하기
@@ -76,4 +77,4 @@
 
 ## 출처·검증 범위
 
-2026-08-26 원문 14·코드 대조(observed), 실제 UI/Cloud 미검증. [상태 확인](https://docs.cloud.google.com/load-balancing/docs/health-checks). 명시적 destroy 후에는원래두 zone 이아닌현재 config 의 secondaryzone 만검색하지말고 run 전체 inventory 를 확인합니다.
+2026-08-26 원문 14·코드 대조(observed). 실제 UI 클릭은 별도이며 Cloud 기계 검증 결과·한계는 [실행 근거](../../memory/PRODUCT-TRUTH.md)를 따릅니다. [상태 확인](https://docs.cloud.google.com/load-balancing/docs/health-checks). 명시적 destroy 후에는현재config의secondaryzone만검색하지말고run전체inventory를확인합니다.

@@ -17,7 +17,7 @@ run "original_contract" {
     error_message = "두 region·dualstack 계약"
   }
   assert {
-    condition     = google_compute_instance.loadgen.zone == var.load_zone && google_compute_router_nat.load.region == var.load_region
+    condition     = google_compute_instance.loadgen.zone == var.load_zone && google_compute_router_nat.load.region == var.load_region && google_compute_router_nat.load.min_ports_per_vm == 8192
     error_message = "부하 발생기는 별도 세 번째 region/NAT를 사용해야 함"
   }
   assert {

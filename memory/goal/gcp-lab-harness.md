@@ -163,11 +163,12 @@ v3의개별SHA재질문대기는이번작업에한해대체한다. 목표는현�
 | Phase10 | 수정eb50…·실제manifest/evidence | observed 완료:415602행/TIMESTAMP/8query/Task1–5;dataset유지 |
 | Phase11 | 원문11·monitoring.py·실제manifest/evidence | observed 완료:VM3CPU/group·uptime15최신true·alertOff·Task1–7;그룹/정렬400보존복구 |
 | Phase12 | 원문12·vpn.py·실제단계기록 | observed 완료:4터널/BGPbaseline·REGIONAL/GLOBAL·터널0삭제후두리전ping;Task8정리제외 |
-| Phase13/14 | 원문13/14·verifier·감사한계 | 13원문보완후25개생성·중지VM serial조회실패,49회귀/중지전receipt보완·25no-op2fc9f4…복구중;14사전검사PASS |
-| Phase15 | 원문15·모듈/verifier | 새plan→VM간통신/재plan0변경실기 |
-| 보고/게시 | docs/console·truth/checkpoint | 실제/수동/잔여리소스구분,관련변경게시 |
+| Phase13 | 원문13·verifier·실제manifest/evidence | observed 완료:f5c0dead…NAT보완후HTTP/marker4/LB로그20·자동확장/축소통과;IPv6HTTP미검증·builder중지보존 |
+| Phase14 | 원문14·verifier·실제manifest/evidence | observed 완료:9af07dc…CONNECTION/JSON/PHP보존복구후backend2 healthy·VIP60/clientIP통과;교체0 |
+| Phase15 | 원문15·모듈/verifier·실제evidence | observed 완료:882a7abe…4create/privateping·재plan0변경 |
+| 보고/게시 | docs/console·truth/checkpoint | 54회귀/TFmock9/전체offline·상세안내통과,실제/수동/잔여구분기록후최종게시 |
 
 비용초기추정: e2-micro VM,소형disk,VPN4tunnel,NAT,ALB/ILB를모두유지하면시간당약$0.5–1범위(데이터처리/전송/세금/리전차이/예약계약별도). 이는청구상한이아니며각실제plan에서자원수를다시검사한다. 공식2026-08-26조회근거: Compute general-purpose,Network Connectivity,NAT,Load Balancing pricing. 자동전체destroy/비용종료스케줄러는없다.
 
-Single next leaf: Phase13 p13-260826-2243의apply/verify 결과와serial/health/scale증거를확인해보완하고관련변경게시후Phase14 plan/apply/verify를진행한다.
+Single next leaf: 최종관련diff·비밀제외·source/work binding을확인해한국어commit/main push·원격SHA일치로이번D045/D047작업을종료한다. 새Cloud실행·전체destroy는자동후속으로시작하지않는다.
 Sub-foundations exposed: scope delegation—atomic;source/work/state/identity binding—atomic;11 API버전/수렴—split구성조회·CPU·그룹·uptime·전이;12라우팅/장애—splitbaseline·지역변경·failover;13/14부하/건강/멱등—phase별실기;15ping/0변경—atomic.
