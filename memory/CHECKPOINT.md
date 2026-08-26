@@ -1,33 +1,33 @@
-# Checkpoint — Phase10–15 게시 완료·Phase10 계획 승인 대기 — 2026-08-26 21:11
+# Checkpoint — Phase10 Avro 오류 보완·수정 계획 승인 대기 — 2026-08-26 21:51
 
 ## The story so far
 
-D-045에 따라 상세 콘솔 안내·Phase10–15 보완 코드 등82개 파일을 `b67ce8c91542a9738870af80a19db1f8073392fc`로 commit/push했다. 원격 SHA 일치·FF pull을 확인했고 게시 전40개 회귀/13개 안내/TF mock6개·fmt/init/validate·6개 Phase gate가 통과했다. 각 Phase의 실제 Cloud 성공과 원문 수동 단계 전체 완료는 아직 미검증이며 감사 문서에 한계를 분리했다.
+Phase10–15 로컬 구현/상세 안내는b67ce8c·계획기록e4e5689로게시했다. 사용자가D-046으로Phase10 최초da21…계획을승인하여run `p10-260826-2106`에dataset1개를생성했다. load는415602행/DONE/오류0이지만시간필드가INTEGER여서verify실패/query0이었다. dataset/table/state/load receipt/진단로그는보존했다. 승인원본Avro header의timestamp-micros와실제load의옵션누락을대조하여원인을좁혔다.
 
-현재 계정·allowlist·billing·필요 API를 읽기 확인한 뒤 Phase10 run `p10-260826-2106`의 실제 저장 계획을 만들었다. US BigQuery dataset1개 create·update/delete/replace0, fixture 적재·쿼리8개다. source/work/input/config/account/state/hash/schema/0600 재검사도 통과했다. manifest=planned, state=absent이며 apply·load·query는 하지 않았다. 정확한 bundle SHA는 `da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`이다. Phase08 bucket과 Phase09 이전/현재 PSA 잔여는 그대로다.
+보완은useAvroLogicalTypes=true·필드별오류상세·action plan의동일run테이블WRITE_TRUNCATE(data/schema reload)명시다.42개회귀·Phase10 TF mock1개/fmt/validate·Bash/gate·안내13tests·독립로컬안내리허설을통과했다. 같은state replan은dataset1no-op·추가/변경/삭제/교체0,무결성검사PASS다. 새bundle `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`은Q-023승인대기이며보완Cloud재적용/쿼리성공은아직없다. 기존Phase08/09·PSA잔여는변경없음.
 
 ## Decided
 
-- D-045: 관련 변경 stage·commit·push 후 Phase10부터 실제 실행/오류 보완. exact plan 승인은 유지.
-- D-017: 일반 Phase 쉘 실행은 다시 묻지 않지만 저장 계획 SHA 승인 경계는 유지.
-- D-036/D-037: 실패 시 리소스/state/로그를 보존해 진단·수정·새 계획 승인·재apply. 자동 전체 삭제 금지.
-- D-043/D-044: 완료 보고에 Task 하위 콘솔 경로·확인 값·판정·한계/증거를 제공.
-- 계정/config/project 고정; 기존 다른 run은 이번 실행에서 변경하지 않는다.
+- D-046: 최초da21…계획apply·실제검증승인;같은승인반복질문없음.
+- D-045: 관련수정/증거/안내stage·commit·push와순차실기진행.
+- D-017: 코드/계획변경에는새exact SHA승인필요.
+- D-036/D-037: 실패전체destroy금지,같은run/state/로그보존후진단·수정.
+- D-043/D-044: Task하위콘솔경로·확인값·실기/수동/삭제상태구분.
 
 ## Waiting on the user
 
-- Q-022: Phase10 exact `da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`의 apply·fixture 적재·쿼리8개 검증 승인. 온디맨드 쿼리 추정은1회 최대8GiB×$6.25/TiB≈$0.04883, 저장/전송/예약용량/세금 별도. 테이블 기본 만료1일; 전체 과금0/자동 전체 destroy 보장이 아니다.
-- Q-021:10–15 실제 E2E/원문 차이; Q-014:01–08 옛 자동 삭제 경로 미이관.
-- Q-019 catalog entry, Q-012/Q-020 PSA producer 잔여는 별도이며 자동 처리하지 않는다.
+- Q-023: 같은dataset유지,동일sampleinfotable만논리시간타입을켜원본데이터·스키마로재적재한뒤8쿼리를검증하는수정bundle `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106` 승인. 이전과같은계정/project,쿼리1GiB/개·온디맨드분석비용1회약$0.05이하추정;저장/전송등별도.
+- Q-021: Phase10전체검증·Phase11–15실기미완료. Q-014: Phase01–08옛자동삭제경로실행금지.
+- Q-019 catalog 및Q-012/Q-020 PSA잔여는별도이며이번에처리하지않는다.
 
 ## Next first action
 
-사용자의 Q-022 승인 여부를 읽고, 승인됐다면 `cd /home/grapefruit/gcp-lab-harness && ./phases/10/execute.sh apply --run p10-260826-2106 --confirm-plan-sha da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`를 비공개 로그로 실행한 뒤 같은 run을 verify한다. 미승인이면 Cloud 변경 없이 승인을 기다린다.
+Q-023사용자승인을확인한뒤 `cd /home/grapefruit/gcp-lab-harness && ./phases/10/execute.sh apply --run p10-260826-2106 --confirm-plan-sha eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`를새비공개로그로실행하고같은run을verify한다; 미승인이면Cloud변경하지않는다.
 
 ## Tried
 
-- Phase10 최초 plan은 provider init 동안 출력이 없어 대기 후 확인했고 exit0이었다. 실패나 resource 생성으로 오인하지 않았다.
-- P10 텍스트 dry-run/page 크기 판정, P11 시계열 존재만 성공, P12 자동 전체 삭제/재시도4터널 강제 대기는 보완했다. 아직 실제 새 Cloud 검증은 아니다.
-- P13 builder 외부 삭제는 repair 의존성을 깨므로 stopped 보존. 원문 reset/삭제 미구현·disk 비용 잔존을 문서화했다.
-- 원문 하위 제목 최초177 집계는 Task 밖 제목 포함이었다. 대상167·상세221로 정정했다.
-- Phase09 PSA Error9는 producer 사용 중. 강제 peering 삭제/state 제거/무작정 재시도하지 않는다.
+- 최초AVRO적재는논리타입옵션누락으로시간필드가INTEGER였다.기대타입을낮추지않고옵션을명시했다;실제재검증전성공으로표시하지않는다.
+- 새회귀test의evidence폴더fixture누락은테스트설정에서수정했다.42개검사재통과.
+- phase-gate는숫자10이아닌docs/phases/phase-10-bigquery-billing.md경로를받는다.
+- 최초provider init의무출력은완료를기다려exit0확인했다.오류나Cloud생성으로오인하지않는다.
+- Phase09 PSA producer Error9는강제peering삭제/state제거로우회하지않는다.

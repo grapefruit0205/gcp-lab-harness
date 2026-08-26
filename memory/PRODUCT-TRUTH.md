@@ -243,6 +243,16 @@ Observed 21:11 KST: 현재 실행 계정/allowlist/billing preflight와 필요�
 
 근거: ignored `artifacts/phase10-preflight.log`, `phase10-initial-plan.log`, 해당 run의 `phase-10-plan.json`, `action-plan.json`, `binding.json`, `plan-bundle.json`, `manifest.json` 및 실제 무결성 검사 exit0. 기존 Phase08/09 리소스·state를 변경하지 않았다. Phase11–15 실제 plan/apply/verify는 아직 미실행이다.
 
+## Phase10 실제 적재 후 Avro 시간 타입 오류 — state: observed / 수정은 verified offline — 2026-08-26
+
+D-046의 승인된 최초 apply는21:44 KST exit0, dataset1개 생성과 applied binding 일치를 확인했다. 실제 verifier는 load DONE 뒤 schema 검사에서exit1이었다. 실제 API 재조회는415602행·badRecords0이지만 usage_start_time/usage_end_time/export_time이INTEGER였고 load job에useAvroLogicalTypes가 없었다. 승인 generation의 원본 Avro header를64KiB 범위만 읽어 세 필드가long + logicalType=timestamp-micros인 것을 확인했다(n=1 run/fixture). [공식 Avro 변환 규칙](https://docs.cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types)의 기본INTEGER/옵션true일 때TIMESTAMP 설명과 일치한다. 행 수 부족이나 load job 실패는 관측되지 않았고 최초 query는0개다.
+
+실제 실패 경로는 dataset/table·Terraform state·load job receipt·진단 로그를 보존했고 자동 destroy하지 않았다. 보완 코드는 load에useAvroLogicalTypes=true를 명시하고 같은 run sampleinfotable의WRITE_TRUNCATE 재적재(data/schema)를 action plan에 표시한다. 검증 오류에필드명/기대/실제 타입을 남기며INTEGER를정상으로완화하지 않았다.42개 회귀·Phase10 TF fmt/validate/mock1개·Bash·gate PASS. 신규 회귀는 실제load POST의옵션/대상·WRITE_TRUNCATE와잘못된스키마뒤query0을검사한다. 보완 Cloud 재적용·8쿼리 성공은 새 exact plan 승인 전 미검증이다.
+
+Evidence: ignored `artifacts/phase10-approved-cloud-{apply,verify}.log`, `phase10-logical-types-local-tests.log`; run `p10-260826-2106`의apply/verify attempt 로그·diagnosis·state-addresses·`evidence/billing-jobs-046421e146b1.json`, `table-readback.json`, `load-readback.json`, `fixture-header-readback.json`. state SHA는진단후`2e1a4222d88e38937aaff5a595ad9e25d6e3623b11e357167a1083d7e263c529`다. 근거는 원본/현재실제Job/API1건과 공식문서이며 모든다른Avro파일이나수정후성공을보장하지 않는다.
+
+수정 계획 observed 21:49 KST: 같은run/state의replan은dataset1no-op·create/update/delete/replace0이다. bundle SHA `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`의source/work/input/config/account/state와binary/action/binding 해시·schema·0600을재검사해PASS였다. plan 전후state SHA는위진단값과동일하다. 원래plan/manifest는plan-history에보존하고현재manifest는planned다. Q-023의새SHA승인전보완재적용은하지않았다. 진단지식은`memory/knowledge/gcp-bigquery-avro.md`에관측표본/한계와함께기록했다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -253,7 +263,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase 10–15 실제 Cloud apply·machine verify·destroy
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase 10 전체 machine verify·수정 후 재적재·destroy, Phase11–15 실제 Cloud apply·machine verify·destroy (Phase10 최초 dataset apply·load 자체는 위 실제 관측과 구분)
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

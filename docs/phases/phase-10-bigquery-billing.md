@@ -40,7 +40,7 @@
 
 1. dataset location, BigQuery 권한, query byte limit와 fixture checksum을 preflight한다.
 2. dataset/table/load/query 변경과 최대 처리 bytes를 plan에 기록한다.
-3. 공개 AVRO의 generation/CRC32C를 plan에 기록하고 적재 전후 변경 여부를 확인한다.
+3. 공개 AVRO의 generation/CRC32C를 plan에 기록하고 적재 전후 변경 여부를 확인한다. `useAvroLogicalTypes=true`로 시간 필드를TIMESTAMP로 적재하며, 같은 run의 sampleinfotable 데이터·스키마를 다시 적재하는 `WRITE_TRUNCATE`를 action plan에 명시한다.
 4. 실제 Billing export 연결·도착 대기는 구현 범위에 포함하지 않는다.
 5. jobs API의 totalRows, sample cost 필터·집계 정렬, billed bytes를 검증한다. 전체 golden 정답 비교는 아직 없다.
 

@@ -26,6 +26,8 @@
 2. billing_account_id·currency 는 STRING, cost 는 FLOAT, usage_end_time 은 TIMESTAMP, 중첩 필드는 RECORD 인지 확인합니다.
 3. 필드 이름만 보고 타입·중첩 구조까지 확인했다고 쓰지 않습니다. 자동 검증의 필수 schema 검사와 대조합니다.
 
+시간 필드가 `INTEGER`라면 통과가 아닙니다. 이 원본의 Avro 시간 타입은 `timestamp-micros`이며 자동화는 `useAvroLogicalTypes=true`로 적재합니다. 이전 실행에서 옵션이 빠졌다면 리소스를 삭제하지 말고 같은 run의 `diagnose → 수정 → replan → 새 SHA 승인 → apply → verify` 절차를 따릅니다. 재검증의 `WRITE_TRUNCATE`는 해당 run의 `sampleinfotable` 데이터·스키마를 원본 fixture로 다시 적재하므로, 이 테이블에 별도 작업 데이터를 추가하지 않습니다. [Avro 타입 변환](https://docs.cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types)
+
 ### 2. Details의 전체 행 수
 
 1. **Details → Number of rows**를 읽습니다.

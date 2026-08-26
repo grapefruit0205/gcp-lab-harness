@@ -145,10 +145,10 @@ Sub-foundations exposed: source/work/input/state/account/hash — atomic, mock �
 원자 leaf:
 1. 현재 diff/비밀/검사 → commit·원격 SHA 확인 — source: Git·prepublish tests/gates·원격 ls-remote — observed。b67ce8c91542a9738870af80a19db1f8073392fc의82개 파일 게시·원격 일치·FF pull 통과.
 2. Phase10 계정/project/API와 saved plan 대상·비용·SHA 확인 — source: preflight·safe adapter·BigQuery 공식 가격 — observed。run p10-260826-2106: dataset1create·삭제/교체0, bundle da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9. 무결성/소유권/schema 재검사 PASS. 실제 Cloud 변경 없음; 비용은 PRODUCT-TRUTH의 조건부 추정.
-3. 정확한 plan 승인 — source: D017 및 사용자 응답 — named-unfilled.
-4. 각 Phase10–15 실제 apply와 기능 검증 — source: run state/manifest·Task evidence — named-unfilled.
-5. 실패 원인 분리·최소 수정·같은 state replan·새 승인·재검증 — source: private attempt logs/diagnosis·회귀 검사 — 오류 발생 시 분리.
+3. 정확한 plan 승인 — source: D017 및 사용자 응답 — Phase10 최초da21…는D-046으로승인됨. 수정eb50…는Q-023대기. Phase11–15는미승인.
+4. 각 Phase10–15 실제 apply와 기능 검증 — source: run state/manifest·Task evidence — Phase10 dataset apply/415602행 load 성공, 실제schema INTEGER/TIMESTAMP불일치로verify실패/query0. 나머지Phase미실행.
+5. 실패 원인 분리·최소 수정·같은 state replan·새 승인·재검증 — source: private attempt logs/diagnosis·회귀 검사 — Avro논리타입옵션누락을실제job/header로진단·코드보완·42회귀/TF/gate통과·같은state dataset1no-op계획완료. 새SHA승인후재검증대기.
 6. Task별 콘솔 안내와 종료 상태 보고 — source: docs/console/phase-NN.md·실제 evidence — named-unfilled.
 
-Single next leaf: Q-022의 Phase10 exact bundle 승인 후 저장 계획 apply·실제 검증; 오류 시 같은 run을 보존하여 진단한다. 승인 전에는 Cloud 변경하지 않는다.
+Single next leaf: Q-023의수정bundle eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106 승인후같은run을재apply하고fixture재적재·8쿼리를검증한다. 데이터셋/state보존, 승인전Cloud재변경없음.
 Sub-foundations exposed: Git 인증/원격 비교 — atomic; Cloud 실행자/allowlist/API — atomic; 비용/정확한 계획 승인 — atomic; Phase별 실기 — not atomic →10 BQ/11 Monitoring/12 VPN/13 ALB/14 ILB/15 멱등성으로 분리.

@@ -22,8 +22,10 @@ def check_table(table):
     if int(table.get("numRows", -1)) != 415602:
         raise ValueError("원문 fixture 415602행 불일치")
     fields = {f["name"]: f["type"] for f in table.get("schema", {}).get("fields", [])}
-    if any(fields.get(k) != v for k, v in REQUIRED_SCHEMA.items()):
-        raise ValueError("필수 schema/type 불일치")
+    mismatches = [f"{name}: expected={expected}, actual={fields.get(name, 'missing')}"
+                  for name, expected in REQUIRED_SCHEMA.items() if fields.get(name) != expected]
+    if mismatches:
+        raise ValueError("필수 schema/type 불일치: " + "; ".join(mismatches))
 
 
 def check_result(index, data):
@@ -88,7 +90,8 @@ def run(run_dir, project):
         receipt["jobs"][-1]["status"] = "DONE"
         write_json(receipt_path, receipt)
         return job, data
-    submit({"load": {"sourceUris": [uri], "sourceFormat": "AVRO", "writeDisposition": "WRITE_TRUNCATE",
+    submit({"load": {"sourceUris": [uri], "sourceFormat": "AVRO", "useAvroLogicalTypes": True,
+                      "writeDisposition": "WRITE_TRUNCATE",
                       "destinationTable": {"projectId": project, "datasetId": dataset, "tableId": "sampleinfotable"}}}, "load")
     fixture_unchanged()
     check_table(api.request("GET", f"{base}/datasets/{dataset}/tables/sampleinfotable"))

@@ -192,6 +192,40 @@ class BillingTests(unittest.TestCase):
         data["schema"]["fields"].pop()
         with self.assertRaises(ValueError): billing.check_table(data)
 
+    def test_avro_integer_timestamp_is_rejected_with_field_detail(self):
+        data = {"numRows": "415602", "schema": {"fields": [{"name": k, "type": v} for k, v in billing.REQUIRED_SCHEMA.items()]}}
+        next(f for f in data["schema"]["fields"] if f["name"] == "usage_end_time")["type"] = "INTEGER"
+        with self.assertRaisesRegex(ValueError, "usage_end_time: expected=TIMESTAMP, actual=INTEGER"):
+            billing.check_table(data)
+
+    def test_real_load_submission_enables_logical_types_before_query(self):
+        # 실제 관측한 잘못된 스키마를 반환해 검사 실패까지의 실행 경로를 검증한다.
+        metadata = {"generation": "123", "crc32c": "abc="}
+        table = {"numRows": "415602", "schema": {"fields": [
+            {"name": k, "type": "INTEGER" if k == "usage_end_time" else v}
+            for k, v in billing.REQUIRED_SCHEMA.items()]}}
+        with tempfile.TemporaryDirectory() as temp:
+            run = Path(temp) / "p10-test-001" / "phase-10"
+            run.mkdir(parents=True)
+            (run / "evidence").mkdir()
+            (run / "action-plan.json").write_text(json.dumps({"actions": [{
+                "id": "fixture-load", "target": "gs://test-fixture/sample.avro#123 crc32c=abc="}]}))
+            responses = [metadata, {}, {"status": {"state": "DONE"}}, metadata, table]
+            with patch.object(advanced.API, "request", side_effect=responses) as request:
+                with self.assertRaisesRegex(ValueError, "usage_end_time"):
+                    billing.run(run, "lab-project")
+            posts = [c for c in request.call_args_list if c.args[0] == "POST"]
+            self.assertEqual(len(posts), 1, "schema 실패 후 쿼리를 실행하면 안 됨")
+            config = posts[0].args[2]["configuration"]["load"]
+            self.assertIs(config["useAvroLogicalTypes"], True)
+            self.assertEqual(config["writeDisposition"], "WRITE_TRUNCATE")
+            self.assertEqual(config["sourceUris"], ["gs://test-fixture/sample.avro"])
+            self.assertEqual(config["destinationTable"], {"projectId": "lab-project",
+                "datasetId": "billing_p10_test_001", "tableId": "sampleinfotable"})
+            self.assertTrue((run / "action-plan.json").exists())
+            receipt = json.loads(next((run / "evidence").glob("billing-jobs-*.json")).read_text())
+            self.assertEqual(receipt["jobs"][0]["status"], "DONE")
+
 
 class IntegrationTests(unittest.TestCase):
     def test_controller_accepts_only_declared_manual_boundary(self):

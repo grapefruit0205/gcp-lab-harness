@@ -1,6 +1,6 @@
 # Phase 10–15 오류 보완·상세 콘솔 안내 감사
 
-판정일: 2026-08-26. 범위: 로컬 코드·회귀·Terraform mock/정적 검사. **이 개정본으로 Cloud apply·실제 콘솔 UI·통신 성공을 확인한 기록은 아니다.** 과거 [07–15 감사](phase-07-15-coverage.md)는 당시 기록이며 현재 변경은 아래를 따른다.
+판정일: 2026-08-26. 최초 범위는 로컬 코드·회귀·Terraform mock/정적 검사이며 이후 Phase10 실제 실행에서 발견한 오류를 아래 별도 항목에 추가했다. **전체 Phase10–15 Cloud 실습·실제 콘솔 UI·통신 성공 기록은 아니다.** 과거 [07–15 감사](phase-07-15-coverage.md)는 당시 기록이며 현재 변경은 아래를 따른다.
 
 ## 발견한 오류와 수정
 
@@ -14,6 +14,14 @@
 | 14 ILB | NAT 준비 전 MIG startup 경쟁 방지, apt 유한 재시도, PHP의 실제 REMOTE_ADDR. 중간 curl 실패 전파·VIP60회 성공·정확한 두 backend. 삭제 inventory 전체 zone 조회·조회 오류 fail-closed |
 | 15 Terraform | data source를 managed4개에 잘못 포함하던 검사 수정. 서로 다른 region의 zone 강제, ping readiness, 멱등성 plan의 lock timeout·로그 |
 | 콘솔 문서 | Phase01–15의90개 Task·Task 안의 원문 하위 제목167개. P09 번호 절차와 P10 분석7개 질문도 상세 분할해 안내 하위 항목은221개다. 단일 Task 출력에 준비·증거 경로 포함. 중복/누락 하위 제목 회귀 검사 |
+
+## Phase10 최초 실기에서 발견한 Avro 시간 타입 오류
+
+2026-08-26 observed, n=1: dataset apply와415602행 load는 성공했지만 실제usage_end_time이INTEGER라 schema 검증에서 중단됐다. load job에는useAvroLogicalTypes가 없었고 승인된 원본 header의시간3개필드는timestamp-micros였다. [공식 변환 규칙](https://docs.cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types)에 맞춰true를 명시했다. 기대타입을INTEGER로낮추지않고 오류에필드/기대/실제값을 추가했다.
+
+회귀42개·Phase10 TF mock1개/fmt/validate·Bash/gate를 통과했다. 실패뒤dataset/table/state/job receipt를 보존했고 query는아직0개다. 같은run의WRITE_TRUNCATE 재적재(data/schema)를action plan에 명시했으며, 새 SHA 승인 전 보완재적용/8쿼리성공을주장하지않는다. 실제 증거는 `memory/PRODUCT-TRUTH.md`의동일제목항목과ignored run진단파일에 있다.
+
+새 독자 리허설(observed, 2026-08-26, 1회): 한국어 clone 사용자의 로컬 범위에서 Task2 출력·전체coverage·안내13개검사를실행해모두exit0·차단/추측0이었다. INTEGER를실패로판정하고dataset/state보존과sampleinfotable데이터·스키마덮어쓰기를구분했으며새SHA승인조건을문서에서찾았다. 실제Cloud/API/auth/Git변경·콘솔클릭은수행하지않았다.
 
 ## 재현 명령
 
