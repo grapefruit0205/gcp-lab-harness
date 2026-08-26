@@ -10,7 +10,7 @@ Evidence: `lib/harness/{safe-adapter.sh,advanced.py}`, `phases/10/billing.py`, `
 
 Checked(observed, 2026-08-26): 최종40개 로컬 회귀 검사와13개 상세 안내 검사가 통과했다. 새 보존 어댑터·동일 state replan·현재 계정/source/input/work/state/binary/action 결합, API pagination·403/404 구분, BigQuery job/전체 행 수/sample 조건, Monitoring 정확한 VM 조건·group·chart·최신 uptime true, VPN 단계 재개·manual-boundary 상태 전이, ALB 리전별 health·IPv6 분기·bounded unit, ILB NAT 의존성과 HTTP 실패/Client IP, Terraform managed/data 주소 분리를 검사했다. 최초31개/12개 검사에서 추가 회귀로 확장했으며, 하위 제목 수177은 Task 밖 제목 포함 집계였으므로 원문 Task 안의167개로 정정한다. 상세 안내는90개 Task·221개 확인 항목이다. 실제 Cloud apply/수렴/통신·새 Git 게시·콘솔 UI 클릭 성공은 이번 증거가 아니다.
 
-한계: Phase13 builder는 동일 state 보존 복구를 위해 중지 유지하며 원문 삭제/reset은 미실행이다. 양쪽 RATE·축소 규모·primary-region 부하를 사용하고 marker2개는 두 리전 분산 자체를 입증하지 않는다. Phase11 이메일/UI·Phase12 Task8 최종 destroy는 수동 경계다. Phase10은 전체 golden 정답 비교가 아닌 행 수/schema·job 통계/sample 의미 검사다. Phase01–09 기존 미구현 차이는 안내에 표시했으며 해당 Cloud 코드는 바꾸지 않았다. 자동 비용 중지는 없다.
+현재한계(후속보완반영): Phase13 builder는동일state보존복구를위해중지유지하고삭제는미수행이다. reset자동기동·RATE50/UTILIZATION80·세번째region부하는아래후속보완으로구현했다. min1/max2는원문과같으며이전축소규모설명은오류였다. marker2개만으로두리전분산자체가입증되지는않는다. Phase11이메일/UI·Phase12 Task8최종destroy는수동경계다. Phase10은전체golden정답비교가아닌행수/schema·job통계/sample의미검사다. Phase01–09 Cloud코드는바꾸지않았으며자동비용중지는없다.
 
 후속 최종 observed(2026-08-26, 로컬 작업1회): `make test-offline`·`tests/test-phases-10-15.sh`·Phase10–15 각 gate 모두exit0이다.40개 회귀/13개 안내/6개 TF mock, Phase09 기존70개 검사도 통과했다. ignored `artifacts/phase10-15-{full-offline,local-tests,gates}.log`, `phase09-regression-after-10-15.log`가 근거다. 독립 리허설2차는34문서107개 링크 누락0·차단0이었다. 비차단 네 문구를 수정하고 안내를 재검사했다. 원문·Phase08/09·기존 공통4개 lib에는 diff가 없으며 Cloud/Git 게시를 수행하지 않았다.
 
@@ -267,6 +267,16 @@ Phase11 p11-260826-2224 초기계획은12create였고그룹필터HTTP400으로10
 
 Phase12새run입력은같은primary region의다른UP zone을조회·선택하고tfvars에고정한다. Terraform검증과선택함수의동일zone/타region/DOWN거부회귀를추가했다. Python45개·Phase11 TF mock1개/gate, Phase12 TF mock2개/gate가통과했다. 아직Phase12Cloud실기는없다. 원문소스/공통승인lib/다른run은변경하지않았다.
 
+## Phase11 실제 Task1–7 통과 — state: observed, 리소스 유지 — 2026-08-26
+
+그룹 필터 수정 후 검증은 CPU metadata의aligned query누락으로한번더400이었다. 설정4개GET/멤버3개는정상임을분리진단했고CPU만60초ALIGN_MEAN으로보완했다. 새bundle `3f5eb9f7b0d7339ea38f09a0615d897ed26e754f439847636120cebdf7e412af`는12no-op·추가변경삭제0이었다. D047재apply/verify exit0, manifest verified/Task1–7 passed다.
+
+실측: 같은VM3개의CPU point/group exact membership, uptime15시계열의모든최근값true, VM1/2 20%·60초AND조건, enabled true→false 전이를확인했다(n=1). 근거: ignored `artifacts/phase11-aligned-metric-cloud-{apply,verify}.log`, run `p11-260826-2224`의configuration/cpu-series/uptime-series/monitoring-poll/alert-before-disable/phase-11-machine/manifest다. 이메일채널/메일수신/MCP/사용자UI조작/최종destroy는검증하지않았다. 기존12개리소스·실패기록보존,일반400전체무오류를보장하지않는다.
+
+## Phase13 원문 정합성 후속 보완 — state: verified offline — 2026-08-26
+
+원문과대조해primary RATE50/secondary UTILIZATION80, 세번째region의customimage loadgen/NAT, builder reset 전후서로다른boot의Apache 자동기동검증을추가했다. 재부팅startup은설치완료marker가있으면서비스를재시작하지않고활성/HTTP를검사한다. builder 삭제는보존복구를위해수행하지않는다. 회귀48개(이전boot marker만으로reset통과불가·loadgen customimage 포함),Phase13 TF mock2개/validate/fmt/Bash/gate와안내13개PASS. 실제Phase13 Cloud성공은아직아니다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -277,7 +287,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10 최종destroy, Phase11–15 실제 Cloud apply·machine verify·destroy (Phase10 실제apply/보완후재적재/Task1–5 machine verify는위관측과구분)
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10/11 최종destroy, Phase12–15 실제 Cloud machine verify·최종destroy (Phase10/11 실제apply/machine verify는위관측과구분)
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

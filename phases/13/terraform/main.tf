@@ -19,6 +19,20 @@ variable "run_id" {
 variable "region" { type = string }
 variable "zone" { type = string }
 variable "secondary_region" { type = string }
+variable "load_region" {
+  type = string
+  validation {
+    condition     = var.load_region != var.region && var.load_region != var.secondary_region
+    error_message = "부하 VM은 두 backend와 다른 세 번째 region이어야 함"
+  }
+}
+variable "load_zone" {
+  type = string
+  validation {
+    condition     = startswith(var.load_zone, "${var.load_region}-")
+    error_message = "부하 zone과 region 불일치"
+  }
+}
 
 provider "google" {
   project = var.project_id
@@ -86,6 +100,20 @@ resource "google_compute_router_nat" "nat" {
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
+resource "google_compute_router" "load" {
+  name    = "p13-load-router-${var.run_id}"
+  network = google_compute_network.main.id
+  region  = var.load_region
+}
+
+resource "google_compute_router_nat" "load" {
+  name                               = "p13-load-nat-${var.run_id}"
+  router                             = google_compute_router.load.name
+  region                             = var.load_region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+}
+
 resource "google_compute_instance" "builder" {
   name         = "p13-builder-${var.run_id}"
   machine_type = "e2-micro"
@@ -104,13 +132,22 @@ resource "google_compute_instance" "builder" {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y apache2 apache2-utils
-    systemctl enable --now apache2
-    printf '<html><body>golden-image</body></html>\n' >/var/www/html/index.html
+    if [[ ! -f /var/lib/harness-apache-installed ]]; then
+      apt_retry() { for attempt in $(seq 1 6); do if timeout 180 "$@"; then return 0; fi; sleep 10; done; return 1; }
+      apt_retry apt-get update
+      apt_retry apt-get install -y apache2 apache2-utils curl
+      systemctl enable --now apache2
+      printf '<html><body>golden-image</body></html>\n' >/var/www/html/index.html
+      touch /var/lib/harness-apache-installed
+    fi
+    # 재부팅에서는 서비스를 다시 시작하지 않고 자동 기동 결과를 확인한다.
+    systemctl is-enabled apache2
+    for attempt in $(seq 1 30); do if systemctl is-active apache2 && curl -fsS http://127.0.0.1/ >/dev/null; then break; fi; sleep 2; done
+    systemctl is-active apache2
+    curl -fsS http://127.0.0.1/ >/dev/null
     printf 'HARNESS_APACHE_VERSION=%s\n' "$(dpkg-query -W -f='$${Version}' apache2)" >/dev/ttyS0
     sync
-    echo HARNESS_IMAGE_READY >/dev/ttyS0
+    printf 'HARNESS_IMAGE_READY boot_id=%s\n' "$(</proc/sys/kernel/random/boot_id)" >/dev/ttyS0
   EOT
   depends_on              = [google_compute_router_nat.nat]
 }
@@ -209,8 +246,9 @@ resource "google_compute_backend_service" "http" {
     for_each = google_compute_region_instance_group_manager.backend
     content {
       group                 = backend.value.instance_group
-      balancing_mode        = "RATE"
-      max_rate_per_instance = 50
+      balancing_mode        = backend.key == var.region ? "RATE" : "UTILIZATION"
+      max_rate_per_instance = backend.key == var.region ? 50 : null
+      max_utilization       = backend.key == var.region ? null : 0.8
       capacity_scaler       = 1.0
     }
   }
@@ -261,28 +299,22 @@ resource "google_compute_global_forwarding_rule" "ipv6" {
 resource "google_compute_instance" "loadgen" {
   name         = "p13-loadgen-${var.run_id}"
   machine_type = "e2-micro"
-  zone         = var.zone
+  zone         = var.load_zone
   labels       = local.labels
   tags         = ["p13-iap-${var.run_id}"]
   boot_disk {
     initialize_params {
-      image = data.google_compute_image.debian.self_link
+      image = google_compute_image.webserver.self_link
       size  = 10
       type  = "pd-balanced"
     }
   }
   network_interface { network = google_compute_network.main.id }
-  metadata_startup_script = <<-EOT
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y apache2-utils curl
-  EOT
-  depends_on              = [google_compute_router_nat.nat]
+  depends_on = [google_compute_router_nat.load]
 }
 
 output "ipv4_address" { value = google_compute_global_address.ipv4.address }
 output "ipv6_address" { value = google_compute_global_address.ipv6.address }
 output "backend_service" { value = google_compute_backend_service.http.name }
 output "base_image_self_link" { value = data.google_compute_image.debian.self_link }
+output "load_zone" { value = var.load_zone }

@@ -41,7 +41,7 @@ Phase gate는11–15에도 각각 수행한다. 검사는 Cloud apply를 포함�
 - Phase10: 실제 Billing export 연결은 없다. 고정 AVRO의 적재 전후 generation/CRC32C를 비교하지만 동시 객체 변경을 원자적으로 막지는 않는다. 결과 총행수·표본 조건·정렬 검사는 전체 golden 정답 비교와 다르다.
 - Phase11: 이메일 채널 생성·실제 메일 수신·사용자의 Metrics Explorer 조작은 자동 검증하지 않는다. MCP는 선택 검증이다.
 - Phase12: on-prem VM을 같은region의다른활성zone에배치하도록보완했다. 최종 topology는 터널 하나가 삭제된 장애 실험 상태다. Task8 cleanup은 별도 승인 전 미완료다.
-- Phase13: 원문의 builder reset/삭제 실험은 미구현이다. stopped builder와 disk를 보존한다. 양쪽 backend RATE50·축소 autoscaler1–2·primary-region loadgen을 사용한다. marker2개가 양쪽 리전 트래픽 분산을 증명하지는 않는다. IPv6 route가 없는 실행 환경은 HTTP 검사를 unavailable로 남긴다.
+- Phase13: reset 전후 Apache 자동기동·서로 다른boot 검증, primary RATE50/secondary UTILIZATION80, 세 번째region의customimage loadgen을 보완했다. 원문 builder 삭제는 수행하지 않고 stopped builder/disk를 보존한다. autoscaler는원문과같은min1/max2이며 marker2개가양쪽리전트래픽분산을증명하지는않는다. IPv6 route가없는환경의HTTP검사는unavailable이다. 실제실기결과는별도기록한다. 이전의규모축소설명은원문286/321–322행대조로정정했다.
 - 공통: 자동 만료·비용 종료 스케줄러는 없다. `diagnose`는 최소 state/log 안내이며 서비스 원인 자동 분석기는 아니다. 구형 run 자동 이관과 일반 복구의 삭제/교체는 지원하지 않는다.
 - Phase03/04/06의 코드는 이번에 변경하지 않았다. 문서에는 각각 auto→custom/유럽 private subnet 미구현, 두 VM 동시 대조와 HTTPS probe, Minecraft TCP-only 검증 한계를 표시했다.
 
@@ -54,6 +54,10 @@ Phase gate는11–15에도 각각 수행한다. 검사는 Cloud apply를 포함�
 - [Terraform data source](https://developer.hashicorp.com/terraform/language/data-sources), [Google provider7.45 MIG target_size](https://raw.githubusercontent.com/hashicorp/terraform-provider-google/v7.45.0/website/docs/r/compute_region_instance_group_manager.html.markdown).
 
 ## 처음 보는 사용자 리허설
+
+Phase13후속1차(observed,2026-08-26):새clone독자가Task3/5/6·전체coverage명령4개를실행해exit0이었다. 원문min1/max2를규모축소로설명한오류와loadgen tfvars의경로/필드누락을발견해정정했다. reset성공시제도확인기준으로바꿨다. 실제Cloud/UI/Git변경은수행하지않았으며2차로보완문서를재확인한다.
+
+Phase13후속2차(observed,2026-08-26):새독자가Task3/4/5/6·전체coverage5명령모두exit0,막힘/추측/오독0이었다. reset증거없음=미검증·builder보존·원문과같은min1/max2설명·두backend모드·세번째region/customimage와tfvars정확경로/키를문서에서찾았다. 실제Cloud/API/auth/UI/부하/Git변경은없었고원문일치자체의독립검증은범위밖이다. 원문min/max는주실행자가원문286/321–322행을직접대조했다.
 
 1차: 독립 실행자가 로컬 명령·32개 문서/89개 링크·90개 Task와 하위 항목을 확인했다. 단일 Task의 준비 안내 누락, P10 작업 기록 진입/필드명, P09 유지와 삭제 상태 구분, 중복 하위 제목 검사를 지적했다. 네 항목 모두 수정했다. 최초 집계177은 Task 밖의 제목까지 포함한 수라, 2차의 독립 집계와 awk 대조로 Task 안의167개로 정정했다.
 

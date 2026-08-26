@@ -252,6 +252,42 @@ class BillingTests(unittest.TestCase):
 
 
 class IntegrationTests(unittest.TestCase):
+    def test_builder_reset_requires_new_ready_boot_before_stop(self):
+        with tempfile.TemporaryDirectory() as temp:
+            script = '''set -Eeuo pipefail
+gcloud(){
+  printf '%s\\n' "$3" >>"$TEST_BUILDER/calls"
+  case "$3" in
+    reset) touch "$TEST_BUILDER/reset" ;;
+    stop) [[ -f "$TEST_BUILDER/second-read" ]] ;;
+    get-serial-port-output)
+      if [[ -f "$TEST_BUILDER/second-read" ]]; then
+        printf 'HARNESS_IMAGE_READY boot_id=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\\n'
+      else
+        printf 'HARNESS_IMAGE_READY boot_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\\n'
+        if [[ -f "$TEST_BUILDER/reset" ]]; then touch "$TEST_BUILDER/second-read"; fi
+      fi ;;
+    *) return 1 ;;
+  esac
+}
+sleep(){ :; }
+export -f gcloud sleep
+bash "$1/phases/13/terraform/wait-builder.sh" lab-project us-central1-a p13-builder-test
+'''
+            result = subprocess.run(["bash", "-c", script, "bash", str(ROOT)],
+                env=dict(os.environ, TEST_BUILDER=temp), capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((Path(temp) / "calls").read_text().splitlines(),
+                ["get-serial-port-output", "reset", "get-serial-port-output", "get-serial-port-output", "stop"])
+
+    def test_loadgen_uses_custom_image_third_region(self):
+        source = (ROOT / "phases/13/terraform/main.tf").read_text()
+        loadgen = source.split('resource "google_compute_instance" "loadgen" {', 1)[1].split('\noutput ', 1)[0]
+        self.assertIn("google_compute_image.webserver.self_link", loadgen)
+        self.assertIn("var.load_zone", loadgen)
+        self.assertIn("google_compute_router_nat.load", loadgen)
+        self.assertNotIn("data.google_compute_image.debian", loadgen)
+
     def test_onprem_zone_is_same_region_different_active_zone(self):
         source = (ROOT / "phases/12/execute.sh").read_text().split('\nsource "$repo_root/lib/harness/safe-adapter.sh"', 1)[0]
         zones = [{"name": name, "region": "regions/" + region, "status": status} for name, region, status in (

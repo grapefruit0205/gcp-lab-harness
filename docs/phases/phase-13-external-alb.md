@@ -44,7 +44,7 @@ web server custom image와 managed instance group을 만들고 external Applicat
 
 1. global/regional quota, health check ranges, machine/image와 부하 도구를 preflight한다.
 2. 모든 image·template·MIG·LB·NAT·IP 변경과 autoscaling 상한을 plan한다.
-3. 승인된 startup 코드로 Apache 이미지를 만들고 builder는 중지 보존한다. base image 참조와 설치 버전을 기록하지만 apt 패키지 전체 checksum 고정은 아니다.
+3. 승인된 startup 코드로 Apache를 설치하고 reset 전후 다른 boot에서 자동 기동·HTTP를 확인한 뒤 이미지를 만든다. builder는 중지 보존하며 base image 참조와 설치 버전을 기록한다. apt 패키지 전체 checksum 고정은 아니다.
 4. MIG가 healthy해진 뒤 LB frontend를 구성하고 HTTP content/backend marker를 확인한다.
 5. 제한된 부하를 발생시켜 autoscaling evidence를 수집하고 부하 프로세스를 반드시 종료한다.
 
@@ -79,7 +79,7 @@ Command Code는 HTTP 200 하나만으로 성공을 선언하지 않고 backend h
 
 ## 현재 adapter
 
-`phases/13/terraform`은 immutable Debian base image를 plan에 고정하고 serial readiness 뒤 builder를 중지해 Apache custom image를 만든다. 두 regional MIG, min 1/max 2 autoscaler, logging-enabled backend, IPv4·IPv6 forwarding을 구성한다. verifier는 중지 builder·image provenance, 각 리전의 healthy backend, 여러 backend marker, bounded load의 scale-out과 scale-in을 각각 확인한다. 원문의 builder reset/삭제는 미실행이며 양쪽 backend RATE50·축소 규모를 사용한다. marker2개가 두 리전 트래픽 분산 자체를 입증하지는 않는다.
+`phases/13/terraform`은 Debian base image를 plan에 고정하고 serial readiness와 reset 이후 Apache 자동 기동을 확인한 뒤 builder를 중지해 custom image를 만든다. 두 regional MIG, min1/max2 autoscaler, primary RATE50/secondary UTILIZATION80 backend, logging, IPv4·IPv6 forwarding을 구성한다. 세 번째 region(기본us-west1, `P13_LOAD_REGION`/`P13_LOAD_ZONE` 선택)의 private loadgen도 같은 customimage와 전용 NAT를 사용한다. verifier는 중지 builder·image provenance, 각 리전의 healthy backend, 여러 backend marker, bounded load의 scale-out과 scale-in을 확인한다. 원문의 builder 삭제는 보존 복구를 위해 수행하지 않는다. marker2개가 두 리전 트래픽 분산 자체를 입증하지는 않는다.
 
 ## Git 종료 조건
 

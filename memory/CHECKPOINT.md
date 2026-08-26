@@ -1,30 +1,31 @@
-# Checkpoint — Phase11 그룹 필터 보존 복구 — 2026-08-26 22:31
+# Checkpoint — Phase11 통과·Phase12 apply·Phase13 원문 보완 — 2026-08-26 22:40
 
 ## The story so far
 
-D-047로 현재 계정·허용 프로젝트의 Phase10–15 구현/apply/검증/복구가 재질문 없이 위임됐다. Phase10 p10-260826-2106은 실제415602행·시간3개TIMESTAMP·8쿼리/Task1–5 통과, 리소스 보존. 관련 변경 de18392까지 main에 게시했다.
+D-047 위임으로 Phase15까지 재질문 없이 저장계획/SHA/소유권/비용을 확인하며 실행 중이다. Phase10 p10-260826-2106 실제415602행/TIMESTAMP/8쿼리 통과. Phase11 p11-260826-2224는그룹접두어와CPU정렬400을기존리소스보존후수정했다. 3f5eb9…12no-op 재apply/verify에서Task1–7·VM3CPU/group·uptime15최근true·alert Off 통과. d9d9669까지main게시/FF pull 완료.
 
-Phase11 p11-260826-2224 초기 e364e9… 적용은 그룹의 resource.metadata.user_labels 필터400으로 실패했다. VM3·VPC/subnet/firewall·SA·dashboard·policy 등10개는 생성되어 보존 중. 공식 문서의 metadata.user_labels로 TF/검증/회귀를 수정했다. Phase12는 원문 동일region 다른zone onprem을 자동 선택하도록5파일 수정했고 mock2개/gate 통과; 아직 Cloud 실행 전. Phase13–15 실기 전이다.
+Phase12 p12-260826-2236은df554e…28create계획을검토하고apply/verify가실행중(session72974). 기존Phase08/09·다른run유지. Phase13은원문reset자동기동/서로다른boot, RATE50/UTILIZATION80, 세번째region customimage loadgen/NAT를보완해48회귀/TFmock2/gate통과했다. 아직미커밋이며문서리허설이진행중이다. Phase13–15 Cloud실기전.
 
 ## Decided
 
-- D-047: 이번 Phase10–15는 저장계획/SHA/소유권/비용 검사 후 재질문 없이 실행·보존 복구. 이후 새 작업에 자동 승계하지 않음.
-- D-045: 관련 코드·검증 기록 한국어 커밋/푸시. 비밀·state·원시 로그 제외.
-- D-036/D-037: 실패 전체destroy 금지. Phase08/09·다른run 보존.
-- D-043/D-044: Task 하위별 콘솔 확인법과 실제/수동 경계 제공.
+- D-047: 이번Phase10–15의구현/실행/보존복구를위임. 매SHA재질문없음; 기술가드유지.
+- D-045: 관련검증된변경한국어commit/push. 비밀·state·원시로그게시금지.
+- D-036/D-037: 실패전체destroy금지,같은run으로복구. 다른계정/project/이전실습제외.
+- D-043/D-044: 각Task하위콘솔확인법·실제/수동경계구분.
 
 ## Waiting on the user
 
-- 없음. D047 범위 내 실행은 추가승인 대기가 아니다.
-- Q014 legacy 자동destroy·Q019 catalog·Q012/Q020 PSA는 별도범위로 유지.
+- 없음. 현재작업은D047범위위임으로진행한다.
+- Q014 legacy/Q019 catalog/Q012·020 PSA는별도범위이며이번작업에서변경하지않음.
 
 ## Next first action
 
-`cd /home/grapefruit/gcp-lab-harness && python3 tests/test-phases-10-15.py && terraform -chdir=phases/11/terraform test && ./phases/11/execute.sh replan --run p11-260826-2224`로 그룹 필터 수정과 기존10개 보존 계획을 검증한 뒤 새SHA로 apply/verify한다.
+`cd /home/grapefruit/gcp-lab-harness && tail -n 20 artifacts/phase12-cloud-apply.log && jq -r .status artifacts/runs/p12-260826-2236/phase-12/manifest.json`로현재VPN적용을확인하고, Phase13리허설회신/수정게시/clean FF pull뒤새Phase13plan을생성한다.
 
 ## Tried
 
-- P11 resource.metadata.user_labels.run → 실제API400; metadata.user_labels.run으로 수정, 기존10개 보존.
-- P11 dashboard GET v3 → 잘못된경로; v1로분기수정·회귀추가.
-- P10 AVRO logical type옵션 생략 → INTEGER; 옵션true재적재로TIMESTAMP/8query 실기통과.
-- 일반phase-gate는 숫자아닌docs/phases/phase-NN-*.md 경로를 받는다.
+- P11그룹resource.metadata.user_labels→400; metadata.user_labels로수정해생성성공.
+- P11CPU metadata필터비정렬조회→400;60초ALIGN_MEAN추가로실제통과, uptime bool평균하지않음.
+- P11dashboard v3→잘못된경로;v1로분기.
+- P10AVROlogical옵션생략→INTEGER;true재적재로TIMESTAMP/8query통과.
+- console-checks.py는--summary옵션없음;--phase NN또는--task N을사용.

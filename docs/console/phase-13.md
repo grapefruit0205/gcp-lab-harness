@@ -16,7 +16,7 @@
 ### Cloud Router 인스턴스 생성하기
 
 1. **Cloud NAT → p13-nat → p13-router**에서 network p13, primaryregion, AUTO_ONLY, 해당 region 의모든 subnet egress 를 확인합니다.
-2. secondaryregion 전체 NAT 도있다고가정하지 않습니다. 현재 customimage 는 secondary 에서패키지재설치없이부팅합니다.
+2. 부하 VM의 세 번째 region에는 `p13-load-nat`/`p13-load-router`가 별도로 있습니다. secondary backend는 customimage에서 패키지 재설치 없이 부팅합니다.
 
 ## Task 3. 웹 서버용 커스텀 이미지 생성하기
 
@@ -33,7 +33,7 @@
 ### Apache 서비스가 부팅 시 자동으로 시작되도록 설정하기
 
 1. customimage 로만든 MIG VM 의 startup 상태와 저장 HTTP 응답을대조하여 Apache 활성과본문을 확인합니다.
-2. 원문의 reset 후재확인은현재 자동화 미수행입니다. 확인하려고 reset/재부팅하지않습니다.
+2. `image-provenance.json`의 `reset_autostart_verified=true`, `distinct_ready_boots>=2`와 serial의 서로 다른 `boot_id`를 확인합니다. 이는 자동화가 reset 이후 서비스를 다시 시작하지 않고 자동 기동·HTTP 응답을 검사한 실행의 통과 기준입니다. 증거가 없으면 미검증이며 확인 목적으로 다시 reset하지 않습니다.
 
 ### 커스텀 이미지 생성을 위해 디스크 준비하기
 
@@ -60,7 +60,7 @@
 ### 관리형 인스턴스 그룹 생성하기
 
 1. **Instance groups → us-1-mig/notus-1-mig → Autoscaling**에서서로 다른 region·min1/max2·LButilization80%·template·autohealing 을 확인합니다.
-2. 원문규모를비용상한 1–2 로축소했습니다. targetSize 는 autoscaler 가관리하므로수동 resize 하지않습니다.
+2. 원문과 동일하게 각 MIG는 min1/max2입니다. targetSize는 autoscaler가 관리하므로 수동 resize하지 않습니다.
 
 ### 백엔드 확인하기
 
@@ -81,8 +81,8 @@
 
 ### 백엔드 구성하기
 
-1. **LB → Backends → p13-http-backend**에서두 MIG·양쪽 RATE/max_rate_per_instance50·http namedport·logging enable/sample1.0 을 읽습니다.
-2. 원문의두 번째 UTILIZATION 방식과달리양쪽 RATE 를 사용합니다. 학습목표의차이를 기록합니다.
+1. **LB → Backends → p13-http-backend**에서 primary `us-1-mig`는 RATE/최대50RPS, secondary `notus-1-mig`는 UTILIZATION/최대80%인지 읽습니다.
+2. 두 backend의 http namedport·capacity1.0·logging enable/sample1.0도 확인합니다. 두 분산 방식은 원문과 일치하며 autoscaler 규모는 min1/max2로 제한합니다.
 
 ### HTTP 로드밸런서 검토 및 생성하기
 
@@ -100,6 +100,7 @@
 
 1. 각 **MIG → Monitoring/Autoscaling**에서검증 시각범위를선택해합계 baseline2→peak3/4→2 복귀와 evidence 를 대조합니다.
 2. loadunit360 초상한·종료기록을 확인합니다. ab 를재실행하지않으며현재 2 대만으로과거 scale-out 을입증하지 않습니다.
+3. **VM instances → p13-loadgen → zone/boot disk → source image**에서 세 번째 region(기본us-west1)의 zone과 `p13-webserver` customimage를 확인합니다. backend 두 region과 달라야 합니다. clone 사용자는 계획 전에 `P13_LOAD_REGION`/`P13_LOAD_ZONE`으로 선택할 수 있습니다. 로컬 `artifacts/runs/<RUN_ID>/phase-13/work/phase-13.auto.tfvars.json`의 `load_region`·`load_zone` 값을 콘솔 zone과 대조하며 파일을 공유하거나 수정하지 않습니다.
 
 ## Task 7. Review
 
