@@ -1,31 +1,30 @@
-# Checkpoint — Phase11 통과·Phase12 apply·Phase13 원문 보완 — 2026-08-26 22:40
+# Checkpoint — Phase10–12 실기 통과·Phase13 보존 복구 — 2026-08-26 22:55
 
 ## The story so far
 
-D-047 위임으로 Phase15까지 재질문 없이 저장계획/SHA/소유권/비용을 확인하며 실행 중이다. Phase10 p10-260826-2106 실제415602행/TIMESTAMP/8쿼리 통과. Phase11 p11-260826-2224는그룹접두어와CPU정렬400을기존리소스보존후수정했다. 3f5eb9…12no-op 재apply/verify에서Task1–7·VM3CPU/group·uptime15최근true·alert Off 통과. d9d9669까지main게시/FF pull 완료.
+D-047 위임으로 Phase15까지 재질문 없이 저장계획/SHA/소유권/비용을 검사하며 진행한다. Phase10 p10-260826-2106 실제 415602행·TIMESTAMP·8쿼리, Phase11 p11-260826-2224 Task1–7, Phase12 p12-260826-2236 VPN/BGP·GLOBAL 통신·단일 터널 장애 후 잔여 경로 통과. Phase12는 원문 장애 실험으로 터널 하나만 삭제했고 나머지는 유지한다. 최신 게시 a97d2cd.
 
-Phase12 p12-260826-2236은df554e…28create계획을검토하고apply/verify가실행중(session72974). 기존Phase08/09·다른run유지. Phase13은원문reset자동기동/서로다른boot, RATE50/UTILIZATION80, 세번째region customimage loadgen/NAT를보완해48회귀/TFmock2/gate통과했다. 아직미커밋이며문서리허설이진행중이다. Phase13–15 Cloud실기전.
+Phase13 p13-260826-2243 초기 c643e6…25개 Terraform 생성 후 중지 VM 직렬 로그를 읽는 post-apply 경로가 실패했다(session94518 종료1). 리소스/state는 보존했다. 실행 중에만 가능한 API이므로 중지 전 receipt 저장·정확한 builder ID 확인 후 동일 builder 재시작/reset/재수집/중지 복구를 구현했다. 로컬49회귀·Phase13 TFmock2/gate 통과, 아직 Cloud 재apply 전. Phase14/15 정적 gate/mock 통과, Cloud 실행 전.
 
 ## Decided
 
-- D-047: 이번Phase10–15의구현/실행/보존복구를위임. 매SHA재질문없음; 기술가드유지.
-- D-045: 관련검증된변경한국어commit/push. 비밀·state·원시로그게시금지.
-- D-036/D-037: 실패전체destroy금지,같은run으로복구. 다른계정/project/이전실습제외.
-- D-043/D-044: 각Task하위콘솔확인법·실제/수동경계구분.
+- D-047: 이번 Phase10–15 구현/apply/검증/보존 복구 위임; 매 SHA 재질문 없음, 기술 가드 유지.
+- D-045: 관련 검증 변경 한국어 commit/push; 비밀·개인 설정·state·원시 로그 제외.
+- D-036/D-037: 실패 전체 destroy 금지, 동일 run으로 복구; 이전 Phase08/09·다른 run 제외.
+- D-043/D-044: Task 하위 콘솔 확인법과 실제·수동 검증 경계를 함께 보고.
 
 ## Waiting on the user
 
-- 없음. 현재작업은D047범위위임으로진행한다.
-- Q014 legacy/Q019 catalog/Q012·020 PSA는별도범위이며이번작업에서변경하지않음.
+없음. 현재 범위는 D-047로 진행한다. Q014 legacy/Q019 catalog/Q012·020 PSA는 별도 범위다.
 
 ## Next first action
 
-`cd /home/grapefruit/gcp-lab-harness && tail -n 20 artifacts/phase12-cloud-apply.log && jq -r .status artifacts/runs/p12-260826-2236/phase-12/manifest.json`로현재VPN적용을확인하고, Phase13리허설회신/수정게시/clean FF pull뒤새Phase13plan을생성한다.
+`cd /home/grapefruit/gcp-lab-harness && ./phases/13/execute.sh replan --run p13-260826-2243`로 보존 state의 새 계획을 생성하고 25 no-op/삭제·교체0 및 builder 조건부 복구 action을 검사한 뒤 새 SHA apply/verify를 실행한다.
 
 ## Tried
 
-- P11그룹resource.metadata.user_labels→400; metadata.user_labels로수정해생성성공.
-- P11CPU metadata필터비정렬조회→400;60초ALIGN_MEAN추가로실제통과, uptime bool평균하지않음.
-- P11dashboard v3→잘못된경로;v1로분기.
-- P10AVROlogical옵션생략→INTEGER;true재적재로TIMESTAMP/8query통과.
-- console-checks.py는--summary옵션없음;--phase NN또는--task N을사용.
+- P13 중지 builder get-serial-port-output → resource not ready; 실행 중 receipt 저장 후 stop, 기존 builder만 복구하여 재수집 시점 별도 표시.
+- P11 group resource.metadata.user_labels →400; metadata.user_labels로 수정.
+- P11 CPU metadata 비정렬조회→400;60초 ALIGN_MEAN으로 실제 통과, bool uptime 평균하지 않음.
+- P11 dashboard v3→v1으로 수정.
+- P10 AVRO logical 옵션 생략→INTEGER; true 재적재로 TIMESTAMP/8쿼리 통과.

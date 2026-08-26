@@ -360,3 +360,12 @@ One short section per working session: what was worked on, what was decided (wit
 - observed: 관련15파일을한국어commit d9d96696c4a8edfc58fca0286489e7453c7493e6로main에push·FF pull·당시clean tree확인. Phase12 p12-260826-2236 계획df554e1a7818c9f623b182bf31a399870a449e49070ac44276356b107ceadc9d은28create·기존변경삭제0, PSK비공개/VM외부IP없음·onprem다른zone·IAP/내부CIDR방화벽을확인해D047apply/verify시작했다.
 - implemented: Phase13원문reset자동기동·RATE50/UTILIZATION80·세번째region customimage loadgen/NAT보완. 48회귀·TF mock2개/gate·안내13개PASS. 단일Phase13관리리소스상한25와MIG최대4VM·load360초는유지한다. builder는중지보존한다.
 - observed rehearsal: Phase13새독자1차가원문min1/max2를축소라고잘못설명한부분과tfvars경로누락을발견했다. 주실행자원문직접대조후규모설명·경로/키·성공시제를정정했고2차새독자가5개로컬명령exit0·막힘/추측/오독0을보고했다. Cloud/UI/Git변경없음. 과거감사/기록의규모축소설명은현재정정으로대체한다.
+- observed 22:42 KST: Phase12 apply28개/verify exit0,4터널baseline·BGP원격prefix·REGIONAL교차리전실패/GLOBAL성공·양방향ping·single-tunnel0삭제후양쪽리전ping통과. manifest verified/Task1–7/9passed/Task8manual-boundary. 실제남은3터널중양쪽tunnel1ESTABLISHED,onprem0FIRST_HANDSHAKE를읽기확인하고의도된장애상태·복원가능·전체정리미수행을사용자에게설명했다.
+- observed: Phase13원문보완/문서리허설결과를a97d2cdd6b117763f7eec2095d65db4702c26d3e로main에push·FF pull·clean tree확인. 새run p13-260826-2243의bundle c643e6005afa686213955a2c4b064f586e210605e43b45f6d9bfad100b5b9693은25create/변경삭제0,원문backend모드·privateVM·세번째region NAT·MIG1–2·load360초를검토후D047apply/verify시작했다. 기존리소스확장권한이나전체destroy로해석하지않았다.
+- observed: make test-offline은exit0(기존Phase09 70tests포함), Phase14/15사전gate·TF mock도각exit0이다. 실제Phase14/15Cloud는미실행으로구분한다.
+
+## 2026-08-26 — Phase13 직렬 증거 보존 복구
+
+- observed 22:52 KST: 초기 Terraform은25added/0changed/0destroyed 완료했지만 post-apply가 중지 builder의 직렬 로그를 읽어 실패했다. 실제 get-serial-port-output의 resource-not-ready와 공식 RUNNING 조회 제한을 대조했다. LB·image·MIG·state·실패 로그를 보존했다.
+- implemented: wait-builder가 RUNNING 중 서로 다른 boot/Apache version/Cloud ID를0600 receipt로 저장한 뒤 stop한다. 기존 run은 정확한 ID/라벨/image sourceDisk를 검사해 동일 builder만 start/reset/capture/stop한다. recovered_after_image를 receipt에 저장하여 후속 no-op에서도 원본 제작시점 증거로 오인하지 않는다.49회귀 통과.
+- observed 22:57 KST: 최종 재계획2fc9f4353a4e6021bf1427c23328f79a903ca4feff0cdb9438534a6fd34106a6은25no-op·resource 추가변경삭제교체0, builder ID output만 추가한다. 조건부 builder 복구·기존 bounded 부하 action/기존 계정·프로젝트/과금 유지 검토 후 D047 apply/verify를 시작했다. 중간225041… 계획은 미적용으로 보존했다. Phase14/15 실행 전이며 새 승인 질문은 필요하지 않다.

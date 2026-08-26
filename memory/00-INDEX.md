@@ -11,6 +11,7 @@ Purpose: this folder is the durable memory for gcp-lab-harness. Conversations fo
 | `SESSION-LOG.md` | What happened, per working session | Append, dated |
 | `PRODUCT-TRUTH.md` | What the product actually does (if applicable) | Evidence + date only. Three sections: implemented / not / excluded |
 | `knowledge/` | 검증된 외부 도구·플랫폼 지식 | 검증 게이트를 통과한 사실만 기록 |
+| `knowledge/gcp-compute-serial-receipts.md` | 중지 VM 직렬 로그 조회 실패·중지 전 증거 저장·동일 builder 복구 | 실제 관측과 재수집 시점·한계를 구분 |
 | `goal/gcp-lab-harness.md` | 목표 구조·근거·완료 기준 | 목표 파이프라인의 canonical copy |
 | `CHECKPOINT.md` | 현재 작업의 30초 복귀 지점 | 큰 작업 단위 완료 또는 세션 종료 전에 갱신 |
 | `checkpoints/` | 이전 체크포인트 기록 | append-only 보관 |

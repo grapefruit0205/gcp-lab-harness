@@ -252,6 +252,45 @@ class BillingTests(unittest.TestCase):
 
 
 class IntegrationTests(unittest.TestCase):
+    def test_stopped_builder_uses_receipt_and_rejects_wrong_identity(self):
+        source = (ROOT / "phases/13/execute.sh").read_text()
+        function = 'phase_after_apply() {' + source.split('phase_after_apply() {', 1)[1].split('\nsource "$repo_root/', 1)[0]
+        for foreign, recovered in ((False, False), (False, True), (True, False)):
+            with self.subTest(foreign=foreign, recovered=recovered), tempfile.TemporaryDirectory() as temp:
+                run = Path(temp) / "artifacts/runs/p13-test-001/phase-13"
+                (run / "work").mkdir(parents=True)
+                advanced.write_json(run / "work/builder-readiness.json", {"instance_id": "12345", "project": "lab-project",
+                    "zone": "us-central1-a", "instance": "p13-builder-p13-test-001", "captured_before_stop": True,
+                    "reset_autostart_verified": True, "first_boot": "a"*36, "second_boot": "b"*36, "apache_package_version": "2.4.test",
+                    "recovered_after_image": recovered})
+                builder = {"id": "foreign" if foreign else "12345", "labels": {"run": "p13-test-001"},
+                    "status": "TERMINATED", "disks": [{"boot": True, "source": "https://www.googleapis.com/disk"}]}
+                script = '''set -Eeuo pipefail
+repo_root="$TEST_ROOT"; export GCP_PROJECT_ID=lab-project GCP_ZONE=us-central1-a
+harness_die(){ printf '%s\\n' "$*" >&2; exit 1; }
+harness_sha256_file(){ sha256sum "$1" | cut -d' ' -f1; }
+terraform(){ if [[ "$4" == builder_instance_id ]]; then printf 12345; else printf base-image; fi; }
+gcloud(){
+  printf '%s\\n' "$1 $2 $3" >>"$TEST_ROOT/calls"
+  case "$1 $2 $3" in
+    'compute instances describe')
+      if [[ "$*" == *value* ]]; then printf TERMINATED; else printf %s "$TEST_BUILDER_JSON"; fi ;;
+    'compute images describe') printf '{"status":"READY","sourceDisk":"https://www.googleapis.com/disk"}' ;;
+    *) printf 'unexpected Cloud call\\n' >&2; return 99 ;;
+  esac
+}
+''' + function + '\nphase_after_apply p13-test-001\n'
+                result = subprocess.run(["bash", "-c", script], capture_output=True, text=True,
+                    env=dict(os.environ, TEST_ROOT=temp, TEST_BUILDER_JSON=json.dumps(builder)))
+                self.assertEqual(result.returncode == 0, not foreign, result.stderr)
+                calls = (Path(temp) / "calls").read_text()
+                self.assertNotIn("get-serial-port-output", calls)
+                self.assertNotIn("start", calls)
+                if not foreign:
+                    provenance = json.loads((run / "evidence/image-provenance.json").read_text())
+                    self.assertEqual(provenance["readiness_recovered_after_image"], recovered)
+                    self.assertTrue(provenance["reset_autostart_verified"])
+
     def test_builder_reset_requires_new_ready_boot_before_stop(self):
         with tempfile.TemporaryDirectory() as temp:
             script = '''set -Eeuo pipefail
@@ -259,8 +298,10 @@ gcloud(){
   printf '%s\\n' "$3" >>"$TEST_BUILDER/calls"
   case "$3" in
     reset) touch "$TEST_BUILDER/reset" ;;
-    stop) [[ -f "$TEST_BUILDER/second-read" ]] ;;
+    stop) [[ -f "$TEST_BUILDER/second-read" ]] && jq -e '.captured_before_stop==true' "$TEST_BUILDER/receipt.json" >/dev/null ;;
+    describe) printf '1234567\\n' ;;
     get-serial-port-output)
+      printf 'HARNESS_APACHE_VERSION=2.4.test\\n'
       if [[ -f "$TEST_BUILDER/second-read" ]]; then
         printf 'HARNESS_IMAGE_READY boot_id=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\\n'
       else
@@ -272,13 +313,17 @@ gcloud(){
 }
 sleep(){ :; }
 export -f gcloud sleep
-bash "$1/phases/13/terraform/wait-builder.sh" lab-project us-central1-a p13-builder-test
+bash "$1/phases/13/terraform/wait-builder.sh" lab-project us-central1-a p13-builder-test "$TEST_BUILDER/receipt.json"
 '''
             result = subprocess.run(["bash", "-c", script, "bash", str(ROOT)],
                 env=dict(os.environ, TEST_BUILDER=temp), capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual((Path(temp) / "calls").read_text().splitlines(),
-                ["get-serial-port-output", "reset", "get-serial-port-output", "get-serial-port-output", "stop"])
+                ["get-serial-port-output", "reset", "get-serial-port-output", "get-serial-port-output", "get-serial-port-output", "describe", "stop"])
+            receipt = json.loads((Path(temp) / "receipt.json").read_text())
+            self.assertNotEqual(receipt["first_boot"], receipt["second_boot"])
+            self.assertEqual(receipt["apache_package_version"], "2.4.test")
+            self.assertEqual(receipt["instance_id"], "1234567")
 
     def test_loadgen_uses_custom_image_third_region(self):
         source = (ROOT / "phases/13/terraform/main.tf").read_text()

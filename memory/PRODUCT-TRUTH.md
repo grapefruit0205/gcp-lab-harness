@@ -277,6 +277,18 @@ Phase12새run입력은같은primary region의다른UP zone을조회·선택하�
 
 원문과대조해primary RATE50/secondary UTILIZATION80, 세번째region의customimage loadgen/NAT, builder reset 전후서로다른boot의Apache 자동기동검증을추가했다. 재부팅startup은설치완료marker가있으면서비스를재시작하지않고활성/HTTP를검사한다. builder 삭제는보존복구를위해수행하지않는다. 회귀48개(이전boot marker만으로reset통과불가·loadgen customimage 포함),Phase13 TF mock2개/validate/fmt/Bash/gate와안내13개PASS. 실제Phase13 Cloud성공은아직아니다.
 
+## Phase12 실제 라우팅·단일 경로 장애 검증 — state: observed, 정리 미실행 — 2026-08-26
+
+run `p12-260826-2236`, bundle `df554e1a7818c9f623b182bf31a399870a449e49070ac44276356b107ceadc9d`의28create·기존변경삭제0계획을D047로적용해apply/verify exit0이었다. baseline양쪽4터널ESTABLISHED/BGP4UP와예상원격prefix를검사한뒤REGIONAL교차리전미응답→GLOBAL성공·primary와onprem양방향ping을관측했다. Task7에서정확히baseline ID가일치하는`vpc-demo-tunnel0`하나만삭제했고살아있는tunnel1의양쪽ESTABLISHED와primary/secondary privateping유지를확인했다(n=1).
+
+manifest verified, Task1–7/9 passed, 선택Task8 manual-boundary/destroy_pending이다. 사후목록은터널3개로onprem tunnel0은FIRST_HANDSHAKE,양쪽tunnel1은ESTABLISHED다. 이를정상4터널상태나전체종료로보고하지않는다. 터널복원은같은state replan/apply로가능하다. VM3·나머지네트워크와PSK/state/실패복구증거는보존하며과금지속. 기존Phase08/09와다른run변경없음.
+
+근거: ignored `artifacts/phase12-cloud-{apply,verify}.log`, run manifest/`evidence/vpn-progress.json`의stage verified/baseline_tunnels4/regional_to_globaltrue/삭제대상·baselineID, `evidence/phase-12-machine.json`. 실제Console/UI독립확인·최종destroy는범위밖이다. Task별콘솔출력을읽고VPN/CloudRouter/VM·과거baseline와현재장애상태구분을사용자에게안내했다.
+
+## Phase13 중지 전 증거 저장 — state: observed / verified offline — 2026-08-26
+
+Phase13 직렬 증거 보완 관측(2026-08-26): 초기25개 생성 후 stopped VM 직렬조회가 resource-not-ready로 실패했다. RUNNING 중 receipt 작성·정확한 기존 builder만 재시작하여 증거 재수집·stop하는 코드와49회귀를 통과했다. 재수집은 원래 이미지 제작시점 로그 복원이 아니며 표시를 후속 no-op에도 유지한다.25no-op의2fc9f4… 복구 apply/verify가 진행 중이다. 근거: `memory/knowledge/gcp-compute-serial-receipts.md`, ignored `artifacts/phase13-receipt-{replan,cloud-apply,cloud-verify}.log`. 아직 Phase13 전체 성공을 주장하지 않는다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -287,7 +299,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10/11 최종destroy, Phase12–15 실제 Cloud machine verify·최종destroy (Phase10/11 실제apply/machine verify는위관측과구분)
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10–12 최종destroy, Phase13–15 실제 Cloud machine verify·최종destroy (Phase10–12 실제apply/machine verify는위관측과구분)
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

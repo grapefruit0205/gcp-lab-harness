@@ -27,13 +27,13 @@
 
 ### VM 커스터마이징하기
 
-1. **VM → Serial console output**의 HARNESS_IMAGE_READY 시각과 image-provenance.json 의 Apache packageversion·baseimage hash 를 대조합니다.
-2. marker 만으로원문의수동편집이력까지입증하지않으며로그 전체를공유하지 않습니다.
+1. VM이 실행 중일 때는 **VM → Serial console output**의 HARNESS_IMAGE_READY를 확인할 수 있습니다. 이미지 제작 후 중지된 builder에서는 직렬 로그 조회가 실패할 수 있으므로 저장 증거를 사용합니다.
+2. 로컬 `artifacts/runs/<RUN_ID>/phase-13/work/builder-readiness.json`의 Apache packageversion·`captured_before_stop`와 `evidence/image-provenance.json`의 receipt SHA·baseimage hash를 대조합니다. marker만으로 원문의 수동 편집 이력까지 입증하지 않으며 로그 전체를 공유하지 않습니다.
 
 ### Apache 서비스가 부팅 시 자동으로 시작되도록 설정하기
 
 1. customimage 로만든 MIG VM 의 startup 상태와 저장 HTTP 응답을대조하여 Apache 활성과본문을 확인합니다.
-2. `image-provenance.json`의 `reset_autostart_verified=true`, `distinct_ready_boots>=2`와 serial의 서로 다른 `boot_id`를 확인합니다. 이는 자동화가 reset 이후 서비스를 다시 시작하지 않고 자동 기동·HTTP 응답을 검사한 실행의 통과 기준입니다. 증거가 없으면 미검증이며 확인 목적으로 다시 reset하지 않습니다.
+2. `image-provenance.json`의 `reset_autostart_verified=true`, `distinct_ready_boots>=2`와 위 `builder-readiness.json`의 서로 다른 `first_boot`·`second_boot`를 확인합니다. 이는 reset 이후 서비스를 다시 시작하지 않고 자동 기동·HTTP를 검사한 통과 기준입니다. `readiness_recovered_after_image=true`이면 기존 이미지를 유지한 뒤 누락된 증거 수집을 재실행한 기록이며 최초 이미지 생성 전의 원시 로그로 해석하지 않습니다. 증거가 없으면 미검증이며 확인 목적으로 다시 reset하지 않습니다.
 
 ### 커스텀 이미지 생성을 위해 디스크 준비하기
 

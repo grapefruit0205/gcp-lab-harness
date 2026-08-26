@@ -49,11 +49,15 @@ Phase gate는11–15에도 각각 수행한다. 검사는 Cloud apply를 포함�
 
 ## 공식 근거
 
+Phase13 후속 실기(2026-08-26): Terraform25개 생성 후 stopped builder 직렬조회만 실패했다. 중지 전 receipt 저장으로 바꾸고 기존 run은 동일 Cloud ID·라벨·sourceDisk 확인 후 builder start/reset/재수집/stop한다. 이미지·MIG·네트워크를 재생성하지 않는다. 재수집 표시는 receipt와 provenance에 남겨 원래 제작 시점의 로그 복원으로 과장하지 않는다.49회귀 통과, 실제 복구 결과는 truth/session 기록을 따른다.
+
 - [BigQuery Job 구조와 dryRun](https://docs.cloud.google.com/bigquery/docs/reference/rest/v2/Job), [getQueryResults의 전체 행 수·페이지](https://docs.cloud.google.com/bigquery/docs/reference/rest/v2/jobs/getQueryResults).
 - [Uptime checker IP 조회](https://docs.cloud.google.com/monitoring/uptime-checks/using-uptime-checks), [provider uptime check resource_group](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_uptime_check_config).
 - [Terraform data source](https://developer.hashicorp.com/terraform/language/data-sources), [Google provider7.45 MIG target_size](https://raw.githubusercontent.com/hashicorp/terraform-provider-google/v7.45.0/website/docs/r/compute_region_instance_group_manager.html.markdown).
 
 ## 처음 보는 사용자 리허설
+
+Phase13 후속3차(observed,2026-08-26): 새 clone 독자가 Task3/4·전체coverage·안내13tests의4명령을 실제 실행해 모두exit0·차단/추측/오독0이었다. 중지VM 대신 저장receipt를 읽는 경로와 recovered_after_image=true가 나중 재수집이지 최초 이미지 제작 로그가 아니라는 경계를 문서만으로 구분했다. Cloud/API/auth/Git/파일변경·원시artifacts 열람·실제 콘솔 클릭은 하지 않았다. 전체 Phase10–15 최종 로컬49회귀/Bash/fmt/init/validate/TF mock/gate도 주실행자 exit0이었다.
 
 Phase13후속1차(observed,2026-08-26):새clone독자가Task3/5/6·전체coverage명령4개를실행해exit0이었다. 원문min1/max2를규모축소로설명한오류와loadgen tfvars의경로/필드누락을발견해정정했다. reset성공시제도확인기준으로바꿨다. 실제Cloud/UI/Git변경은수행하지않았으며2차로보완문서를재확인한다.
 

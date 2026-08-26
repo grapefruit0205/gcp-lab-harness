@@ -161,13 +161,13 @@ v3의개별SHA재질문대기는이번작업에한해대체한다. 목표는현�
 |---|---|---|
 | 위임/안전 | D047·safe adapter·AGENTS/pin | 개별질문없이저장계획/비용/소유권/SHA를검토해실행;실패보존 |
 | Phase10 | 수정eb50…·실제manifest/evidence | observed 완료:415602행/TIMESTAMP/8query/Task1–5;dataset유지 |
-| Phase11 | 원문11·monitoring.py·43회귀 | dashboard v1경로보완;새plan→VM3/메트릭/uptime/alert전이실기 |
-| Phase12 | 원문12·vpn.py·단계기록 | 새plan→라우팅/VPN/failover실기;다른run삭제없음 |
-| Phase13/14 | 원문13/14·verifier·감사한계 | 새plan→LB/부하/축소·ILB2backend통신실기,누락/오류보완 |
+| Phase11 | 원문11·monitoring.py·실제manifest/evidence | observed 완료:VM3CPU/group·uptime15최신true·alertOff·Task1–7;그룹/정렬400보존복구 |
+| Phase12 | 원문12·vpn.py·실제단계기록 | observed 완료:4터널/BGPbaseline·REGIONAL/GLOBAL·터널0삭제후두리전ping;Task8정리제외 |
+| Phase13/14 | 원문13/14·verifier·감사한계 | 13원문보완후25개생성·중지VM serial조회실패,49회귀/중지전receipt보완·25no-op2fc9f4…복구중;14사전검사PASS |
 | Phase15 | 원문15·모듈/verifier | 새plan→VM간통신/재plan0변경실기 |
 | 보고/게시 | docs/console·truth/checkpoint | 실제/수동/잔여리소스구분,관련변경게시 |
 
 비용초기추정: e2-micro VM,소형disk,VPN4tunnel,NAT,ALB/ILB를모두유지하면시간당약$0.5–1범위(데이터처리/전송/세금/리전차이/예약계약별도). 이는청구상한이아니며각실제plan에서자원수를다시검사한다. 공식2026-08-26조회근거: Compute general-purpose,Network Connectivity,NAT,Load Balancing pricing. 자동전체destroy/비용종료스케줄러는없다.
 
-Single next leaf: Phase10 결과와D047/Phase11 사전수정을게시해clean tree를확인하고Phase11의새run plan을생성한다.
+Single next leaf: Phase13 p13-260826-2243의apply/verify 결과와serial/health/scale증거를확인해보완하고관련변경게시후Phase14 plan/apply/verify를진행한다.
 Sub-foundations exposed: scope delegation—atomic;source/work/state/identity binding—atomic;11 API버전/수렴—split구성조회·CPU·그룹·uptime·전이;12라우팅/장애—splitbaseline·지역변경·failover;13/14부하/건강/멱등—phase별실기;15ping/0변경—atomic.

@@ -23,7 +23,7 @@ phase_write_tfvars() {
 phase_write_action_plan() {
   jq -n --arg run_id "$2" '{schema_version:1,phase:"13",run_id:$run_id,actions:[
     {id:"golden-image",kind:"terraform",target:("p13-builder-"+$run_id),mutation:"wait for readiness, reset, verify Apache auto-start on new boot, stop builder, create image",rollback:"preserve failed builder and logs for repair",timeout_seconds:1500,contains_secret:false},
-    {id:"builder-preserve",kind:"gcloud",target:("p13-builder-"+$run_id),mutation:"read stopped builder; retain for same-state repair",rollback:"explicit saved destroy plan removes builder",timeout_seconds:300,contains_secret:false},
+    {id:"builder-preserve",kind:"gcloud",target:("p13-builder-"+$run_id),mutation:"read saved pre-stop readiness; if missing, identity-check existing builder then start if stopped, reset/capture/stop without rebuilding image; retry can resume running builder",rollback:"preserve builder/image/state; explicit destroy only",timeout_seconds:1500,contains_secret:false},
     {id:"backend-health",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"bounded health polling",rollback:"read-only",timeout_seconds:900,contains_secret:false},
     {id:"lb-log-readback",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"verify logConfig and bounded current-backend log polling",rollback:"read-only",timeout_seconds:600,contains_secret:false},
     {id:"bounded-load",kind:"guest",target:("p13-loadgen-"+$run_id),mutation:"maximum 360-second ApacheBench loop",rollback:"kill exact ab processes",timeout_seconds:420,contains_secret:false},
@@ -40,21 +40,41 @@ phase_plan_guard() {
   ' "$1" >/dev/null || harness_die "Phase 13 dual-region·dual-stack·autoscaling plan 계약 불일치"
 }
 phase_after_apply() {
-  local run_id="$1" run_dir serial apache_version base_image provenance builder_status boot_count
+  local run_id="$1" run_dir apache_version base_image provenance builder_status receipt expected_id builder_json image_json recovered=false
   run_dir="$repo_root/artifacts/runs/$run_id/phase-13"
-  serial="$(gcloud compute instances get-serial-port-output "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --port=1 --start=0 2>/dev/null)"
-  apache_version="$(grep -o 'HARNESS_APACHE_VERSION=[^[:space:]]*' <<<"$serial" | tail -n1 | cut -d= -f2-)"
-  [[ -n "$apache_version" ]] || harness_die "builder Apache package version evidence 누락"
-  boot_count="$(sed -n 's/.*HARNESS_IMAGE_READY boot_id=\([a-f0-9-]*\).*/\1/p' <<<"$serial" | sort -u | wc -l)"
-  [[ "$boot_count" -ge 2 ]] || harness_die "reset 전후 서로 다른 boot의 Apache 자동 시작 증거 누락"
+  receipt="$run_dir/work/builder-readiness.json"
+  expected_id="$(terraform -chdir="$run_dir/work" output -raw builder_instance_id)"
+  builder_json="$(gcloud compute instances describe "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --format=json)"
+  jq -e --arg id "$expected_id" --arg run "$run_id" '.id==$id and .labels.run==$run and (.status=="TERMINATED" or .status=="RUNNING")' <<<"$builder_json" >/dev/null || harness_die "builder identity/소유권/복구 가능 상태 불일치"
+  image_json="$(gcloud compute images describe "p13-webserver-$run_id" --project="$GCP_PROJECT_ID" --format=json)"
+  jq -e --arg disk "$(jq -r '.disks[]|select(.boot==true)|.source' <<<"$builder_json")" '.status=="READY" and .sourceDisk==$disk' <<<"$image_json" >/dev/null || harness_die "image 원본 disk 불일치"
+  if [[ ! -f "$receipt" ]]; then
+    recovered=true
+    if [[ "$(jq -r .status <<<"$builder_json")" == TERMINATED ]]; then
+      gcloud compute instances start "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --quiet >/dev/null
+    fi
+    "$run_dir/work/wait-builder.sh" "$GCP_PROJECT_ID" "$GCP_ZONE" "p13-builder-$run_id" "$receipt" true
+  fi
+  # 후속 no-op apply도 재수집 증거를 원래 이미지 제작 시점의 증거로 바꾸지 않는다.
+  recovered="$(jq -r '.recovered_after_image // false' "$receipt")"
+  jq -e --arg id "$expected_id" --arg project "$GCP_PROJECT_ID" --arg zone "$GCP_ZONE" --arg instance "p13-builder-$run_id" '
+    .instance_id==$id and .project==$project and .zone==$zone and .instance==$instance and
+    .captured_before_stop==true and .reset_autostart_verified==true and
+    (.first_boot|test("^[a-f0-9-]{36}$")) and (.second_boot|test("^[a-f0-9-]{36}$")) and .first_boot!=.second_boot and
+    (.apache_package_version|length>0)' "$receipt" >/dev/null || harness_die "중지 전 builder 증거 불일치"
+  apache_version="$(jq -r .apache_package_version "$receipt")"
   builder_status="$(gcloud compute instances describe "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --format='value(status)')"
+  if [[ "$builder_status" == RUNNING ]]; then
+    gcloud compute instances stop "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --quiet >/dev/null
+    builder_status="$(gcloud compute instances describe "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --format='value(status)')"
+  fi
   [[ "$builder_status" == TERMINATED ]] || harness_die "custom image 생성 시점의 builder 상태가 TERMINATED가 아닙니다: $builder_status"
   base_image="$(terraform -chdir="$run_dir/work" output -raw base_image_self_link)"
   provenance="$run_dir/evidence/image-provenance.json"
   mkdir -p "$run_dir/evidence"; chmod 700 "$run_dir/evidence"
   jq -n --arg base_image_sha256 "$(printf %s "$base_image" | sha256sum | awk '{print $1}')" --arg apache_version "$apache_version" \
-    --argjson boot_count "$boot_count" \
-    '{base_image_sha256:$base_image_sha256,apache_package_version:$apache_version,builder_ready:true,builder_stopped_before_image:true,reset_autostart_verified:true,distinct_ready_boots:$boot_count}' >"$provenance"
+    --argjson recovered "$recovered" --arg receipt_sha256 "$(harness_sha256_file "$receipt")" \
+    '{base_image_sha256:$base_image_sha256,apache_package_version:$apache_version,builder_ready:true,builder_stopped_before_image:true,reset_autostart_verified:true,distinct_ready_boots:2,readiness_receipt_sha256:$receipt_sha256,readiness_recovered_after_image:$recovered}' >"$provenance"
   chmod 600 "$provenance"
   # Terraform 밖 삭제는 다음 repair의 image/builder 의존성을 깨뜨리므로 중지 상태를 보존한다.
 }

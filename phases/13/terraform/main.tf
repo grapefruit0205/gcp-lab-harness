@@ -318,3 +318,4 @@ output "ipv6_address" { value = google_compute_global_address.ipv6.address }
 output "backend_service" { value = google_compute_backend_service.http.name }
 output "base_image_self_link" { value = data.google_compute_image.debian.self_link }
 output "load_zone" { value = var.load_zone }
+output "builder_instance_id" { value = google_compute_instance.builder.instance_id }

@@ -1,6 +1,6 @@
 # Phase 10–15 — 실행·확인·실패 복구
 
-이 문서는 저장소를 clone한 사용자가 **자신의 Google 계정·프로젝트**로 실행하는 절차다. 로컬 회귀·Terraform mock/정적 검증과Phase10의보완후실제Task1–5검증을통과했다. Phase11–15의실제네트워크·메트릭성공은아직미검증이다. [수정 내역과 남은 한계](audits/phase-10-15-repair.md)를 먼저 읽는다.
+이 문서는 저장소를 clone한 사용자가 **자신의 Google 계정·프로젝트**로 실행하는 절차다. 로컬 회귀·Terraform mock/정적 검사와 Phase10–12의 실제 기계 검증을 통과한 관측이 있다. Phase13–15 실제 성공은 아직 미검증이며 사용자 콘솔·수동 항목·최종 destroy와 구분한다. [수정 내역과 남은 한계](audits/phase-10-15-repair.md)를 먼저 읽는다.
 
 진행 중인 유지관리 작업 예외(D-047, 2026-08-26): 사용자가 현재 Phase10–15의 구현·apply·오류 수정을 재질문 없이 명시 위임했다. 이 작업에서는 담당자가 각 저장 계획·정확한 SHA·소유권·비용을 확인·기록하고 실행하며 개별 SHA 승인을 다시 요청하지 않는다. 아래의 일반 clone 사용자 승인 절차와 기술적 무결성 검사는 그대로다. 다른 계정/프로젝트·이전 실습 변경·전체 destroy·외부 계정 권한 확대 및 이번 작업 완료 후 새 실행은 이 위임에 포함되지 않는다.
 
@@ -23,7 +23,7 @@ python3 tests/test-console-checks.py
 2. `gcloud auth list --filter=status:ACTIVE --format='value(account)'`로 실행 계정을 읽는다. 과거 작성자의 이메일을 복사하지 않는다. 필요한 본인 계정 로그인은 본인이 수행한다.
 3. `GCP_PROJECT_ID`와 `GCP_ALLOWED_PROJECTS`는 같은 실습 프로젝트여야 한다. 프로젝트의 billing·필요 API·권한·quota를 확인한다. 기존 사용자의 프로젝트를 기본값처럼 사용하지 않는다.
 4. Phase10–15는 현재 gcloud 사용자의 단기 토큰으로 CLI/API/Terraform을 맞춘다. 서비스 계정 가장 설정은 지원하지 않으므로 감지되면 중단한다. 별도 ADC 계정이 있어도 그 계정으로 몰래 실행하지 않는다.
-5. Phase12/13은 서로 다른 두 리전, Phase14는 **같은 리전의 서로 다른 두 zone**, Phase15는 서로 다른 두 리전의 zone이 필요하다. Phase14의 실제 `zone_two`는 저장 tfvars/output을 기준으로 읽는다.
+5. Phase12/13의 backend는 서로 다른 두 리전이 필요하다. Phase12 on-prem VM은 primary와 같은 리전의 다른 활성 zone을 선택한다. Phase13 부하 VM은 별도 세 번째 리전(기본us-west1, 계획 전 `P13_LOAD_REGION`/`P13_LOAD_ZONE` 선택)에 둔다. Phase14는 **같은 리전의 서로 다른 두 zone**, Phase15는 서로 다른 두 리전의 zone이 필요하다. 실제 zone은 `artifacts/runs/<RUN_ID>/phase-NN/work/phase-NN.auto.tfvars.json`과 output을 기준으로 읽으며 민감한 입력 파일을 공유하지 않는다.
 
 공통 preflight의 옛 `GCP_CLEANUP_ON_FAILURE=true` 요구는 아직 남아 있다. **Phase10–15의 새 실행 경로는 이 값과 무관하게 실패 시 destroy하지 않는다.** Phase01–08의 옛 apply helper에는 이 보장이 없으므로 이 안내를 다른 Phase에 그대로 적용하지 않는다. Phase09는 별도 `recovery.sh`를 사용한다.
 
