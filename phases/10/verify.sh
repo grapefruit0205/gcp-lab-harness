@@ -5,7 +5,7 @@ mode=offline;run_id="";while [[ "$#" -gt 0 ]];do case "$1" in --offline)mode=off
 if [[ "$mode" == offline ]];then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh";terraform -chdir="$phase_dir/terraform" fmt -check>/dev/null
   [[ "$(find "$phase_dir/sql" -type f -name '*.sql'|wc -l)" -eq 8 ]]||harness_die "원본 SQL 8개가 필요합니다."
-  for sql in "$phase_dir"/sql/*.sql;do rg -q '__TABLE__' "$sql"||harness_die "table placeholder 누락: $sql";done
+  for sql in "$phase_dir"/sql/*.sql;do grep -Fq '__TABLE__' "$sql"||harness_die "table placeholder 누락: $sql";done
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-10-bigquery-billing.md">/dev/null
   printf 'PASS: Phase 10 offline 계약 검증 완료\n';exit 0
 fi

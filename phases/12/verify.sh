@@ -20,9 +20,9 @@ done
 if [[ "$mode" == offline ]]; then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh"
   terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
-  [[ "$(rg -c '^resource "google_compute_vpn_tunnel"' "$phase_dir/terraform/main.tf")" -eq 2 ]] || harness_die "양쪽 tunnel resource block이 필요합니다."
-  rg -q 'routing_mode *= *"GLOBAL"' "$phase_dir/terraform/main.tf" || harness_die "global routing 누락"
-  ! rg -q 'shared_secret *= *"' "$phase_dir/terraform/main.tf" || harness_die "고정 PSK를 허용하지 않습니다."
+  [[ "$(grep -Ec '^resource "google_compute_vpn_tunnel"' "$phase_dir/terraform/main.tf")" -eq 2 ]] || harness_die "양쪽 tunnel resource block이 필요합니다."
+  grep -Eq 'routing_mode *= *"GLOBAL"' "$phase_dir/terraform/main.tf" || harness_die "global routing 누락"
+  ! grep -Eq 'shared_secret *= *"' "$phase_dir/terraform/main.tf" || harness_die "고정 PSK를 허용하지 않습니다."
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-12-ha-vpn.md" >/dev/null
   printf 'PASS: Phase 12 offline 계약 검증 완료\n'
   exit 0

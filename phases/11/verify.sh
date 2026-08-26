@@ -4,8 +4,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."&&pwd)";phase_dir="$repo_r
 mode=offline;run_id="";while [[ "$#" -gt 0 ]];do case "$1" in --offline)mode=offline;shift;;--run)[[ "$mode" == destroyed ]]||mode=cloud;run_id="${2:-}";shift 2;;--destroyed)mode=destroyed;shift;;*)exit 2;;esac;done
 if [[ "$mode" == offline ]];then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh" "$repo_root/scripts/setup-gcp-mcp.sh";terraform -chdir="$phase_dir/terraform" fmt -check>/dev/null
-  [[ "$(rg -c '^  conditions \{' "$phase_dir/terraform/main.tf")" -eq 2 ]]||harness_die "alert 조건 2개 필요"
-  rg -q 'combiner[[:space:]]*=[[:space:]]*"AND"' "$phase_dir/terraform/main.tf"||harness_die "AND combiner 누락"
+  [[ "$(grep -Ec '^[[:space:]]*conditions \{' "$phase_dir/terraform/main.tf")" -eq 2 ]]||harness_die "alert 조건 2개 필요"
+  grep -Eq 'combiner[[:space:]]*=[[:space:]]*"AND"' "$phase_dir/terraform/main.tf"||harness_die "AND combiner 누락"
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-11-monitoring.md">/dev/null
   printf 'PASS: Phase 11 offline 계약 검증 완료\n';exit 0
 fi

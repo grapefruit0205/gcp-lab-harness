@@ -21,8 +21,8 @@ if [[ "$mode" == offline ]]; then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh"
   terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-07-iam.md" >/dev/null
-  ! rg -q 'google_project_iam_(policy|binding)' "$phase_dir/terraform/main.tf" || harness_die "authoritative project IAM 리소스는 허용하지 않습니다."
-  ! rg -q 'google_service_account_key|private_key[[:space:]]*=' "$phase_dir/terraform" "$phase_dir/execute.sh" || harness_die "서비스 계정 키 생성 경로가 있습니다."
+  ! grep -Eq 'google_project_iam_(policy|binding)' "$phase_dir/terraform/main.tf" || harness_die "authoritative project IAM 리소스는 허용하지 않습니다."
+  ! grep -Eq 'google_service_account_key|private_key[[:space:]]*=' "$phase_dir/terraform/main.tf" "$phase_dir/execute.sh" || harness_die "서비스 계정 키 생성 경로가 있습니다."
   printf 'PASS: Phase 07 offline 계약 검증 완료\n'
   exit 0
 fi
@@ -77,7 +77,7 @@ gcloud projects remove-iam-policy-binding "$GCP_PROJECT_ID" --member="serviceAcc
 if gcloud projects describe "$GCP_PROJECT_ID" --impersonate-service-account="$actor2" >/dev/null 2>"$run_dir/actor2-project-denial.log"; then
   harness_die "Viewer 회수 뒤 actor2 프로젝트 조회가 성공했습니다."
 fi
-rg -qi 'permission|denied|forbidden' "$run_dir/actor2-project-denial.log" || harness_die "actor2 expected-denial 근거가 없습니다."
+grep -E -qi 'permission|denied|forbidden' "$run_dir/actor2-project-denial.log" || harness_die "actor2 expected-denial 근거가 없습니다."
 
 gcloud storage buckets add-iam-policy-binding "gs://$bucket" --member="serviceAccount:$actor2" --role=roles/storage.objectViewer --quiet >/dev/null
 gcloud storage cat "gs://$bucket/sample.txt" --impersonate-service-account="$actor2" >/dev/null

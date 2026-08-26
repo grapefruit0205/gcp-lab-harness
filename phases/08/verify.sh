@@ -8,7 +8,7 @@ while [[ "$#" -gt 0 ]]; do case "$1" in --offline) mode=offline;shift;; --run) [
 if [[ "$mode" == offline ]]; then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh"; terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-08-cloud-storage.md" >/dev/null
-  ! rg -n 'CSEK_[12]=|encryption_key:[[:space:]]+[A-Za-z0-9+/=]{20,}' "$phase_dir" || harness_die "CSEK 값이 코드에 있습니다."
+  ! grep -rnE 'CSEK_[12]=|encryption_key:[[:space:]]+[A-Za-z0-9+/=]{20,}' "$phase_dir" || harness_die "CSEK 값이 코드에 있습니다."
   printf 'PASS: Phase 08 offline 계약 검증 완료\n'; exit 0
 fi
 harness_validate_run_id "$run_id"; harness_load_config "$repo_root/config/harness.env"; bucket="gcp-lab-p08-$run_id"
@@ -38,7 +38,7 @@ if gcloud storage objects update "gs://$bucket/setup.html" --add-acl-grant=entit
   public_acl_active=false
   public_acl="created-tested-revoked"
 else
-  rg -qi '412|public access prevention|organization policy|not supported' "$run_dir/public-acl.log" || harness_die "public ACL 실패가 예상 정책 거부가 아닙니다."
+  grep -E -qi '412|public access prevention|organization policy|not supported' "$run_dir/public-acl.log" || harness_die "public ACL 실패가 예상 정책 거부가 아닙니다."
 fi
 trap - EXIT
 

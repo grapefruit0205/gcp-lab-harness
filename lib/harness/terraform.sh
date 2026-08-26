@@ -26,7 +26,7 @@ harness_tf_guard_plan() {
     harness_die "GCP_MAX_RESOURCES_PER_PHASE가 유효하지 않습니다."
     return
   }
-  jq -e empty <<<"$allowed_types_json" >/dev/null || {
+  jq empty <<<"$allowed_types_json" >/dev/null || {
     harness_die "허용 Terraform type 목록이 유효한 JSON이 아닙니다."
     return
   }

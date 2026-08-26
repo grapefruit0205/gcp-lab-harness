@@ -36,7 +36,7 @@ jq -e '
   .output_changes.secret.after == "<redacted>"
 ' <<<"$sanitized" >/dev/null
 
-if git -C "$repo_root" ls-files | rg -q '\.(tfstate|tfplan|pem|key)$|credentials.*\.json$|service-account.*\.json$'; then
+if git -C "$repo_root" ls-files | grep -Eq '\.(tfstate|tfplan|pem|key)$|credentials.*\.json$|service-account.*\.json$'; then
   printf 'FAIL: Git 추적 파일에 state, plan 또는 credential 후보가 있습니다.\n' >&2
   exit 1
 fi

@@ -65,8 +65,8 @@ verify_cloud() {
   [[ "$(jq -r '.disks[0].diskSizeGb' <<<"$windows_json")" -eq 64 ]] || harness_die "Windows boot disk가 64GB가 아닙니다."
 
   local utility_guest custom_guest
-  utility_guest="$(timeout 60 gcloud compute ssh "$utility_vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command='set -eu; test -f /var/lib/gcp-lab-harness/ready; . /etc/os-release; printf "%s|%s|%s" "$ID" "$(nproc)" "$(awk "/MemTotal/{print int(\$2/1024)}" /proc/meminfo)"')"
-  custom_guest="$(timeout 60 gcloud compute ssh "$custom_vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command='set -eu; test -f /var/lib/gcp-lab-harness/ready; . /etc/os-release; printf "%s|%s|%s" "$ID" "$(nproc)" "$(awk "/MemTotal/{print int(\$2/1024)}" /proc/meminfo)"')"
+  utility_guest="$(timeout 60 gcloud compute ssh "$utility_vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command='set -eu; test -f /var/lib/gcp-lab-harness/ready; . /etc/os-release; mem=$(awk "/MemTotal/{print int(\$2/1024)}" /proc/meminfo); printf "%s|%s|%s\n" "$ID" "$(nproc)" "$mem"')"
+  custom_guest="$(timeout 60 gcloud compute ssh "$custom_vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command='set -eu; test -f /var/lib/gcp-lab-harness/ready; . /etc/os-release; mem=$(awk "/MemTotal/{print int(\$2/1024)}" /proc/meminfo); printf "%s|%s|%s\n" "$ID" "$(nproc)" "$mem"')"
   [[ "$utility_guest" == debian\|* ]] || harness_die "utility VM guest OS/SSH 검사 실패"
   [[ "$custom_guest" == debian\|2\|* ]] || harness_die "custom VM guest vCPU/SSH 검사 실패"
   custom_memory_mb="${custom_guest##*|}"
@@ -78,7 +78,7 @@ verify_cloud() {
       --zone="$GCP_ZONE" \
       --project="$GCP_PROJECT_ID" \
       --query-path='gcp-lab-harness/readiness' \
-      --format='value(queryValue.items[0].value)' 2>/dev/null
+      --format='value(value)' 2>/dev/null
   }
   windows_ready() { [[ "$(guest_attribute_value "$windows_vm")" == "rdp-ready" ]]; }
   if ! harness_wait_until 600 15 windows_ready; then

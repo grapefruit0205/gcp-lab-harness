@@ -6,8 +6,8 @@ mode=offline;run_id="";while [[ "$#" -gt 0 ]];do case "$1" in --offline)mode=off
 if [[ "$mode" == offline ]];then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh";terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-09-cloud-sql.md" >/dev/null
-  rg -q -- '--address=127.0.0.1 --port=3306' "$phase_dir/terraform/main.tf" || harness_die "Auth Proxy public-default 계약 누락"
-  ! rg -q 'authorized_networks|source_ranges[[:space:]]*=[[:space:]]*\["0\.0\.0\.0/0"\]' "$phase_dir/terraform/main.tf" || harness_die "광범위 SQL/HTTP 노출 경로"
+  grep -Fq -- '--address=127.0.0.1 --port=3306' "$phase_dir/terraform/main.tf" || harness_die "Auth Proxy public-default 계약 누락"
+  ! grep -Eq 'authorized_networks|source_ranges[[:space:]]*=[[:space:]]*\["0\.0\.0\.0/0"\]' "$phase_dir/terraform/main.tf" || harness_die "광범위 SQL/HTTP 노출 경로"
   printf 'PASS: Phase 09 offline 계약 검증 완료\n';exit 0
 fi
 harness_validate_run_id "$run_id";harness_load_config "$repo_root/config/harness.env";instance="wordpress-db-$run_id";proxy="wordpress-proxy-$run_id";private="wordpress-private-$run_id"

@@ -82,7 +82,7 @@ verify_cloud() {
       --zone="$GCP_ZONE" \
       --project="$GCP_PROJECT_ID" \
       --query-path='gcp-lab-harness/readiness' \
-      --format='value(queryValue.items[0].value)' 2>/dev/null || true)"
+      --format='value(value)' 2>/dev/null || true)"
     [[ "$value" == "ready" ]]
   }
   app_ready() {
@@ -104,13 +104,13 @@ verify_cloud() {
   ssh_fw_json="$(gcloud compute firewall-rules describe "$ssh_fw_name" --project="$GCP_PROJECT_ID" --format=json)"
   jq -e '.status == "RUNNING" and (.machineType | endswith("/e2-medium"))' <<<"$vm_json" >/dev/null || harness_die "VM 상태 또는 machine type 불일치"
   jq -e '.sizeGb >= 50 and (.type | endswith("/pd-ssd"))' <<<"$disk_json" >/dev/null || harness_die "data disk 크기 또는 type 불일치"
-  jq -e '.iamConfiguration.publicAccessPrevention == "enforced" and .iamConfiguration.uniformBucketLevelAccess.enabled == true' <<<"$bucket_json" >/dev/null || harness_die "backup bucket 비공개 정책 불일치"
+  jq -e '((.public_access_prevention == "enforced") or (.iamConfiguration.publicAccessPrevention == "enforced")) and ((.uniform_bucket_level_access == true) or (.iamConfiguration.uniformBucketLevelAccess.enabled == true))' <<<"$bucket_json" >/dev/null || harness_die "backup bucket 비공개 정책 불일치"
   jq -e '.sourceRanges | length == 1 and .[0] != "0.0.0.0/0" and .[0] != "::/0"' <<<"$app_fw_json" >/dev/null || harness_die "Minecraft firewall source가 제한되지 않았습니다."
   jq -e '.sourceRanges == ["35.235.240.0/20"]' <<<"$ssh_fw_json" >/dev/null || harness_die "SSH firewall가 IAP-only가 아닙니다."
   [[ "$(jq -r '.sourceRanges[0]' <<<"$app_fw_json")" == "$(jq -r '.client_source_cidr' "$tfvars_file")" ]] || harness_die "실제 client CIDR가 승인 입력과 다릅니다."
 
   local before_state
-  before_state="$(guest 'set -eu; source_dev=$(findmnt -n -o SOURCE /srv/minecraft); uuid=$(sudo blkid -s UUID -o value "$source_dev"); fstype=$(findmnt -n -o FSTYPE /srv/minecraft); grep -Fq "UUID=$uuid /srv/minecraft ext4" /etc/fstab; systemctl is-active --quiet minecraft.service; test -f /srv/minecraft/world/level.dat; test -x /usr/local/sbin/minecraft-backup; grep -Fq /usr/local/sbin/minecraft-backup /etc/cron.d/minecraft-backup; artifact=$(sha256sum /srv/minecraft/server.jar | awk "{print \$1}"); jre=$(dpkg-query -W -f="\${Version}" openjdk-17-jre-headless); boot=$(cat /var/lib/gcp-lab-harness/boot-count); printf "%s|%s|%s|%s|%s" "$uuid" "$fstype" "$artifact" "$jre" "$boot"')"
+  before_state="$(guest 'set -eu; source_dev=$(findmnt -n -o SOURCE /srv/minecraft); uuid=$(sudo blkid -s UUID -o value "$source_dev"); fstype=$(findmnt -n -o FSTYPE /srv/minecraft); grep -Fq "UUID=$uuid /srv/minecraft ext4" /etc/fstab; systemctl is-active --quiet minecraft.service; test -f /srv/minecraft/world/level.dat; sudo test -x /usr/local/sbin/minecraft-backup; grep -Fq /usr/local/sbin/minecraft-backup /etc/cron.d/minecraft-backup; artifact=$(sha256sum /srv/minecraft/server.jar | awk "{print \$1}"); jre=$(dpkg-query -W -f="\${Version}" openjdk-17-jre-headless); boot=$(cat /var/lib/gcp-lab-harness/boot-count); printf "%s|%s|%s|%s|%s" "$uuid" "$fstype" "$artifact" "$jre" "$boot"')"
   IFS='|' read -r before_uuid before_fstype artifact_sha jre_version before_boot <<<"$before_state"
   [[ "$before_uuid" =~ ^[A-Fa-f0-9-]+$ && "$before_fstype" == "ext4" ]] || harness_die "data disk UUID/filesystem/mount 검사 실패"
   [[ "$artifact_sha" == "$(jq -r '.minecraft_server_sha256' "$tfvars_file")" ]] || harness_die "guest server artifact checksum 불일치"
@@ -148,7 +148,7 @@ verify_cloud() {
   IFS='|' read -r after_uuid after_boot <<<"$after_state"
   [[ "$after_uuid" == "$before_uuid" ]] || harness_die "maintenance 전후 data disk UUID가 다릅니다."
   [[ "$after_boot" =~ ^[0-9]+$ && "$after_boot" -gt "$before_boot" ]] || harness_die "maintenance 후 startup script 재실행 증거가 없습니다."
-  shutdown_value="$(gcloud compute instances get-guest-attributes "$vm_name" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --query-path='gcp-lab-harness/shutdown' --format='value(queryValue.items[0].value)' 2>/dev/null || true)"
+  shutdown_value="$(gcloud compute instances get-guest-attributes "$vm_name" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --query-path='gcp-lab-harness/shutdown' --format='value(value)' 2>/dev/null || true)"
   [[ "$shutdown_value" == "observed" ]] || harness_die "shutdown hook 실행 증거가 없습니다."
   timeout 15 bash -c "</dev/tcp/$public_ip/25565" || harness_die "maintenance 후 외부 TCP probe가 복구되지 않았습니다."
 

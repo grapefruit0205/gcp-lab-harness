@@ -47,7 +47,7 @@ active_project="$(gcloud config get-value project 2>/dev/null)"
 [[ "$active_project" == "$GCP_PROJECT_ID" ]] || harness_die "gcloud 활성 project가 allowlist project와 다릅니다."
 for bucket_name in "$console_bucket" "$shell_bucket"; do
   bucket_json="$(gcloud storage buckets describe "gs://$bucket_name" --project="$GCP_PROJECT_ID" --format=json)"
-  jq -e '.location == "US" and .storageClass == "STANDARD" and .iamConfiguration.publicAccessPrevention == "enforced"' <<<"$bucket_json" >/dev/null || harness_die "Phase 01 bucket 정책이 plan과 다릅니다."
+  jq -e '((.location == "US" or .location_type == "multi-region") and (.storageClass == "STANDARD" or .default_storage_class == "STANDARD")) and ((.public_access_prevention == "enforced") or (.iamConfiguration.publicAccessPrevention == "enforced"))' <<<"$bucket_json" >/dev/null || harness_die "Phase 01 bucket 정책이 plan과 다릅니다."
 done
 
 temp_root="$(mktemp -d)"

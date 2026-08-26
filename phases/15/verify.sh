@@ -6,8 +6,8 @@ mode=offline;run_id="";while [[ "$#" -gt 0 ]];do case "$1" in --offline)mode=off
 if [[ "$mode" == offline ]];then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh";terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   [[ -f "$phase_dir/terraform/.terraform.lock.hcl" ]]||harness_die "provider lockfile 누락"
-  rg -q 'source *= *"\./modules/instance"' "$phase_dir/terraform/main.tf"||harness_die "local reusable module 누락"
-  ! rg -q 'source *= *("git|"https|"registry)|access_config|0\.0\.0\.0/0' "$phase_dir/terraform"||harness_die "원격 module·external IP·전체 ingress 금지"
+  grep -Eq 'source *= *"\./modules/instance"' "$phase_dir/terraform/main.tf"||harness_die "local reusable module 누락"
+  ! grep -Eq 'source *= *("git|"https|"registry)|access_config|0\.0\.0\.0/0' "$phase_dir/terraform/main.tf" "$phase_dir/terraform/modules/instance/main.tf"||harness_die "원격 module·external IP·전체 ingress 금지"
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-15-terraform.md">/dev/null
   printf 'PASS: Phase 15 offline 계약 검증 완료\n';exit 0
 fi

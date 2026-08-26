@@ -17,9 +17,9 @@ esac; done
 if [[ "$mode" == offline ]]; then
   bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh" "$phase_dir/terraform/wait-builder.sh"
   terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
-  rg -q 'ip_version *= *"IPV4"' "$phase_dir/terraform/main.tf" && rg -q 'ip_version *= *"IPV6"' "$phase_dir/terraform/main.tf" || harness_die "IPv4/IPv6 frontend 누락"
-  rg -q 'log_config' "$phase_dir/terraform/main.tf" || harness_die "backend logging 누락"
-  ! rg -q 'source_ranges *= *\["0.0.0.0/0"\]' "$phase_dir/terraform/main.tf" || harness_die "전체 public ingress 금지"
+  grep -Eq 'ip_version *= *"IPV4"' "$phase_dir/terraform/main.tf" && grep -Eq 'ip_version *= *"IPV6"' "$phase_dir/terraform/main.tf" || harness_die "IPv4/IPv6 frontend 누락"
+  grep -Eq 'log_config' "$phase_dir/terraform/main.tf" || harness_die "backend logging 누락"
+  ! grep -Eq 'source_ranges *= *\["0.0.0.0/0"\]' "$phase_dir/terraform/main.tf" || harness_die "전체 public ingress 금지"
   "$repo_root/scripts/phase-contract.py" --check "$repo_root/docs/phases/phase-13-external-alb.md" >/dev/null
   printf 'PASS: Phase 13 offline 계약 검증 완료\n'; exit 0
 fi
