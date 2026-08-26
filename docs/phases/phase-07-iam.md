@@ -24,6 +24,23 @@ Notion 본문처럼 서로 다른 **실제 Google 사용자 두 계정**으로 �
 | Task 7. Service Account User 역할 살펴보기 | automated | VM metadata SA로 Compute 거부/read 성공/write 거부, project Viewer→Creator 교체 후 업로드 성공/**기존 파일 읽기 거부** |
 | Task 8. Review | cli-equivalent | B의 Viewer/Object Viewer/Compute/actAs 회수·baseline 및 A 보존 확인. 최종 리소스 삭제는 승인된 destroy 뒤이며 그전에는 전체 종료 완료가 아님 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | 일반 브라우저 A·시크릿/별도 프로필 B → 우측 계정 메뉴 | 서로 다른 본인 계정이며 A는 허용 프로젝트 관리자 | Qwiklabs 임시 계정은 필요 없음. 이메일/토큰을 문서 기본값에 저장하지 않음 |
+| 2 | IAM 및 관리자 → IAM; B의 프로젝트 선택 | 해당 단계의 Viewer B는 조회 가능하고 IAM 변경 권한은 없음 | 자동 검증 종료 후 임시 역할은 회수되므로 B의 접근 거부가 정상일 수 있음 |
+| 3 | Cloud Storage → run private 버킷 → sample.txt | A가 객체를 확인하고 승인 단계의 B 조회 증거가 있음 | 후속 회수 후에는 B로 재조회가 안 될 수 있음. 단계별 evidence 대조 |
+| 4 | A: IAM 및 관리자 → IAM에서 B 검색 | 임시 프로젝트 Viewer가 제거되고 단계별 B 읽기 거부 증거가 있음 | 현재 콘솔만으로 과거 거부를 입증하지 않음. 재현하려고 역할을 임의 부여하지 않음 |
+| 5 | IAM 및 관리자 → IAM 및 Storage 객체 상세 | Object Viewer 단계의 B 목록/읽기 성공·쓰기/Compute/IAM 거부 evidence | 최종 rollback 후 Object Viewer가 없는 것이 정상. 단계 종료와 현재 권한을 구분 |
+| 6 | Compute Engine → run VM 상세 → 서비스 계정; Logging → 로그 탐색기 | VM의 workload SA가 일치하고 VM 생성 operation/audit actor가 B | A의 SSH와 B의 VM 생성을 구분. IAM 부여는 이미 회수될 수 있으며 별도 재부여 금지 |
+| 7 | IAM 및 관리자 → IAM에서 workload SA 검색; VM workload evidence | Viewer→Creator 전이에서 읽기/쓰기 허용·거부가 계약대로 기록됨 | 사용자 B 권한과 VM SA 권한은 별개. 콘솔 목록만으로 metadata 인증 결과는 입증 불가 |
+| 8 | IAM 페이지 + 해당 run VM/버킷 | B의 임시 Viewer/Object Viewer/Compute/actAs 회수와 기존 A/baseline 유지 | 리소스는 destroy 전 남을 수 있음. 현재 IAM과 단계별8개 evidence를 함께 확인 |
+
+메뉴 확인 근거(2026-08-26): [현재 IAM 접근 권한 보기](https://docs.cloud.google.com/iam/docs/granting-changing-revoking-access). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 두 실제 사용자 인증, project-level 역할 전이, **User2의 VM 생성**, User1의 SSH, workload 역할 전환과 정확한 rollback을 연결한다. 프로젝트 권한은 프로젝트에서, 객체 권한은 생성된 실습 버킷에서 검사한다. 기존/그룹 상속 Object·actAs 권한이 있으면 실습 성공으로 처리하지 않으며 다른 사용자 권한은 제거하지 않는다.

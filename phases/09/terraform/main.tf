@@ -17,8 +17,8 @@ variable "run_id" {
 variable "client_source_cidr" {
   type = string
   validation {
-    condition     = can(cidrhost(var.client_source_cidr, 0)) && !contains(["0.0.0.0/0", "::/0"], var.client_source_cidr)
-    error_message = "제한된 client CIDR가 필요합니다."
+    condition     = can(cidrnetmask(var.client_source_cidr)) && endswith(var.client_source_cidr, "/32")
+    error_message = "client IPv4 /32가 필요합니다."
   }
 }
 variable "wordpress_url" { type = string }
@@ -27,7 +27,15 @@ variable "proxy_url" { type = string }
 variable "proxy_sha256" { type = string }
 variable "wp_cli_url" { type = string }
 variable "wp_cli_sha256" { type = string }
+variable "runner" { type = string }
 provider "google" { project = var.project_id }
+
+resource "google_project_service" "required" {
+  for_each           = toset(["sqladmin.googleapis.com", "servicenetworking.googleapis.com", "iap.googleapis.com"])
+  project            = var.project_id
+  service            = each.value
+  disable_on_destroy = false
+}
 
 data "google_compute_image" "debian" {
   family  = "debian-12"
@@ -58,6 +66,7 @@ resource "google_service_networking_connection" "private_services" {
   network                 = google_compute_network.sql.id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_services.name]
+  depends_on              = [google_project_service.required]
 }
 resource "google_compute_firewall" "iap" {
   project = var.project_id
@@ -83,12 +92,12 @@ resource "google_compute_firewall" "http" {
 }
 resource "google_service_account" "proxy" {
   project      = var.project_id
-  account_id   = "p09-proxy-${substr(var.run_id, 0, 15)}"
+  account_id   = "p09-p-${var.run_id}"
   display_name = "Phase 09 proxy ${var.run_id}"
 }
 resource "google_service_account" "private" {
   project      = var.project_id
-  account_id   = "p09-private-${substr(var.run_id, 0, 13)}"
+  account_id   = "p09-d-${var.run_id}"
   display_name = "Phase 09 private ${var.run_id}"
 }
 resource "google_project_iam_member" "proxy_client" {
@@ -103,7 +112,8 @@ resource "google_sql_database_instance" "wordpress" {
   database_version    = "MYSQL_8_0"
   deletion_protection = false
   settings {
-    tier              = "db-f1-micro"
+    edition           = "ENTERPRISE"
+    tier              = "db-custom-1-3840"
     disk_type         = "PD_SSD"
     disk_size         = 10
     disk_autoresize   = false
@@ -129,19 +139,30 @@ resource "google_sql_database" "wordpress" {
 locals {
   common_startup = <<-EOT
     #!/usr/bin/env bash
+    set +x
     set -Eeuo pipefail
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
-    apt-get install -y -qq apache2 php libapache2-mod-php php-mysql php-curl php-gd php-mbstring php-xml php-zip default-mysql-client curl ca-certificates
+    apt-get install -y -qq apache2 php libapache2-mod-php php-mysql php-curl php-gd php-mbstring php-xml php-zip default-mysql-client curl ca-certificates python3
     tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
-    curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --max-time 300 -o "$tmp" '${var.wordpress_url}'
-    printf '%s  %s\n' '${var.wordpress_sha256}' "$tmp" | sha256sum --check --status
-    rm -rf /var/www/html/*; tar -xzf "$tmp" -C /var/www/html --strip-components=1
+    if [[ ! -f /var/lib/p09-wordpress-assets ]]; then
+      # 재부팅으로 WordPress 설정/업로드/데이터를 지우지 않는다.
+      [[ ! -e /var/www/html/wp-config.php && ! -L /var/www/html/wp-config.php ]]
+      curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --max-time 300 -o "$tmp" '${var.wordpress_url}'
+      printf '%s  %s\n' '${var.wordpress_sha256}' "$tmp" | sha256sum --check --status
+      tar -xzf "$tmp" -C /var/www/html --strip-components=1
+      # 최초 Apache 기본 welcome 파일만 제거한다.
+      if [[ -f /var/www/html/index.html ]] && grep -q 'Apache2 Debian Default Page' /var/www/html/index.html; then
+        rm -- /var/www/html/index.html
+      fi
+      chown -R www-data:www-data /var/www/html
+      touch /var/lib/p09-wordpress-assets
+    fi
     curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --max-time 300 -o "$tmp" '${var.wp_cli_url}'
     printf '%s  %s\n' '${var.wp_cli_sha256}' "$tmp" | sha256sum --check --status
     install -m 0755 "$tmp" /usr/local/bin/wp
-    chown -R www-data:www-data /var/www/html
     systemctl enable --now apache2
+    touch /var/lib/p09-wordpress-ready
   EOT
   proxy_startup  = <<-EOT
     ${local.common_startup}
@@ -170,6 +191,7 @@ resource "google_compute_instance" "proxy" {
   zone         = var.zone
   machine_type = "e2-micro"
   tags         = ["p09-wordpress"]
+  labels       = { harness = "gcp-lab-harness", phase = "09", run = var.run_id }
   boot_disk {
     initialize_params {
       image = data.google_compute_image.debian.self_link
@@ -186,6 +208,7 @@ resource "google_compute_instance" "proxy" {
     email  = google_service_account.proxy.email
     scopes = ["https://www.googleapis.com/auth/sqlservice.admin", "https://www.googleapis.com/auth/logging.write"]
   }
+  depends_on = [google_project_iam_member.proxy_client]
 }
 resource "google_compute_instance" "private" {
   project      = var.project_id
@@ -193,6 +216,7 @@ resource "google_compute_instance" "private" {
   zone         = var.zone
   machine_type = "e2-micro"
   tags         = ["p09-wordpress"]
+  labels       = { harness = "gcp-lab-harness", phase = "09", run = var.run_id }
   boot_disk {
     initialize_params {
       image = data.google_compute_image.debian.self_link

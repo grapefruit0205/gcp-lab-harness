@@ -104,6 +104,7 @@ if [[ "$state" == "planned" ]]; then
   printf 'WAITING: 출력된 저장 plan SHA256을 확인한 뒤 같은 명령에 --confirm-plan-sha를 추가하세요.\n'
 elif [[ "$state" == "waiting_extension_review" && -f "$report_file" ]]; then
   printf 'PASS: 단일 모델 검증 결과가 준비됐습니다: %s\n' "$report_file"
+  python3 "$repo_root/scripts/console-checks.py" --phase "$phase"
   printf '사용자 확인 후: gcp-lab-harness single-model approve --run %s\n' "$run_id"
 else
   printf 'INFO: 현재 Phase %s 상태: %s\n' "$phase" "$state"

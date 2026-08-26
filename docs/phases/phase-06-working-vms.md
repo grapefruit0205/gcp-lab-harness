@@ -20,6 +20,22 @@ VM과 데이터 disk를 준비하고 애플리케이션을 설치·실행하며 
 | Task 6. 서버 유지보수하기 | automated | graceful stop, VM stop/start, startup/shutdown script evidence |
 | Task 7. Review | cli-equivalent | disk·app·network·backup·maintenance 결과 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Compute Engine → VM 인스턴스 → Minecraft VM | RUNNING, 머신·서비스 계정·metadata가 계획과 일치 | 서비스 준비 완료는 Task 3과 별도 |
+| 2 | Compute Engine → 디스크 → run 데이터 디스크; VM의 추가 디스크 | 올바른 VM에 데이터 디스크가 연결됨 | 포맷·mount·fstab·재부팅 유지 여부는 guest evidence. 콘솔 attach만으로 통과 아님 |
+| 3 | VM 상세 → SSH; 해당 서버의 application probe 결과 | Minecraft 서비스/process가 정상이고 서버 protocol/TCP 검사가 성공 | 콘솔 VM 상태나 Java 프로세스 존재만으로 접속 성공을 단정하지 않음 |
+| 4 | VPC 네트워크 → 방화벽 → run Minecraft 규칙 | tcp:25565, 올바른 target tag, 승인된 source CIDR | 게임 포트 공개 예외와 IAP SSH 제한을 구분. 실제 클라이언트 접속/TCP evidence 추가 |
+| 5 | Cloud Storage → backup 버킷 → 객체 | 해당 run 백업 객체·생성 시각·세대가 존재하고 내용 검사가 일치 | 예약 cron과 복구 가능성은 guest/backup evidence로 보조 |
+| 6 | Compute Engine → VM 상세·작업/직렬 포트 기록 | 유지보수 후 VM/서버와 mount가 정상 복구 | 현재 RUNNING만으로 stop/start와 graceful 종료 전이를 입증 못 함 |
+| 7 | VM·디스크·방화벽·backup 객체 | Task 1–6 증거와 현재 리소스가 같은 run에 속함 | destroy 이후 월드/VM은 없어야 함. 확인용 재생성·새 백업을 하지 않음 |
+
+메뉴 확인 근거(2026-08-26): [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. image·disk·외부 artifact URL과 checksum·라이선스 조건을 preflight한다.

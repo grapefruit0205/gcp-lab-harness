@@ -32,6 +32,23 @@ Lifecycle과 versioning은 Terraform에서 먼저 설정하고 API로 읽어 확
 
 새 실습 bucket에만 `soft_delete_policy.retention_duration_seconds=0`을 명시한다. 일회성 CSEK 데이터가 키 폐기 후 7일간 남는 것을 방지하기 위한 차이이며 saved plan 승인 범위다. 이전 실습에서 이미 soft-delete된 데이터에는 영향이 없다. 조직 정책을 자동 완화하지 않는다.
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Cloud Storage → 버킷 → 해당 run 버킷 | 설정 리전과 fixture 이름/크기가 승인 계획과 같음 | 다른 run 버킷이나 Qwiklabs 제공 파일과 혼동하지 않음 |
+| 2 | 버킷 → 객체 → fixture → 권한; 버킷 권한 | 검증 종료 후 임시 allUsers READER가 회수됨 | 임시 공개 동안의 익명 성공·회수 후 거부는 evidence. 공개 권한을 다시 열지 않음 |
+| 3 | 버킷 → 객체; CSEK 단계 evidence | CSEK metadata·복호화 hash 성공 기록이 있음 | 보안상 setup2/3의 암호화 세대는 검증 중 제거됨. 콘솔에 안 보이는 것이 정상이고 키를 복원·입력하지 않음 |
+| 4 | 동일 버킷과 키 순환 evidence | setup2/3의 구키·신키 성공/거부 조합이 모두 기록됨 | 현재 객체 화면으로 키 순환을 재현할 수 없음. 키값 없는 정제 증거로 확인 |
+| 5 | 버킷 → 수명 주기(Lifecycle) | Age 31일의 Delete 규칙이 있음 | 정책 설정 확인이며 실제31일 경과 삭제를 관측한 것은 아님 |
+| 6 | 버킷 → 보호(Protection)/버전 관리; 객체 → 버전 이력 | 버전 관리 사용, fixture의 세대/크기와 원본 복구 hash evidence 일치 | 다른 이름의 recovered.txt 로컬 복구는 콘솔에 없어도 정상. 키 폐기 객체와 구분 |
+| 7 | 버킷 → 객체 → 동기화 경로 | 동기화한2개 객체의 경로·크기가 기대 집합과 같음 | 내용 무결성은 다운로드 hash evidence로 확인 |
+| 8 | 버킷 정책·객체 + Task1–8 evidence | 임시 공개 회수·CSEK 세대 제거·버전·sync 결과를 대조 | 전체 종료는 별도 destroy 후 버킷 부재/잔여0 확인. 검증 성공과 구분 |
+
+메뉴 확인 근거(2026-08-26): [수명 주기 정책 확인](https://docs.cloud.google.com/storage/docs/managing-lifecycles), [객체 버전 확인](https://docs.cloud.google.com/storage/docs/using-versioned-objects). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 `terraform/main.tf`는 bucket과 정책, `execute.sh`·`support.sh`는 승인/인증/소유권, `storage_lab.py`는 데이터 경로, `verify.sh`는 검증·실패 정리를 담당한다. 원본 보존 파일은 수정하지 않았다.

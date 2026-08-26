@@ -17,6 +17,19 @@ Linux 유틸리티 VM, Windows VM, custom machine VM을 명시적 사양으로 �
 | Task 3. 커스텀 가상 머신 생성하기 | automated | custom vCPU·memory describe와 SSH guest 검사 |
 | Task 4. Review | cli-equivalent | 세 VM의 설정·로그·접속 결과 비교 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Compute Engine → VM 인스턴스 → utility VM 상세 | RUNNING, Linux 이미지·zone·머신·디스크·NIC가 계획과 일치 | SSH·guest OS 확인 evidence도 필요 |
+| 2 | Compute Engine → VM 인스턴스 → Windows VM 상세/직렬 포트 출력 | Windows 이미지·사양·guest agent 준비 상태가 기대와 일치 | RDP readiness 증거와 실제 GUI 로그인은 별개. 비밀번호를 재설정하거나 로그에 게시하지 않음 |
+| 3 | Compute Engine → VM 인스턴스 → custom VM 상세 | custom vCPU·메모리·zone이 승인 계획과 일치 | guest CPU·메모리 인식은 SSH 검사 evidence 대조 |
+| 4 | 세 VM 상세 페이지 | Linux/Windows/custom 사양과 각 readiness 결과를 나란히 확인 | RUNNING만으로 OS 로그인·앱 동작이 입증되지 않음 |
+
+메뉴 확인 근거(2026-08-26): [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. zone, image family, machine series, Windows license 비용과 quota를 preflight한다.

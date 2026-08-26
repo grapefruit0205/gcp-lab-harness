@@ -19,6 +19,7 @@
 4. `gcp-lab-harness single-model prepare --run <RUN_ID> --plan <저장-plan> --evidence <manifest>`로 hash 결합 검증 bundle을 준비한다. 이미 review 대기 상태면 기존 bundle을 사용한다.
 5. 준비 prompt의 run·Phase·세 hash와 정확히 일치하는 `single-model-review.json`을 지정된 경로에 작성한다.
 6. P0/P1 또는 실행 실패가 있으면 `verdict: fail`, 없고 모든 필수 검증이 실제로 통과한 경우에만 `verdict: pass`로 기록한다.
+7. 완료 보고에는 `python3 scripts/console-checks.py --phase NN`의 모든 Task별 콘솔 경로·대상·통과 기준·한계/보조 증거를 포함한다. 기계 검증·사용자 콘솔 확인·destroy 상태는 별개다. 사용자 확인을 대신 완료 처리하거나 삭제된 환경을 안내용으로 재생성하지 않는다.
 
 ## 중단점
 

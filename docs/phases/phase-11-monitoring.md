@@ -20,6 +20,22 @@
 | Task 6. 알림 비활성화하기 | automated | enabled true→false 전이 확인 |
 | Task 7. Review | cli-equivalent | dashboard·policy·group·uptime evidence 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Monitoring → Metrics Explorer → VM CPU 지표 | 올바른 metrics scope/project와 현재 run VM3개의 시계열 | 데이터가 늦으면 시간 범위를 실행 시점으로 조정. 빈 그래프를 정상으로 판정하지 않음 |
+| 2 | Monitoring → 대시보드 → Phase 11 <RUN_ID> | 해당 run CPU 차트와 실제 데이터가 표시됨 | 대시보드 존재만으로 쿼리/데이터 성공은 아님 |
+| 3 | Monitoring → 알림(Alerting) → 정책 → Phase 11 CPU <RUN_ID> | 조건2개·AND 결합이 승인 설정과 일치 | Task6 후에는 사용 중지 상태가 정상. 실제 알림 발송은 opt-in과 별도 |
+| 4 | Monitoring → 그룹(Groups) → Phase 11 nginx <RUN_ID> | run label 필터와 구성원 VM3개 일치 | UI에서 메뉴가 없으면 콘솔 검색 또는 API evidence로 보조. 그룹은 원문 재현용 |
+| 5 | Monitoring → 가동 시간 확인(Uptime checks) → 해당 run | 설정 대상/경로가 일치하고 실제 검사 결과 시계열 확인 | 구성 존재나 HTTP VM 상태만으로 uptime 성공을 단정하지 않음 |
+| 6 | Monitoring → 알림 → 해당 정책 | 최종 상태 사용 중지/Disabled | true→false 전이는 정제 evidence와 대조. 확인하려고 다시 활성화하지 않음 |
+| 7 | 대시보드·정책·그룹·가동 시간 화면 | Task1–6 데이터·구성·비활성화 결과를 함께 확인 | UI 확인과 MCP/기계 검증은 별도. 미수행 항목을 완료로 표시하지 않음 |
+
+메뉴 확인 근거(2026-08-26): [대시보드 관리](https://docs.cloud.google.com/monitoring/charts/dashboards), [Monitoring 그룹](https://docs.cloud.google.com/monitoring/groups). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. Monitoring/Logging API, metric availability, uptime 대상, notification channel 정책을 preflight한다.

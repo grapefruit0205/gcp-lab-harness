@@ -18,6 +18,20 @@
 | Task 4. Internal Network Load Balancer 구성하기 | automated | regional health check·backend service·internal forwarding rule |
 | Task 5. Internal Network Load Balancer 테스트하기 | automated | utility VM의 internal VIP 반복 curl과 backend distribution |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | VPC 네트워크 → 전용 VPC → 서브넷·방화벽 | 두 subnet과 SSH/health/internal 트래픽 규칙이 계획과 일치 | CIDR/target 범위를 보며 외부 전체 허용으로 확장하지 않음 |
+| 2 | Cloud NAT → run gateway; Cloud Router | backend egress용 subnet/리전 연결 일치 | NAT 존재만으로 패키지 다운로드 성공은 입증 불가 |
+| 3 | Compute Engine → 템플릿·MIG·utility VM | startup 구성·MIG VM·utility VM이 기대 네트워크에서 정상 | guest 웹서버 상태와 backend health evidence 추가 |
+| 4 | 네트워크 서비스 → 부하 분산 → 내부 passthrough Network LB | 내부 VIP·region·포트·backend service·health check 일치 | 외부 Application LB와 다른 종류. 외부 브라우저 접속 불가가 곧 장애는 아님 |
+| 5 | utility VM → SSH 및 내부 VIP 통신 evidence | utility VM에서 internal VIP 응답·backend 식별/분산 성공 | 일반 인터넷 브라우저가 아닌 내부 경로에서 확인. 현재 설정만으로 과거 분산 증명 불가 |
+
+메뉴 확인 근거(2026-08-26): [상태 확인 구성](https://docs.cloud.google.com/load-balancing/docs/health-checks), [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. region, subnet CIDR, internal IP, quota와 firewall source를 preflight한다.

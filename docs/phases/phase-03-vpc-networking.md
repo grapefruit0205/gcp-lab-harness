@@ -18,6 +18,20 @@
 | Task 4. 네트워크 간 연결성 살펴보기 | automated | 외부 IP 성공 matrix, 라우팅 없는 내부 IP expected failure |
 | Task 5. Review | cli-equivalent | topology와 connectivity matrix 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | VPC 네트워크 → VPC 네트워크 → default; 해당 실행의 조건부 Task 결과 | 전용 프로젝트 승인 여부와 default 작업/예상 실패 결과가 기록됨 | 콘솔에서 임의로 default를 삭제하지 않음. skip/blocked를 성공으로 바꾸지 않음 |
+| 2 | VPC 네트워크 → 해당 auto 생성 네트워크 → 서브넷 | 미국·유럽 VM/서브넷이 계획과 같고 최종 모드는 custom | 자동→custom 전이 전 상태는 현재 화면만으로 입증 불가. 전이 evidence 대조 |
+| 3 | VPC 네트워크 → managementnet·privatenet 계열 run 네트워크 | 서브넷 리전/CIDR·방화벽 대상·VM NIC가 각각의 계획과 일치 | 이름만 같은 다른 run을 고르지 않음 |
+| 4 | Compute Engine → 각 VM의 네트워크 인터페이스; VPC → 경로 | 외부/내부 주소 및 네트워크 간 경로가 설계와 일치 | 실제 외부 성공/격리된 내부 실패는 출발 VM별 connectivity matrix 필요 |
+| 5 | VPC·방화벽·경로·VM 목록 | 각 VM의 소속 네트워크와 성공/실패 연결 행렬을 대조 | 리소스 존재만으로 packet 경로 성공을 선언하지 않음 |
+
+메뉴 확인 근거(2026-08-26): [VPC 네트워크와 경로](https://docs.cloud.google.com/vpc/docs/vpc). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. 프로젝트가 전용·비운영인지 확인하고 기존 default VPC 소유 경계를 기록한다.

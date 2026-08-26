@@ -10,9 +10,10 @@
 4. `preflight`, `plan`, `apply`, `machine-verify`까지만 수행한다. 사람 승인이 필요한 Extension gate, commit, push, 다음 Phase 전이는 수행하지 않는다.
 5. 실제 Google Cloud 변경은 `config/harness.env`의 project allowlist·비용 제한과 저장된 plan 승인이 모두 확인될 때만 수행한다.
 6. 비밀정보, Terraform state, 원시 로그를 Git 대상 파일에 기록하지 않는다.
-7. 모든 생성 리소스를 run manifest에 등록하고 실패 시 소유권이 확인된 리소스만 정리한다.
+7. 모든 생성 리소스를 run manifest에 등록한다. 실패만으로 전체 삭제하지 않고 환경/state/로그를 보존하여 진단·수정·새 계획 승인·재apply한다. 다른 Phase의 보존 복구 이관(Q-014)이 끝나기 전 기존 자동 실패 destroy 경로를 실행하지 않는다.
 8. 기계 검증이 끝나면 Extension review package를 생성하고 상태를 `waiting_extension_review`로 남긴다.
 9. 최종 메시지는 `schemas/command-code-phase-result.schema.json`에 맞는 JSON object 하나만 출력한다.
+10. `python3 scripts/console-checks.py --phase NN`을 읽고 각 Task의 `checks[].detail`에 기계 결과와 구분한 콘솔 경로·대상·통과 기준·한계/보조 증거를 포함한다. 사용자의 실제 콘솔 확인을 대신 완료 처리하지 않는다. 전달 문서와 Extension handoff에도 동일 안내가 포함되어야 한다.
 
 ## 구현 품질
 

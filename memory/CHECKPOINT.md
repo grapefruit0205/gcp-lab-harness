@@ -1,30 +1,30 @@
-# Checkpoint — Phase 08 결과 게시·Phase 09 실행 준비 — 2026-08-26 15:42
+# Checkpoint — Phase09 종료 잔여3개·90개 Task 콘솔 안내 게시 준비 — 2026-08-26 18:27
 
 ## The story so far
 
-D-031 승인 run `p08-260826-c924`는 Terraform 1개 생성 후 실제 Cloud machine 검증에 성공했다. manifest verified/Task1–8 passed, public ACL 생성·익명 hash·회수, CSEK rewrite/구키·신키 matrix/암호화 전체 세대 삭제, lifecycle/3세대 원본 복구/sync2 hash를 확인했다. 첫 실패 run `p08-260826-8c1d`는 앞서 정리 완료 상태다.
+Phase09 run `p09-260826-eb03`은 DB1044/API400 보완 후 실제 SQL/WordPress Task1–6 검증을 통과했다. 이후 D-042 요청으로 destroy했고 SQL/VM2/disk2/subnet/firewall/SA·전용 IAM은 없어졌다. PSA producer 사용 중 Error9로 VPC·할당 범위·연결3개만 남아 cleanup_required다. state에는 잔여3개와 활성 유지 API3개가 있고, 새 백업·강제 삭제/state 제거는 하지 않았다. Phase08과 이전 run 잔여는 보존했다.
 
-별도 gcloud 읽기 조회로 bucket1/객체 세대5(setup3+sync2), 공개 ACL·공개 IAM0, 암호화 객체0과 생성 identity/정책/state/hash를 대조했다. Python44·Terraform mock4/JSON guard3·Phase08 gate도 재통과했다. 증거는 `artifacts/runs/p08-260826-c924/phase-08/evidence/phase-08-{machine,postverify-audit}.json`이다.
-
-최종 bucket destroy는 승인되지 않아 비공개 bucket `gcp-lab-p08-p08-260826-c924`를 유지한다. lab_completion.complete=false/destroy_pending=true이며 전체 정리나 비용0을 주장하지 않는다. 사용자가 D-032로 Phase08 기록 commit/push와 Phase09 실행을 요청했다. Phase08 문서 3차 로컬 리허설(Python44/TF/phase gate/help)은 통과했다. Phase09 Cloud SQL·WordPress 기존 adapter와 원문 Task1–6을 점검 중이며 아직 새 Cloud 리소스를 만들지 않았다.
+D-043에 따라 모든15개 Phase/90개 Task의 콘솔 경로·통과 기준·한계/보조 확인을 문서·AGENTS·prompt·review 출력 경로에 연결했다. 8개 안내 회귀 테스트·90개 coverage·Phase09 70tests/TF/gate·controller·Phase01–15 offline suite·독립 문서 리허설 통과. 수정된 Cloud 실행 소스는 e701… 그대로이고 shared adapter/다른 Phase Cloud 코드는 미변경이다. 관련 파일의 검증·stage·한국어 commit·push를 진행한다. 새 pin catalog 항목만 사용자 확인 전이다.
 
 ## Decided
 
-- D-031: bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a` 재apply·실습 검증 승인, Q-009 closed. 실행 성공.
-- D-017/D-027: saved 사용자·코드·입력 고정과 최종 사용자 승인 경계 유지. 다른 사람 계정으로 바꿔 같은 run을 재사용하지 않음.
-- 정상 성공 후 bucket 전체 destroy는 미승인. 이전 D-028/D-029 정리는 그대로 유지.
-- D-032: 현재 Phase08 기록 stage/commit/push와 Phase09 실행 준비. 새 Phase09 exact plan SHA 승인 경계 유지.
+- D-042: 현재 Phase09 run 정상 종료 destroy 승인, Phase08·다른 run 잔여·공통 API 보존.
+- D-043: Phase별 Task 콘솔 확인법을 항상 안내하고 관련 변경을 로컬·원격 Git에 반영한다.
+- D-036/D-037: 실패해도 리소스/state/로그 보존·진단한다. 자동 destroy 금지.
 
 ## Waiting on the user
 
-Phase08 게시와 Phase09 준비는 승인됨. Phase09 새 saved plan의 실제 apply는 계획 생성 후 exact SHA 승인 필요. Phase08 bucket 삭제는 요청 없음.
+- Q-019: 제시한 phase-task-console-check exact 항목의 ballast catalog 저장만 확인 대기. AGENTS·문서·보고 동작은 D-043대로 반영했다.
+- Q-020: 현재 run PSA producer 해제 후 같은 run 정리 필요. 강제 peering 삭제/state 제거는 금지하며 이전 run Q-012와 구분한다.
+- 다른 Phase의 보존 복구 이관(Q-014)은 별도이며 기존 자동 실패 destroy 경로 실행 금지.
 
 ## Next first action
 
-`cd /home/grapefruit/gcp-lab-harness && git diff --check && git status --short`로 Phase08 기록 게시 대상을 점검하고, 게시 후 clean tree에서 `git pull --ff-only`로 Phase09 시작 기준을 맞춘다.
+`git -C /home/grapefruit/gcp-lab-harness status --short`로 게시 중인 파일 상태를 확인한다. Cloud 재생성/재apply는 하지 않는다.
 
 ## Tried
 
-- 최초 verify HTTP401 → 실패 cleanup 성공. 오류 원문을 남기지 않은 기존 로그로는 요청 위치를 확정할 수 없어 안전한 단계·오류 형식 진단을 추가했다.
-- 다운로드 오류의 JSON-only 판정 → 삭제된 정확한 bucket에 대한 읽기 전용 GET에서 일반 텍스트404를 관측했다. 상태 코드만의 오탐도 막도록 인증 전후 대조/구체 CSEK metadata 검사를 추가했다.
-- 수정본 새 SHA를 D-031로 승인받아 성공했다. 실행 소스는 변경하지 않았으며 정상 destroy만 별도 남아 있다.
+- API 비밀번호 초기화 성공만으로 DB 사용 가능을 판단한 경로: root USAGE뿐이라 wordpress1044. 실제 권한/SQL 검사가 필요했다.
+- type 없는 역할+비밀번호 동시 요청:400/INTERNAL_ERROR. 옛 backend 원문이 없어 단일 원인을 분리 입증하지 못했지만 새 분리 요청·양쪽 실제 SQL/HTTP 검증은 통과했다.
+- 명시적 destroy의 PSA 삭제: SQL 삭제 성공 뒤에도 producer 사용 중 Error9. 같은 요청을 무작정 반복하거나 강제 peering 삭제하지 않는다.
+- 삭제 전 apply receipt/state SHA는 역사적 증거다. 현재 state는 종료 정리로 변경됐으며 예전 apply receipt로 재verify하지 않는다. 비밀/state/원시 로그는 Git 제외다.

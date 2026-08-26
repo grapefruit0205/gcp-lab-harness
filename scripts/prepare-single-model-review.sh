@@ -114,3 +114,4 @@ chmod 600 "$prompt_file"
 
 printf 'single_model_review_prompt=%s\n' "$prompt_file"
 printf 'single_model_review_result=%s\n' "$report_file"
+python3 "$repo_root/scripts/console-checks.py" --phase "$phase"

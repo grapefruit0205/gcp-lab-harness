@@ -18,6 +18,20 @@
 | Task 4. Cloud NAT Logging 구성 및 로그 확인하기 | automated | logging enable, traffic 발생, 구조화 NAT log 조회 |
 | Task 5. Review | cli-equivalent | private API path·NAT path·log correlation 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Compute Engine → VM 인스턴스 → private VM | 외부 IP 없음, 올바른 subnet과 RUNNING 상태 | IAP SSH readiness는 guest evidence로 추가 확인 |
+| 2 | VPC 네트워크 → 네트워크 → 해당 서브넷 상세 | Private Google Access가 사용 설정됨 | 활성화 전 실패·활성화 후 객체 읽기 성공은 저장 evidence. 현재 설정만으로 과거 전이는 입증 불가 |
+| 3 | 콘솔 검색 Cloud NAT → 해당 gateway; Cloud Router → 연결 router | 리전·VPC·서브넷 범위와 NAT 설정이 승인 계획과 일치 | 패키지 저장소 egress 성공은 VM의 실제 통신 evidence 대조 |
+| 4 | Logging → 로그 탐색기 → resource.type="nat_gateway" | 실행 시간 범위·gateway/VM에 해당하는 NAT 연결 로그 확인 | 로그 전파 지연/권한/필터를 점검. 로그 부재를 트래픽 부재로 단정하지 않음 |
+| 5 | VM·서브넷·NAT·로그 탐색기 | 외부 IP 없는 VM의 Google API 경로와 일반 인터넷 NAT 경로를 구분 | PGA/NAT 전후 검사·로그 상관관계가 함께 있어야 전체 통과 |
+
+메뉴 확인 근거(2026-08-26): [Private Google Access 설정 위치](https://docs.cloud.google.com/vpc/docs/configure-private-google-access), [NAT 로그와 상태 확인](https://docs.cloud.google.com/nat/docs/monitoring). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. 필요한 API, IAP SSH 권한, subnet PGA 상태와 NAT quota를 점검한다.

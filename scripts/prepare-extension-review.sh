@@ -65,6 +65,7 @@ mkdir -p "$output_dir"
 } >"$output_file"
 
 printf 'VS Code Codex Extension 검증 prompt: %s\n' "$output_file"
+python3 "$repo_root/scripts/console-checks.py" --phase "$phase_number"
 if command -v code >/dev/null 2>&1; then
   code --reuse-window "$repo_root" "$output_file"
   printf 'code CLI로 VS Code workspace와 검증 prompt를 열었습니다.\n'

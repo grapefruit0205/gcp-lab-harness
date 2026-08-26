@@ -15,6 +15,8 @@ Purpose: this folder is the durable memory for gcp-lab-harness. Conversations fo
 | `CHECKPOINT.md` | 현재 작업의 30초 복귀 지점 | 큰 작업 단위 완료 또는 세션 종료 전에 갱신 |
 | `checkpoints/` | 이전 체크포인트 기록 | append-only 보관 |
 | `HANDOFF.md` | 다음 세션에 전달할 일회성 실행 지시 | 읽고 실행한 직후 삭제 |
+| `../.claude/skills/phase09-mysql-repair/SKILL.md` | 실기 검증한 Phase09 MySQL 보존 복구 절차 | 성공 근거·한계·날짜와 함께 유지, Cloud 변경은 새 승인 경계 준수 |
+| `../docs/console-checks.md` | 각 Phase 완료 시 사용자에게 제공할 Task별 콘솔 확인 공통 안내 | Phase별 표·출력 도구·보고 prompt·coverage 검사와 함께 유지 |
 
 ## Operating principles
 

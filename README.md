@@ -6,6 +6,8 @@
 
 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (public)
 
+각 Phase 완료 시 [Task별 콘솔 확인 안내](docs/console-checks.md)를 함께 제공합니다. [Phase 문서](docs/phases/README.md)의 표에서 메뉴 경로·확인 대상·통과 기준·보조 증거를 볼 수 있습니다. 로컬에서는 `python3 scripts/console-checks.py --phase 09`처럼 조회합니다. 이 안내는 실제 Cloud 검증 결과나 사용자의 콘솔 확인을 대신하지 않습니다.
+
 ## 0. 가장 쉬운 시작: Windows Desktop에 링크와 프롬프트 붙여넣기
 
 Codex Desktop의 Codex 작업 화면 또는 Claude Desktop의 Code 탭을 사용합니다. Claude의 일반 Chat 탭은 로컬 파일과 터미널을 실행하는 경로가 아닙니다.
@@ -45,9 +47,14 @@ Windows 환경에서 다음 public GitHub 저장소로 Google Cloud 실습 하�
     내가 그 SHA256을 명시적으로 승인하기 전에는 apply하지 않는다.
 11. apply 뒤 machine verification과 읽기 전용 GCP 검증을 실행하고 evidence를 보여준 뒤 멈춘다.
     내가 "검증 승인"이라고 말하기 전에는 정상 리소스 cleanup, commit, push, 다음 Phase를 하지 않는다.
-12. apply·post-apply 실패 시에는 manifest가 소유한 리소스만 자동 cleanup하고 잔여 0을 확인한다.
+12. 실패만으로 전체 cleanup하지 않는다. 리소스·state·진단 로그를 보존하고
+    원인 분석 → 수정 → 새 plan 승인 → 재apply·검증으로 복구한다.
+    보존 복구 이관(Q-014)이 끝나지 않은 Phase의 기존 자동 실패 destroy 경로는 실행하지 않는다.
 13. 검증 승인 후 현재 Phase 소유 리소스만 cleanup하고 잔여 0을 확인한다.
     그다음 한국어 commit과 push를 완료하고 다음 Phase의 plan 승인 대기에서 멈춘다.
+14. 각 Phase 완료 보고에는 해당 문서의 Task별 콘솔 확인 표를 함께 안내한다.
+    메뉴 경로·대상·통과 기준·콘솔의 한계와 보조 증거를 빠뜨리지 않는다.
+    이미 destroy했다면 삭제 전 증거와 현재 리소스 부재를 구분하고 재생성하지 않는다.
 
 지금은 외부 변경을 하지 말고 설치 상태와 저장소 상태를 확인한 다음 내 GCP 프로젝트 ID를 물어봐.
 ```

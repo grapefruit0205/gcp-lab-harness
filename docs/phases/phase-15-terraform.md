@@ -17,6 +17,19 @@ Terraform을 초기화하고 `mynetwork` VPC, firewall, VM을 선언형으로 �
 | Task 3. 배포 확인하기 | cli-equivalent | Terraform output/state address와 gcloud network/VM read-only 대조 |
 | Task 4. Review | cli-equivalent | fmt·validate·plan·apply·idempotency·destroy evidence 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | 콘솔 상단 Cloud Shell; 로컬 Terraform version/init 검사 기록 | 자신의 프로젝트와 Terraform/provider 초기화 증거 일치 | 자동화는 로컬 Ubuntu 동등 경로. 콘솔에 Terraform 로컬 state가 자동 표시되지 않음 |
+| 2 | VPC 네트워크 → run mynetwork 계열 VPC·방화벽; Compute Engine → VM2 | VPC/방화벽/VM 사양과 참조가 승인 plan과 일치 | 이름만 비교하지 않고 프로젝트·zone·NIC도 확인 |
+| 3 | 각 Cloud 리소스 상세와 로컬 Terraform output/state address 대조 | 계획 주소와 실제 리소스가 일대일 대응 | state 원문/비밀을 콘솔 메모나 Git에 붙여넣지 않음 |
+| 4 | Cloud 리소스 + fmt/validate/plan/apply/재plan/destroy evidence | 멱등성 no-op과 실제 배포·명시적 삭제 후 잔여0을 구분 | 콘솔에는 멱등성 PASS 버튼이 없음. 저장된 검사 결과가 필요 |
+
+메뉴 확인 근거(2026-08-26): [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details), [VPC 네트워크](https://docs.cloud.google.com/vpc/docs/vpc). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. Terraform/version/provider checksum, ADC, project allowlist, quota를 preflight한다.

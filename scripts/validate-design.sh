@@ -13,6 +13,7 @@ fi
 required_headings=(
   '## 목적'
   '## 범위와 원본 매핑'
+  '## Task별 콘솔 확인'
   '## 구현 작업'
   '## 실행 계약'
   '## 검증 게이트'
@@ -52,6 +53,7 @@ if ! grep -Fq 'git pull --ff-only origin "$branch"' scripts/sync-before-phase.sh
   exit 1
 fi
 
+python3 "$repo_root/scripts/console-checks.py" --check-all
 jq empty schemas/*.json
 bash -n scripts/*.sh
 bash -n bin/gcp-lab-harness

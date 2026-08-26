@@ -17,6 +17,19 @@
 | Task 3. 서비스 관리하기 | automated | SSH를 통한 Jenkins service stop/start와 상태 전이 |
 | Task 4. Review | cli-equivalent | 구성·서비스·접속 결과를 구조화 summary로 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Marketplace → 승인된 Jenkins 상품; 배포 결과의 리소스 링크 | 상품 ID·배포 artifact와 생성 리소스의 출처가 승인 계획과 일치 | 지원 공식 배포 경로가 없으면 blocked. 임의 Jenkins VM을 Marketplace 완료로 간주하지 않음 |
+| 2 | Compute Engine → VM 인스턴스 → 해당 run VM 및 디스크 | 예상 VM/디스크/네트워크가 있고 Jenkins 주소에서 정상 화면 | VM RUNNING만으로 Jenkins 준비 완료가 아님. HTTP·provenance evidence 대조 |
+| 3 | VM 인스턴스 → SSH → Jenkins 서비스 상태 | 허용된 SSH 세션에서 systemctl is-active jenkins가 active | 이 읽기 전용 조회는 현재 상태만 확인. stop/start 전이는 저장 증거로 확인하고 재중단하지 않음 |
+| 4 | Marketplace 상품 정보 + 해당 VM 상세 | Task 1–3 출처·구성·HTTP·서비스 전이 증거를 함께 설명 가능 | 상품 미지원/blocked이면 전체 완료로 표시하지 않음 |
+
+메뉴 확인 근거(2026-08-26): [VM 상세 확인](https://docs.cloud.google.com/compute/docs/instances/view-vm-details). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. 상품 ID, 현재 제공 상태, 공식 CLI 배포 artifact를 preflight에서 확정한다.

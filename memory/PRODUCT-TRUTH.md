@@ -145,6 +145,82 @@ Evidence: `phases/08/{execute.sh,verify.sh,support.sh,storage_lab.py,fixture.htm
 
 재실행 observed(2026-08-26 15:35 KST, 성공 n=1): D-031의 run `p08-260826-c924`는 승인 bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`로 1 added/0 changed/0 destroyed 후 실제 Cloud machine verification을 통과했다. manifest verified, Task1–8 passed, public_acl=created-tested-revoked, 암호화 세대 잔여0, 원본 복구3세대·sync2개 hash 일치, risks0이다. 별도의 읽기 전용 gcloud 재조회에서도 총5개 객체 세대(setup3+sync2), 공개 객체 ACL0·공개 bucket IAM0, 암호화 객체0과 bucket 생성 identity/정책·Terraform bucket state1을 대조했다. gcloud와 JSON API의 생성 시각 문자열 표현 차이는 같은 UTC 시각으로 정규화해 비교했다. 증거: ignored `artifacts/phase-08-reapply-{local-tests,gate,cloud,verify}.log`, 해당 run의 `evidence/phase-08-machine.json`·`phase-08-postverify-audit.json`, `artifacts/phase-08-postverify-{objects,bucket,bucket-iam}.json`. 성공 후 bucket 전체 destroy는 승인 범위가 아니므로 수행하지 않았다. bucket1은 유지되며 lab_completion.complete=false/destroy_pending=true다. 실제31일 경과 삭제·Windows 실행·전체15Lab 성공은 이 결과에 포함하지 않는다.
 
+## Phase 09 Cloud SQL 실행 보완 — state: implemented, verified offline, Cloud 실습 실패·일부 정리 대기 — 2026-08-26
+
+Evidence: `phases/09/{execute.sh,verify.sh,support.sh,sql_lab.py,guest_install.py,assets.json}`, `phases/09/terraform/main.tf`, `tests/test-phase-09.py`, `tests/test-phase-09.sh`, `phases/09/terraform/tests/sql.tftest.hcl`. `artifacts/phase-09-local-tests.log`와 `artifacts/phase-09-recreate-local-tests.log`의 Python/TF validate/mock·JSON plan guard 결과.
+
+Checked: 2026-08-26 — 원본 Task1–6에 맞춰 MySQL8 Enterprise 1vCPU/3.75GB·10GB SSD, 전용 VPC/PSA, e2-micro VM2와 API3개를 포함한 Terraform 16개 create-only 구성을 구현했다. 현재 실행자 OAuth·allowlist, client 공개 IPv4 /32, 공식 artifact 고정 URL/hash, 코드·입력·승인 bundle, Terraform state·Cloud identity guard를 추가했다. 원문 default network 대신 전용 VPC를 사용한다. `--quiet`와 비밀번호 프롬프트 충돌을 없애고 SQL users API의 비동기 operation 완료를 검사한다. apply 후 root 난수 초기화, verify 때 메모리 난수 재설정, guest stdin/0640 wp-config와 wp-cli 관리자 stdin 설치를 연결했다. SQL은 WordPress DB 연결의 wp eval로 질의하고 두 frontend의 HTTP200 본문·DB marker를 비교한다. redirects/권한 오류를 성공·부재로 처리하지 않는다.
+
+관측 범위: Python33·Terraform mock3/JSON guard2·Phase09 gate·Phase07–15 suite가 통과했다. fake API 전체 경로·실제 격리 Bash 실패→cleanup·PSA 실패/조회 실패→cleanup_required·secret 전달·source/input drift를 검사했다. 실제 Cloud apply·게스트 PHP 실행·SQL/HTTP E2E·Windows 실행은 아직 미검증이다. SQL API 미활성 상태에서는 SQL inventory/quota를 미리 완전히 조회하지 못한다. 정상 verify 후 리소스를 유지하며 자동 만료/비용 중지는 없다. guest DB 비밀번호는 최종 VM/disk destroy까지 유지된다. 삭제 후 SQL producer의 PSA 해제가 최대4일 걸릴 수 있으며 실패를 숨기지 않고 state/cleanup_required를 보존한다. `sqladmin`, `servicenetworking`, `iap` API는 destroy 후에도 활성 상태로 유지하도록 설계했다.
+
+실제 계획 observed(2026-08-26): run `p09-260826-5d82`의 계정·API/이름 충돌·IAM/Compute quota·artifact preflight와 Terraform plan을 통과했다. create16/change0/destroy0, SQL1/VM2, 제한 HTTP IPv4 /32이며 bundle SHA `d418a5b7ed219126889882f2e1e296b1e34dcea26b256dc329774119fb561cf4`다. source/input/action/bundle/binary hash·manifest/action schema를 별도 재검사했다. manifest는 planned이고 actual Cloud apply·API 활성화는 하지 않았다. 근거는 ignored `artifacts/phase-09-plan.log`와 해당 run의 plan·manifest다.
+
+후속 apply observed(2026-08-26 16:13 KST, n=1): D-033의 동일 run/exact bundle로 Terraform16added/0changed/0destroyed 및 after-apply Cloud identity·SQL API root 초기화가 exit0으로 완료됐다. manifest applied, `database-initialized.json`의 root_password_initialized=true/password_persisted=false를 확인했다. 이어 machine verify를 실행 중이며 아직 SQL·WordPress E2E 성공 판정은 아니다. 근거는 ignored `artifacts/phase-09-cloud-apply.log`, 해당 run의 identity·초기화 기록이다. 정상 완료 뒤 전체 destroy는 별도다.
+
+후속 실패/정리 observed(2026-08-26 16:21 KST, n=1): 실제 verify는 root 비밀번호 API 갱신 후 guest readiness/WordPress config 단계의 CLI 오류로 실패했다. 두 VM startup 정상 종료와 현재 사용자의 OS Login/Admin·IAP·actAs 권한을 읽기 전용 확인했으나 세부 guest stderr를 보관하지 않아 정확한 설치 실패 원인은 unknown이다. 자동 cleanup으로 VM2/boot disk2/SQL1·DB·subnet·firewall2·SA2/관련 IAM은 삭제됐다. PSA 삭제는 producer가 사용 중이라는 Error9로 거부됐다. 별도 실제 inventory/state/identity/IAM 재조회에서 VM/disk/SQL/subnet/firewall/SA와 run IAM은0, 전용 VPC1/PSA range1/ACTIVE connection1 잔여를 확인했다. 공통 API3개는 승인된 유지 대상이다. state6개(전용3+API3)를 보존하고 manifest cleanup_required/cleanup failed/remaining3으로 기록했다. 증거는 ignored `artifacts/phase-09-cloud-verify.log`, run의 `verification-cleanup.log`, `evidence/phase-09-postfailure-audit.json`이다. 전체 실습 성공·정리 완료·비용0이 아니며 실패 원인을 추정 수정하거나 새 Cloud 생성은 하지 않았다.
+
+재생성 준비 observed/implemented(2026-08-26): D-034에 따라 기존 승인 소스를 ignored `artifacts/approved-code/phase09-5d82`에 보존하고 원래 state/lock을 공유하도록 했다. source hash 검증 후 같은 승인 범위 destroy를 재시도했으나 PSA Error9가 지속됐다. 기존 PHP CLI 누락 가설은 startup 로그의 php8.2-cli 설치·mysqli 로드로 반증됐다. 새 guest installer는 PHP·설정 lint·실제 mysqli SELECT1 readiness(120초 한도)·WP-CLI·core install/is-installed를 구분하고 허용된 stage/reason/exit_code만 로컬 evidence에 남긴다. PHP DB 검사 비밀번호와 관리자 비밀번호는 child stdin으로 전달한다. 실패 원문/예외/추가 필드를 진단 파일로 전달하지 않는 테스트, 임시 경로 실제 config 생성·권한·덮어쓰기 거부, child 실행 mock·DB 재시도·deadline·installer 소스 hash를 포함한 Python44와 Terraform validate/mock3·JSON guard2가 통과했다. 실제 PHP/Cloud 재현 성공은 아직 없으며 원인을 해결했다고 주장하지 않는다.
+
+새 계획 observed(2026-08-26 16:34 KST): run `p09-260826-eb03`의 현재 사용자 OAuth·설정 allowlist·artifact/IP·IAM/일부 quota·이름 충돌 preflight 및 저장 Terraform plan이 통과했다. 신규16개/변경0/삭제0, bundle SHA `bc763bc4bec0092bdbd0a1fd8efc3e564df8a2ed6c0952bb43762fce102fb7ab`이며 source/input/action/binary/bundle hash와 schema를 재대조했다. Phase09 gate·Phase07–15 offline suite도 통과했다. manifest planned이고 새 Cloud apply는 아직 없다. 이전 run 정리 snapshot의 승인 hash도 새 소스 수정 후 별도로 일치했다. Phase08/shared lib/원문 변경 없음. 근거: ignored `artifacts/phase-09-recreate-{plan,local-tests,gate,suite}.log`, 새 run manifest/plan과 이전 snapshot. 문서 로컬3명령은 새 독자 리허설에서 exit0/막힘0이었고 `/tmp/phase09-rehearsal.1e31Wf/`에 기록했다.
+
+재생성 apply observed(2026-08-26 16:44 KST, n=1): D-035의 run `p09-260826-eb03` exact 저장 plan이16added/0changed/0destroyed로 완료됐고 Cloud resource identity·SQL root API 초기화까지 exit0이다. manifest applied·database-initialized.json의 root_password_initialized=true/password_persisted=false를 확인했다. 곧바로 실제 verifier를 시작했으며 아직 SQL/WordPress E2E 성공은 아니다. 근거는 ignored `artifacts/phase-09-recreate-cloud-apply.log`와 해당 run의 초기화/identity/manifest 기록이다.
+
+## Phase09 실패 보존·동일 state 복구 — state: implemented, verified offline — 2026-08-26
+
+Evidence: `phases/09/{execute.sh,verify.sh,support.sh,recovery.sh,recovery.py,sql_lab.py,guest_install.py}`, Terraform startup, `tests/test-phase-09.py`, ignored `artifacts/phase-09-preserve-local-tests.log`.
+Checked: 2026-08-26 — Python58 tests·Terraform validate/mock3·JSON plan guard2 통과. Phase09 apply는 shared auto-destroy helper 대신 전용 경로를 사용하며 apply/초기화/verify 실패·timeout/중단 code에서 state·plan·로그를 보존한다. 같은 work/state의 replan은 이전 계획 메타데이터를 archive하고 create/update/no-op만 허용하며 delete/replace를 거부한다. 새 baseline(state hash·Cloud 생존 identity·create 범위)와 source/input/action/binary/bundle을 승인에 결합했다. 새로 만든 같은 이름 리소스는 승인 create+TF state 기록으로만 새 identity를 인정한다. managed config의 run/hash 일치만 갱신하고 unmanaged/symlink/drift를 거부하며 MySQL errno 숫자만 진단에 추가했다. WordPress 기존 설치를 재사용하고 marker upsert·probe 내용 확인 회수·verification attempt 보존을 구현했다. startup에서 전체 html 삭제를 제거했다. 실제 Linux PHP/SQL/HTTP Cloud 재검증은 미수행이며 기존 DB 연결 장애 원인은 미확정이다. shared adapter와 Phase08 소스는 그대로여서 다른 Phase 자동 실패 삭제 이관(Q-014)은 별도로 남는다.
+
+직전 실행 실패 observed(2026-08-26): `p09-260826-eb03`도 proxy `db-ready/db-connect/exit31`로 실패했다. 기존 cleanup 중 사용자 정책 변경으로 정상 중단했지만 이미 제출된 SQL 삭제는 완료돼 VM/SQL0, 전용 network/range/connection3개+API3개 state가 남았다. 이번 읽기 전용 재조회에서 peering ACTIVE와 SQL0을 확인했다(`artifacts/phase-09-repair-{network,address,sql}.json`). 복구 준비는 이 state를 재사용하며 이전 run과 Phase08을 삭제하지 않는다. 이 관측은 성공한 실습이 아니고 기존 cleanup 승인도 D-036/D-037로 앞으로 폐기됐다.
+
+복구 계획 observed(2026-08-26 17:16 KST): 새 Phase09 `diagnose`가 VM/disk/SQL/subnet/firewall/SA0, VPC1/PSA range1의 기존 identity를 확인했다. 같은 run/work/state의 `replan`은10create/0update/0delete/6no-op이며 bundle SHA `3d8e72d72c34a5b2b97097490959b0ed9d4b2a55d42ddcdbb5020d170f9483e2`다. state SHA는 실행 전후 `70c8146655a4f64b43b74a258fb7f7d589d4efc60fcd132e503d00f7865e52d6`로 동일하다. Cloud apply·실습 성공은 아니며 Q-016 승인 대기다. 근거: ignored `artifacts/phase-09-preserve-{diagnosis,replan,local-tests,suite}.log`, run manifest/baseline/plan. 새 독자 문서 로컬3명령(Python58/TF/gate/help)도 exit0/막힘0, Cloud/auth/Git 쓰기 없음으로 통과했다. 실제 Cloud·PHP E2E와 다른 Phase 복구 코드 이관은 포함하지 않는다.
+
+보존 복구 apply observed(2026-08-26 17:25 KST, n=1): D-039 exact bundle로 동일 run의10개 생성/변경0/삭제0 및 root 비밀번호 API 초기화가 exit0으로 완료됐다. VPC/PSA/API6개는 재사용했고 manifest applied·current bundle apply receipt·root 초기화 파일을 대조했다. 새 identity는 기존 생존 identity를 유지하며 승인 create+TF state 기록에 맞춰 갱신됐다. 근거는 ignored `artifacts/phase-09-preserve-cloud-apply.log`와 run의 resource-identities/database-initialized/apply-completed/manifest다. 현재 실제 verifier 진행 중으로 SQL/WordPress E2E 성공은 아직 아니다. 새 Cloud 생성과 API 초기화만 검증한 관측이다.
+
+## Phase09 root DB 권한 보완 — state: implemented, verified offline, Cloud 적용 대기 — 2026-08-26
+
+Evidence: `phases/09/sql_lab.py`, `guest_install.py`, `execute.sh`, `tests/test-phase-09.py`; ignored `artifacts/phase-09-root-role-local-tests.log`, `phase-09-preserve-cloud-verify.log`, run의 `evidence/read-only-db-privileges.json`, `evidence/diagnosis.json`, `recovery.json`.
+Checked: 2026-08-26 17:35 KST — 이전 17:25의 진행 중 상태를 갱신한다. 실제 verify는 MySQL1044로 exit1이었고 Phase09 전용 실패 경로는 자동 destroy 없이 VM2/SQL1·state·로그를 유지했다. 읽기 전용 진단에서 동일 Proxy VM의 Auth Proxy/SQL private 두 연결 모두 root@% 인증 성공, CURRENT_ROLE=NONE, SHOW GRANTS=USAGE뿐, wordpress 선택1044를 관측했다(n=1 SQL,2경로). 따라서 현재 DB readiness 실패의 직접 원인은 root DB 접근 권한 누락이며 전체 WordPress/SQL/HTTP 성공은 아니다. 과거 두 실행의 미보관 errno까지 같은 원인으로 확정하지 않는다.
+
+보완 구현은 정확한 root@%의 목록/type를 확인해 없으면 users.insert, 있으면 users.update의 databaseRoles query로 cloudsqlsuperuser를 추가하고 기존 역할은 회수하지 않는다. 난수 비밀번호는 기존 메모리/API body 경로로만 전달한다. 1044는 db-privilege-denied로 분류해 transient 연결 실패처럼 재시도하지 않는다. action-plan에 실습 전용 root DB 관리자 역할 변경을 명시했다. Python64·Terraform validate/mock3/JSON guard2가 통과했으나 실제 권한 보완·SQL/WordPress 재검증은 새 exact bundle 승인 전이며, 새 Cloud 성공을 주장하지 않는다. GCP IAM·방화벽·다른 계정/Phase08은 이 보완에서 변경하지 않는다.
+
+근거: [Provider7.45.0 기본 root 삭제 소스](https://github.com/hashicorp/terraform-provider-google/blob/v7.45.0/google/services/sql/resource_sql_database_instance.go#L1782), [users.insert](https://docs.cloud.google.com/sql/docs/mysql/admin-api/rest/v1/users/insert), [users.update](https://docs.cloud.google.com/sql/docs/mysql/admin-api/rest/v1/users/update), [MySQL 사용자 권한](https://docs.cloud.google.com/sql/docs/mysql/users). 역할은 이 실습 DB 관리용이며 운영 애플리케이션 최소권한 예시가 아니다. API operation 완료와 실제 DB 접근 성공을 구분한다.
+
+권한 보완 계획 observed(2026-08-26 17:39 KST): 동일 run/state의 실제 replan은16개 no-op, 추가/변경/삭제/교체0이다. bundle SHA `7ce28fea77bfd9f4e1eb8076c848c489411a9494bed7208a4f7e44345d6d758d`; state SHA는 apply 직후 값과 같은 `0b745001ff3e0f4a9904773fe59d6b9afcb25e4da890dc3e9dffab7621b7cd1a`다. 실제 source/input/baseline/state/Cloud identity/plan/action/bundle hash·schema·파일0600을 읽기 전용 재검사했다. manifest planned이며 새 apply/역할 변경은 하지 않았다(Q-017). 근거: ignored `artifacts/phase-09-root-role-{replan,before-apply-check,local-tests,suite}.log`, 현재 plan/baseline/action/manifest. Phase07–15 suite PASS이며 새 독자가 Phase09 안내만으로 로컬3명령을 모두 exit0/막힘0으로 실행했다(64tests/TF/gate/help). 리허설은 Cloud/auth/Git 변경·실제 SQL 성공 증거가 아니다. 이 결과가 기존 SQL 권한1044를 해결했다는 의미는 아니다.
+
+## Phase09 DB 역할 요청 분리 — state: implemented, Cloud 미검증 — 2026-08-26
+
+Observed 17:50 KST: D-040 승인7ce28… 계획의 Terraform은0added/0changed/0destroyed로 성공했으나 initialization의 API 요청이HTTP400으로 실패했다. SQL operation에는 UPDATE_USER/DONE/INTERNAL_ERROR만 남았고 API 원문은 앞선 비밀 보호 코드가 폐기해 세부 사유는 미확정이다. 같은 run diagnose는 VM2 RUNNING·SQL1 RUNNABLE·disk2와 모든 identity 보존, 실패 automatic_destroy=false/state_preserved=true를 확인했다. 읽기 전용 SQL 재조회에서 root@%는 여전히 USAGE뿐이며 양쪽 경로의wordpress 선택1044다. 따라서 D-040의 역할 보완·실제 실습 검증은 성공하지 않았다. 근거: ignored `artifacts/phase-09-root-role-cloud-apply.log`, `phase-09-root-role-api-operations.json`, `phase-09-root-role-postfailure-{diagnosis,db}.log`, run의 recovery/evidence.
+
+Implemented: 기존 root의 역할 요청에는 BUILT_IN을 명시하고 password를 넣지 않는다. 역할 operation 완료를 확인한 뒤 별도 요청으로 비밀번호만 갱신하며 총600초 deadline을 공유한다. 역할 실패 시 비밀번호 변경을 시작하지 않고, 비밀번호 실패 시 역할 회수·계정 삭제를 하지 않는다. 신규 root insert와 기존 계정 덮어쓰기 금지는 유지한다. HTTP 오류는 고정 status/reason/category 허용 목록만 남기고 원문·비밀을 출력하지 않는다. 오류 분류 전에 실제 비밀 값을 제거해 secret 내용에 따른 오분류를 방지한다.
+
+Evidence: `phases/09/sql_lab.py`, `execute.sh`, `tests/test-phase-09.py`; 로컬70개·TF validate/mock3/JSON guard2 통과(`artifacts/phase-09-separated-role-local-tests.log`). [공식 MySQL 역할 추가 안내](https://docs.cloud.google.com/sql/docs/mysql/create-manage-users#add-database-roles)와 로컬 공식gcloud581.0.0 `surface/sql/users/assign_roles.py`는 type을 명시한 비밀번호 없는 역할 요청을 사용한다. 기존 코드와 이 요청 차이는 관측했으나 이것만으로HTTP400의 유일한 원인이라고 단정하지 않는다. 새 소스 계획 승인 전 Cloud 적용·SQL/WordPress E2E 성공은 미검증이다.
+
+분리 요청 계획 observed(2026-08-26 17:57 KST): 같은 state의 최종 plan은16개 no-op, bundle SHA `e701120a9f6d8ef03a5df23bf41f8d0e056d6238cd7d7ca3dee37ce14658e707`다. source/input/action/baseline/state/Cloud identity/plan/bundle·schema·0600을 읽기 전용 재검사했고 현재 state SHA는`d1e523baadbd1945e1f3d34b2f6633226542119341c70b65c417cf9b71d571e6`로 plan 전후 동일하다. Phase07–15 suite와 새 독자의 안내서 로컬3명령(70tests/TF/phase gate/help)도 모두exit0·막힘0이다. 근거는 ignored `artifacts/phase-09-separated-role-{final-replan,before-apply-check,local-tests,suite}.log`, plan/manifest와 로컬 리허설 transcript다. Q-018 새 승인 전이므로 분리 요청의 Cloud 적용/실제 WordPress 검증은 미실행이다.
+
+분리 요청 apply observed(2026-08-26 18:02 KST, n=1): D-041 exact e701… bundle 적용은exit0,Terraform0added/0changed/0destroyed와 기존root의역할/비밀번호 API operation 완료를 확인했다.400 오류가 이번 적용에서 재발하지 않았으며 manifest applied·root_user_mode=updated·requested_database_role=cloudsqlsuperuser·현재bundle apply receipt/state SHA `4b4cbeebaaa1c51c4a9e55126f9d6f7f91749b67cf53613a54ae0f247dc0379b` 일치를 확인했다. 기존70tests/TF/gate 재검사도PASS다. 근거는 ignored `artifacts/phase-09-separated-role-cloud-apply.log`, run의 database-initialized/apply-completed/manifest다. 실제WordPress/SQL verifier는 시작했지만 아직 결과가 없어 전체E2E성공·모든400재발방지를 주장하지 않는다.
+
+## Phase09 SQL·WordPress 실제 검증 성공 — state: verified, 리소스 유지 — 2026-08-26
+
+Observed 18:05 KST, n=1 run: D-041의 분리 요청 apply와 실제 verifier가 모두exit0이다. Terraform은0added/0changed/0destroyed였고 DB 역할·비밀번호 API를 apply/verify에서 성공적으로 처리해 이번 실행에서HTTP400이 재발하지 않았다. Proxy/private 양쪽 guest의DB readiness·WordPress 설치가complete/ok/0이고, Proxy에서 SQL marker를 생성·갱신한 뒤 private VM의 직접SQL에서 동일값을 읽었다. 두 WordPress의HTTP200/본문과 각각SQL-backed HTTP probe의marker 일치·검증용probe 회수도 통과했다. manifest verified·Task1–6 모두passed·command-code-result waiting_extension_review다.
+
+Evidence: ignored `artifacts/phase-09-separated-role-cloud-{apply,verify}.log`; run `p09-260826-eb03`의 `evidence/phase-09-machine.json`, `evidence/guest-install-{proxy,private}.json`, `manifest.json`, `command-code-result.json`, current bundle의 `apply-completed.json`. 현재 소스70tests·TF validate/mock/JSON guard·Phase09 gate도PASS다. 이번 관측으로 현재1044/400 실패 경로가 수정됐음을 확인했으며 이전400의type 누락/요청 결합 중 어느 하나만이 유일한 원인이었다고 분리 입증한 것은 아니다. 없는root 신규insert·다른버전/계정/환경·Windows·장기간 운영·모든향후400을 보장하지 않는다.
+
+종료 경계: 사용자가 리소스 삭제를 금지했으므로VM2/SQL1 등 기존 환경을 유지한다. `lab_completion.complete=false/destroy_pending=true`는 최종destroy를 수행하지 않았다는 뜻이며 Task1–6 실습 실패가 아니다. 과금·guest DB 비밀번호 보유·이전별도run PSA 잔여는 유지된다. 추가commit/push·Phase08/shared lib/원문 변경 없음.
+
+사후 재확인 observed(18:08 KST): 읽기 전용 diagnose에서VM2 RUNNING·SQL1 RUNNABLE·disk2와 승인 baseline의모든생존identity 일치를 확인했다. 기존guest설정으로다시연결한두SQL경로에서CURRENT_ROLE=cloudsqlsuperuser, wordpress 선택true/errno0을 확인했다. 두frontend의별도curl 재조회도HTTP200이었다. 근거는 ignored `artifacts/phase-09-separated-role-final-diagnosis.log`, `artifacts/phase-09-separated-role-final-db.log`, `artifacts/phase-09-separated-role-final-vms.json`, `artifacts/phase-09-separated-role-final-users.json`과 run `evidence/diagnosis.json`, `evidence/read-only-db-privileges.json`이다. users.list의역할필드생략을권한없음으로해석하지않고실제SHOW GRANTS/SQL결과로판정했다. 재사용절차 `.claude/skills/phase09-mysql-repair/SKILL.md`를프로젝트에만저장하고skill validator를통과했다. 전역스킬설치나자동Cloud실행권한을추가하지않았다.
+
+## Phase09 명시적 종료 정리 — state: observed, PSA 잔여 — 2026-08-26
+
+D-042 요청으로 현재 run `p09-260826-eb03`을 destroy했다. 삭제 전 소유권/identity를 조회하고 저장 삭제 계획의16개 delete·공통 API 유지 설정을 확인한 뒤 승인 소스의 종료 경로를 실행했다. SQL/WordPress VM2/디스크2/subnet/방화벽2/서비스 계정2와 전용 IAM은 제거됐고 새 백업은 만들지 않았다. SQL 삭제 후 PSA 삭제가 producer 사용 중 Error9로 실패해 VPC·할당 범위·서비스 연결3개가 남았다. manifest는 cleanup_required, state는 잔여3개와 유지 API3개를 보존한다. 전체 destroy·비용0을 주장하지 않는다. Phase08 bucket과 공통 API3개의 유지도 조회했다.
+
+Evidence: ignored `artifacts/phase-09-user-destroy{,-before,-after,-plan}.log`, run의 `phase-09-user-destroy-plan.json`, `manifest.json`, 현재 `evidence/diagnosis.json`, `artifacts/phase-09-user-destroy-peerings.json`, `phase-09-user-destroy-enabled-apis.txt`, `phase-09-user-destroy-phase08-bucket.txt`. 기존18:05의 SQL/HTTP 실습 성공 증거는 삭제 전 기록으로 남는다. 같은 SQL의 producer 해제 시점은 unknown이며 Q-020에서 추적한다. 기존 다른 run의 Q-012와 구분한다.
+
+## Task별 콘솔 확인 안내 — state: verified offline / handoff wired — 2026-08-26
+
+Evidence: `docs/console-checks.md`, 15개 Phase의 Task별 콘솔 표, `scripts/console-checks.py`, `tests/test-console-checks.py`, `scripts/validate-design.sh`, `Makefile`, AGENTS·실행/Extension/단일 모델 prompts와 review 출력 경로. 직접 실행과 독립 독자의 로컬 리허설에서15개 Phase·원본90개 Task coverage/출력/8개 회귀 테스트가 exit0였다. 각 경로/통과 기준/보조 확인을 필수로 검사하고 Task 누락·중복·빈칸을 거부한다. 기존 Phase09 70tests·TF validate/mock/gate·controller·Phase01–15 offline suite도 통과했다.
+
+Checked: 2026-08-26. 로컬 Markdown 출력과 보고 경로 연결의 구현·로컬 증거다. 실제15개 Cloud 재실행·전체 콘솔 클릭·Windows·사용자의 콘솔 확인 완료는 검증하지 않았다. 리허설 독자는 Task별 과거 전이·회수된 CSEK/probe·destroy 후 부재의 차이를 문서만으로 설명했고 막힘0이었다. D-043은 AGENTS와 문서에 반영됐으며 새 ballast catalog entry의 exact 확인(Q-019)은 별도 대기다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -155,7 +231,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09–15 실제 Cloud apply·machine verify·destroy
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase 10–15 실제 Cloud apply·machine verify·destroy
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

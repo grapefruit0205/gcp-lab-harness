@@ -18,6 +18,20 @@
 | Task 4. SQL로 대규모 청구 데이터세트 분석하기 | automated/conditional | fixture 기본 경로; 실제 Billing export는 opt-in과 readiness 대기 |
 | Task 5. Review | cli-equivalent | load·schema·query 비용·결과 검토 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | BigQuery → 탐색기 → billing_<RUN_ID의 하이픈을 밑줄로 변경> → sampleinfotable | load job 성공, 승인 fixture의415602행 | 실제 Billing export 연결과 sample fixture 실습을 구분 |
+| 2 | 테이블 → 스키마(Schema)·세부정보(Details)·미리보기 | 필드 타입·행 수·sample 데이터가 계약과 일치 | 미리보기만 보고 전체 데이터 일치를 단정하지 않음 |
+| 3 | BigQuery → 탐색기 → 작업 기록 → 프로젝트 기록 → 단순 query | Cost>0 쿼리 작업 성공과 저장 결과 hash/처리 bytes가 있음 | 기록에 없으면 프로젝트/실행 계정/리전을 확인. 쿼리를 임의 재실행해 비용을 만들지 않음 |
+| 4 | 작업 기록 → 해당 실행 시간대의 분석 query7개 | 각 query가 오류 없이 종료했고 byte 상한·정제 결과가 기록됨 | 청구 원본/민감 결과를 Git·채팅에 복사하지 않음 |
+| 5 | 테이블 상세 + load/전체8개 query 기록 | Task1–4 행 수·schema·비용 상한·결과를 대조 | 작업 성공만으로 기대 결과의 의미적 정확성이 입증되지는 않음 |
+
+메뉴 확인 근거(2026-08-26): [테이블 정보 확인](https://docs.cloud.google.com/bigquery/docs/tables), [작업 기록 확인](https://docs.cloud.google.com/bigquery/docs/managing-jobs). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. dataset location, BigQuery 권한, query byte limit와 fixture checksum을 preflight한다.

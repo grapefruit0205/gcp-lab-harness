@@ -2,6 +2,8 @@
 
 원본 Lab 하나가 실행 Phase 하나다. Foundation은 별도 문서이며 `run-all`은 아래 15개 Phase만 순차 진행한다.
 
+완료 보고에는 각 문서의 **Task별 콘솔 확인** 표를 항상 함께 안내한다. [공통 콘솔 확인법](../console-checks.md)과 `python3 scripts/console-checks.py --phase NN`을 사용한다. 기계 검증·사용자 콘솔 확인·destroy 상태를 구분하며, 이미 삭제된 환경을 안내 목적으로 재생성하지 않는다.
+
 | Phase | 원본 Lab | 비용 위험 | 핵심 승인 증거 |
 |---:|---|---|---|
 | [01](phase-01-console-cloud-shell.md) | Console and Cloud Shell | 낮음 | bucket·object·shell fixture |

@@ -19,6 +19,21 @@ Google Cloud 프로젝트와 CLI 인증을 확인하고 버킷·객체 작업, �
 | Task 5. Cloud Shell에서 지속 상태 만들기 | cli-equivalent | 격리된 임시 HOME에서 환경 변수와 profile 재로딩 검증 |
 | Task 6. Google Cloud 인터페이스 정리하기 | automated | run 소유 객체·버킷 삭제와 잔여 inventory 0 |
 
+## Task별 콘솔 확인
+
+[공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
+
+| Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
+|---|---|---|---|
+| 1 | Cloud Storage → 버킷 → 이름에 해당 run이 있는 console 버킷 | 위치·스토리지 클래스가 승인 계획과 같음 | Terraform 생성은 콘솔의 생성 버튼을 눌렀다는 증거가 아님 |
+| 2 | 콘솔 상단 Cloud Shell 활성화 → 터미널 | 본인 계정과 선택 프로젝트가 맞고 셸이 열림 | 수동 UI 경계. 로컬 Bash preflight 통과와 별개이며 로그인/프로젝트를 임의 변경하지 않음 |
+| 3 | Cloud Storage → 버킷 → 해당 run의 shell 버킷 | console용과 별개인 두 번째 버킷이 존재 | 로컬 CLI 동등 작업 결과이며 실제 Cloud Shell에서 생성했는지는 별도 |
+| 4 | 해당 버킷 → 객체 → 업로드 fixture 상세 | 객체 이름·크기와 다운로드 내용이 fixture와 일치 | 바이트 무결성은 로컬 다운로드 SHA-256 evidence로 보조 |
+| 5 | Cloud Shell → 터미널; 로컬 검증의 profile evidence | 격리된 셸에서 재로딩 후 환경 변수 값이 유지됐다는 증거 | 자동화는 임시 HOME 사용. 실제 사용자 Cloud Shell 프로필에 같은 값이 남아 있어야 하는 것은 아님 |
+| 6 | 삭제 승인 후 Cloud Storage → 버킷 | 해당 run 두 버킷과 객체가 없고 삭제 inventory가 0 | 검증 직후에는 남아 있는 것이 정상. 다른 run 버킷/soft-delete 보존과 구분 |
+
+메뉴 확인 근거(2026-08-26): [Cloud Storage 버전별 객체 확인](https://docs.cloud.google.com/storage/docs/using-versioned-objects). 화면 언어/버전에 따라 상단 검색으로 같은 서비스에 접근한다. 실제 UI 클릭 전 과정 검증은 별도다.
+
 ## 구현 작업
 
 1. 활성 계정, 허용 프로젝트, API, 기본 리전을 읽기 전용으로 점검한다.

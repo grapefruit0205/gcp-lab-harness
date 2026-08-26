@@ -23,6 +23,8 @@ validate-design:
 	./scripts/validate-design.sh
 
 test-offline:
+	python3 scripts/console-checks.py --check-all
+	python3 tests/test-console-checks.py
 	./tests/offline-controller.sh
 	./tests/offline-phases-01-06.sh
 	./tests/offline-phases-07-15.sh
