@@ -221,6 +221,8 @@ Evidence: `docs/console-checks.md`, 15개 Phase의 Task별 콘솔 표, `scripts/
 
 Checked: 2026-08-26. 로컬 Markdown 출력과 보고 경로 연결의 구현·로컬 증거다. 실제15개 Cloud 재실행·전체 콘솔 클릭·Windows·사용자의 콘솔 확인 완료는 검증하지 않았다. 리허설 독자는 Task별 과거 전이·회수된 CSEK/probe·destroy 후 부재의 차이를 문서만으로 설명했고 막힘0이었다. D-043은 AGENTS와 문서에 반영됐으며 새 ballast catalog entry의 exact 확인(Q-019)은 별도 대기다.
 
+게시 observed(18:28 KST): 관련 변경75개를 한국어 commit `eb9aad9f043ebd749e67c695c0e447755c2fafda`로 main에 push했고 무인증 원격 SHA·fast-forward pull·clean tree를 대조했다. state/개인 설정/원시 로그는 제외했다. 기존 저장소 전용 SSH alias를 사용했으며 공개 origin URL이나 전역 Git 설정을 변경하지 않았다. 사후 run IAM binding0도 확인했다. 현재 run의 PSA3개 잔여·Q-019 catalog 대기는 그대로다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
