@@ -10,7 +10,7 @@ source "$repo_root/lib/harness/terraform.sh"
 usage() {
   cat <<'USAGE'
 사용법:
-  P06_CLIENT_SOURCE_CIDR=<CIDR> \
+  P06_CLIENT_SOURCE_CIDR=<IPv4_CIDR 또는 공개 접속 0.0.0.0/0> \
   P06_MINECRAFT_SERVER_URL=<HTTPS_URL> \
   P06_MINECRAFT_SERVER_SHA256=<SHA256> \
   P06_JRE_PACKAGE_VERSION=<APT_VERSION> \
@@ -72,7 +72,7 @@ case "$action" in
     : "${P06_JRE_PACKAGE_VERSION:?P06_JRE_PACKAGE_VERSION이 필요합니다.}"
     [[ "${P06_EULA_ACCEPTED:-}" == "true" ]] || harness_die "P06_EULA_ACCEPTED=true의 명시적 동의가 필요합니다."
     [[ "$P06_MINECRAFT_SERVER_SHA256" =~ ^[a-f0-9]{64}$ ]] || harness_die "Minecraft artifact SHA-256 형식이 잘못되었습니다."
-    [[ "$P06_CLIENT_SOURCE_CIDR" != "0.0.0.0/0" && "$P06_CLIENT_SOURCE_CIDR" != "::/0" ]] || harness_die "public 전체 CIDR은 허용하지 않습니다."
+    python3 "$phase_dir/network-policy.py" cidr --cidr "$P06_CLIENT_SOURCE_CIDR"
     command -v curl >/dev/null 2>&1 || harness_die "artifact preflight에 curl이 필요합니다."
 
     artifact_tmp="$(mktemp)"
@@ -115,10 +115,9 @@ case "$action" in
     ]'
     jq -e '
       ([.resource_changes[] | select(.type == "google_compute_instance")] | length) == 1 and
-      ([.resource_changes[] | select(.type == "google_compute_disk")] | length) == 1 and
-      ([.resource_changes[] | select(.type == "google_compute_firewall") |
-        .change.after.source_ranges[]] | all(. != "0.0.0.0/0" and . != "::/0"))
-    ' "$plan_json" >/dev/null || harness_die "Phase 06 VM/disk/제한 ingress 계약이 plan에 없습니다."
+      ([.resource_changes[] | select(.type == "google_compute_disk")] | length) == 1
+    ' "$plan_json" >/dev/null || harness_die "Phase 06 VM/disk 계약이 plan에 없습니다."
+    python3 "$phase_dir/network-policy.py" plan --cidr "$P06_CLIENT_SOURCE_CIDR" "$plan_json"
 
     plan_sha="$(harness_sha256_file "$plan_file")"
     project_hash="$(printf '%s' "$GCP_PROJECT_ID" | sha256sum | awk '{print $1}')"
@@ -200,7 +199,7 @@ case "$action" in
           {name: "Task 1: VM", status: "passed", detail: "제한 사양과 guest startup readiness"},
           {name: "Task 2: 데이터 디스크", status: "passed", detail: "ext4 UUID mount/fstab와 maintenance 후 유지"},
           {name: "Task 3: 애플리케이션", status: "passed", detail: "고정 JRE/artifact checksum/EULA/systemd"},
-          {name: "Task 4: 클라이언트 트래픽", status: "passed", detail: "제한 ingress와 실제 TCP probe"},
+          {name: "Task 4: 클라이언트 트래픽", status: "passed", detail: "승인된 IPv4 source의 TCP 25565와 IAP-only SSH, 실제 TCP probe"},
           {name: "Task 5: 백업", status: "passed", detail: "즉시 업로드, hash와 archive 복구성, cron"},
           {name: "Task 6: 유지보수", status: "passed", detail: "shutdown hook과 stop/start 복구"},
           {name: "Task 7: Review", status: "passed", detail: "구조화 machine evidence 생성"}

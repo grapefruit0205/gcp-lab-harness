@@ -57,3 +57,11 @@ One short section per working session: what was worked on, what was decided (wit
 - Command Code의 무확인 실행 권한을 Phase execute script와 로컬 검증 스크립트로 제한하고 직접 `gcloud`·`terraform`·`rm` 허용을 제거했다.
 - `run-all --run <id>`를 단일 Command Code supervisor에 연결하고 Phase 01–15 offline 검사를 선행하도록 했다. Cloud E2E, Extension 승인, 이번 diff의 commit/push는 남아 있다.
 - 최종 안전 감사에서 post-apply/verify 실패 뒤 destroy 진입, 실패 시 자동 cleanup, Phase별 Cloud 잔여 inventory를 보강했다. Phase 08 공개 ACL은 어떤 중간 실패에서도 EXIT trap으로 회수하고, Phase 11 metric·uptime과 Phase 13 LB log는 현재 run의 exact resource만 증거로 인정하도록 수정했다.
+
+## 2026-08-26 — Phase 06 Minecraft 공개 접속 설정
+
+- D-020: 사용자 요청에 따라 TCP 25565만 전체 IPv4에 공개할 수 있도록 Terraform CIDR 검증과 실행·검증 코드를 변경했다. 다른 Phase의 제한, SSH IAP-only, 비공개 bucket은 유지한다.
+- observed: API·시리얼 로그 및 두 차례 Minecraft status 요청에서 기존 서버가 Java 1.20.4로 응답했다. 외부 조회 사이트 timeout은 특정 source IP만 허용된 firewall와 일치하며, 게임 클라이언트 로그인은 별도로 검증하지 않았다.
+- observed: 정책 단위 테스트 12개, Terraform mock test 4개, Phase 06 test/gate, Phase 01–06 offline suite와 개별 Bash syntax 검사가 통과했다. provider 7.45.0의 신규 생성 plan도 공개 port-only 정책을 통과했으며 해당 테스트 plan은 apply하지 않았다.
+- 기존 run의 입력·state·manifest·evidence를 ignored updates 폴더에 보존하고 source CIDR만 변경하는 saved plan을 생성했다. observed: 추가 0·변경 1·삭제 0, 변경은 기존 Minecraft firewall의 source_ranges뿐이다. plan SHA prefix `642c5674a85a`를 사용자에게 보고했고 exact-plan 승인을 요청했다.
+- 현재 단계에서는 실제 Cloud 방화벽을 변경하지 않았다. 승인 후 saved plan apply, 직접 protocol 응답·외부 조회·SSH 제한·Terraform no-drift 확인이 남아 있다. VM/디스크 재생성·서버 재시작·destroy는 범위에 없다.

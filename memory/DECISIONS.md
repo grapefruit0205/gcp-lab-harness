@@ -120,3 +120,9 @@ sweep: README 최상단 링크+공용 프롬프트, Windows Desktop 단일 GUI �
 Supersedes D-016. `$HOME` clone, 자연어 Command Code 실행, Extension handoff, 사용자 승인 뒤 cleanup·한국어 commit·push·다음 Phase 진행은 유지한다. Linux는 Bash를 사용하고 Windows는 WSL을 요구하지 않으며, PowerShell entrypoint가 Git for Windows의 Bash 호환층을 내부적으로 호출해 같은 adapter와 상태 머신을 사용한다.
 
 sweep: `bootstrap.ps1`, `harness.ps1`, `scripts/bootstrap-windows.sh`, portable pipeline lock, README, workflow, orchestration, product truth에 반영함 (2026-08-25)
+
+## D-020 · Phase 06 Minecraft 게임 포트를 공개하고 Terraform·Git에 반영한다 — 2026-08-26 (사용자, 접속 제한 해제 요청)
+
+사용자 요청: “제한 서버 옵션 풀어서 반영하여 테라폼, 커밋, 푸쉬까지 반영해줘 그리고 다시 apply 해줘.” 후속으로 TCP 25565의 접속 IP 허용을 재요청했다. Phase 06 Minecraft TCP 25565의 source를 전체 IPv4 `0.0.0.0/0`으로 전환한다. SSH IAP 제한, 비공개 backup bucket, 기존 VM·data disk·월드·고정 IP와 다른 Phase의 공개 제한은 유지한다. 해당 변경과 필요한 검증을 Terraform·코드에 반영하고 한국어 commit·push 및 기존 run의 재적용을 수행한다. 기존 source CIDR 제한을 해제하는 예외는 Minecraft 게임 포트에만 적용한다.
+
+sweep: Phase 06 Terraform·execute·verify, 공통 network policy, Phase 01–06 offline 예외 검사, Python·Terraform mock 회귀 테스트와 Phase 06 문서에 반영함 (2026-08-26). 실제 저장 plan 재적용은 D-017의 exact SHA 승인 후 수행한다.

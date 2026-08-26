@@ -38,11 +38,11 @@ variable "zone" {
 
 variable "client_source_cidr" {
   type        = string
-  description = "Minecraft client probe source CIDR"
+  description = "Minecraft TCP 25565 IPv4 source CIDR; 0.0.0.0/0 permits public clients"
 
   validation {
-    condition     = can(cidrhost(var.client_source_cidr, 0)) && var.client_source_cidr != "0.0.0.0/0" && var.client_source_cidr != "::/0"
-    error_message = "client_source_cidr는 public 전체가 아닌 유효한 제한 CIDR이어야 합니다."
+    condition     = can(cidrnetmask(var.client_source_cidr))
+    error_message = "client_source_cidr는 IPv4 CIDR이어야 합니다. Minecraft 공개 접속은 0.0.0.0/0으로 지정합니다."
   }
 }
 
@@ -111,9 +111,11 @@ resource "google_compute_address" "mc_ip" {
 }
 
 resource "google_compute_firewall" "iap_ssh" {
-  project = var.project_id
-  name    = "minecraft-iap-ssh-${var.run_id}"
-  network = google_compute_network.p06_net.name
+  project   = var.project_id
+  name      = "minecraft-iap-ssh-${var.run_id}"
+  network   = google_compute_network.p06_net.name
+  direction = "INGRESS"
+  disabled  = false
 
   allow {
     protocol = "tcp"
@@ -125,9 +127,11 @@ resource "google_compute_firewall" "iap_ssh" {
 }
 
 resource "google_compute_firewall" "minecraft" {
-  project = var.project_id
-  name    = "minecraft-rule-${var.run_id}"
-  network = google_compute_network.p06_net.name
+  project   = var.project_id
+  name      = "minecraft-rule-${var.run_id}"
+  network   = google_compute_network.p06_net.name
+  direction = "INGRESS"
+  disabled  = false
 
   allow {
     protocol = "tcp"

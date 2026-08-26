@@ -18,7 +18,8 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 verify_offline() {
-  bash -n "$phase_dir/execute.sh" "$phase_dir/verify.sh"
+  bash -n "$phase_dir/execute.sh"
+  bash -n "$phase_dir/verify.sh"
   terraform -chdir="$phase_dir/terraform" fmt -check >/dev/null
   terraform -chdir="$phase_dir/terraform" init -backend=false -input=false >/dev/null
   terraform -chdir="$phase_dir/terraform" validate >/dev/null
@@ -42,7 +43,8 @@ verify_offline() {
     'shutdown-script'; do
     grep -Fq "$token" "$phase_dir/terraform/main.tf" || harness_die "Phase 06 guest 계약 누락: $token"
   done
-  ! grep -Fq 'source_ranges = ["0.0.0.0/0"]' "$phase_dir/terraform/main.tf" || harness_die "Phase 06에 public 전체 ingress가 있습니다."
+  python3 "$repo_root/tests/test-phase-06-network.py"
+  terraform -chdir="$phase_dir/terraform" test -filter=tests/network.tftest.hcl -no-color >/dev/null
   printf 'PASS: Phase 06 offline 계약 검증 완료\n'
 }
 
@@ -105,9 +107,8 @@ verify_cloud() {
   jq -e '.status == "RUNNING" and (.machineType | endswith("/e2-medium"))' <<<"$vm_json" >/dev/null || harness_die "VM 상태 또는 machine type 불일치"
   jq -e '.sizeGb >= 50 and (.type | endswith("/pd-ssd"))' <<<"$disk_json" >/dev/null || harness_die "data disk 크기 또는 type 불일치"
   jq -e '((.public_access_prevention == "enforced") or (.iamConfiguration.publicAccessPrevention == "enforced")) and ((.uniform_bucket_level_access == true) or (.iamConfiguration.uniformBucketLevelAccess.enabled == true))' <<<"$bucket_json" >/dev/null || harness_die "backup bucket 비공개 정책 불일치"
-  jq -e '.sourceRanges | length == 1 and .[0] != "0.0.0.0/0" and .[0] != "::/0"' <<<"$app_fw_json" >/dev/null || harness_die "Minecraft firewall source가 제한되지 않았습니다."
-  jq -e '.sourceRanges == ["35.235.240.0/20"]' <<<"$ssh_fw_json" >/dev/null || harness_die "SSH firewall가 IAP-only가 아닙니다."
-  [[ "$(jq -r '.sourceRanges[0]' <<<"$app_fw_json")" == "$(jq -r '.client_source_cidr' "$tfvars_file")" ]] || harness_die "실제 client CIDR가 승인 입력과 다릅니다."
+  python3 "$phase_dir/network-policy.py" live --cidr "$(jq -r '.client_source_cidr' "$tfvars_file")" \
+    <(printf '%s' "$app_fw_json") <(printf '%s' "$ssh_fw_json")
 
   local before_state
   before_state="$(guest 'set -eu; source_dev=$(findmnt -n -o SOURCE /srv/minecraft); uuid=$(sudo blkid -s UUID -o value "$source_dev"); fstype=$(findmnt -n -o FSTYPE /srv/minecraft); grep -Fq "UUID=$uuid /srv/minecraft ext4" /etc/fstab; systemctl is-active --quiet minecraft.service; test -f /srv/minecraft/world/level.dat; sudo test -x /usr/local/sbin/minecraft-backup; grep -Fq /usr/local/sbin/minecraft-backup /etc/cron.d/minecraft-backup; artifact=$(sha256sum /srv/minecraft/server.jar | awk "{print \$1}"); jre=$(dpkg-query -W -f="\${Version}" openjdk-17-jre-headless); boot=$(cat /var/lib/gcp-lab-harness/boot-count); printf "%s|%s|%s|%s|%s" "$uuid" "$fstype" "$artifact" "$jre" "$boot"')"

@@ -1,27 +1,24 @@
-# Checkpoint — Phase 01–15 보완 통합·push 준비 — 2026-08-25
+# Checkpoint — Phase 06 공개 접속 plan 승인 대기 — 2026-08-26
 
 ## The story so far
 
-원격의 선택형 단일 모델 실행 경로와 이번 Phase 01–15 adapter 보완을 통합했다. 공통 source-task 계약, action-plan/plan-bundle, 민감 plan 정제, artifact 전이 guard, 실패 cleanup과 Phase별 잔여 inventory가 구현돼 있다. Monitoring·ALB evidence는 현재 run의 metric·log로 한정한다. Windows는 WSL 없이 PowerShell→Git for Windows Bash를 사용한다. 전체 offline suite와 Google provider schema 검증은 통과했지만 개정 adapter의 Cloud E2E는 아직 실행하지 않았다.
+observed: 기존 Minecraft 서버가 Java 1.20.4로 응답하지만 firewall source가 제한돼 외부 상태 조회가 timeout된다. D-020에 따라 TCP 25565의 `0.0.0.0/0` 공개를 지원하도록 Terraform·execute·verify·공통 정책과 테스트를 수정했다. SSH는 IAP-only, bucket은 비공개다. Python 12개·Terraform mock 4개·Phase 06 gate·Phase 01–06 offline 검사를 통과했다. 기존 run의 saved plan은 firewall source-only update 1개이며 실제 apply는 아직 하지 않았다.
 
 ## Decided
 
-- D-017: 같은 Command Code 고정 모델의 구현·자기 검증 선택 경로를 유지한다.
-- D-018: README는 Windows Desktop 링크·프롬프트를 가장 먼저 설명한다.
-- D-019: Windows는 WSL을 요구하지 않는다.
-- Phase `execute.sh`·`verify.sh`만 Command Code 무확인 허용 목록에 넣고 직접 `gcloud`·`terraform`·`rm`은 포괄 허용하지 않는다.
-- 정상 검증 리소스는 사용자 승인 전 유지하되 apply·post-apply 실패 시 manifest 소유 범위만 자동 cleanup한다.
+- D-020: 사용자가 게임 포트 공개, Terraform 반영, 한국어 commit·push와 재적용을 요청했다.
+- 기존 VM·월드·고정 IP 유지, 생성·삭제·재시작 없음. D-017의 exact saved-plan SHA 승인 절차는 유지한다.
 
 ## Waiting on the user
 
-- Cloud 비용이 발생하는 새 run의 plan/apply 승인과 Extension 또는 단일 모델 review의 사용자 승인.
+- ignored `artifacts/runs/run-p06-708435/phase-06/updates/public-25565.u0yUiD/public-25565.tfplan`의 승인. SHA256 `642c5674a85abec922ce5f1ac08c3a1b4be485e8153459f9a5ce9f51ff098536`, 추가 0·변경 1·삭제 0. 사용자에게 비동기 질문을 보냈다.
 
 ## Next first action
 
-새 run ID로 Phase 01 plan을 만들고 exact plan hash를 보고한 뒤 사용자 승인을 기다린다. 전체 15개 Phase Cloud E2E, Windows 실기동, MCP OAuth는 별도 검증한다.
+사용자가 위 SHA의 plan을 승인했는지 확인하고, 승인되면 `network-policy.py update`와 저장 hash를 다시 검사한 뒤 해당 plan만 기존 run에 apply한다.
 
 ## Tried
 
-- 원격 `main`이 두 커밋 앞서 있어 현재 변경을 stash로 보존한 뒤 `git pull --ff-only`했다.
-- 원격 단일 모델 기능과 Phase 보완이 같은 파일을 수정해 충돌했으며 두 기능을 모두 유지하도록 수동 통합했다.
-- Terraform Registry가 한 번 timeout됐지만 단일 재시도에서 설계 검증이 통과했다.
+- gcloud/git는 인증 캐시·.git 쓰기 권한이 필요했다. 중단 후 권한이 초기화되어 필요한 경로·네트워크 권한을 다시 요청했다.
+- 신규 create plan의 firewall direction은 provider가 unknown으로 두므로 Terraform에 INGRESS/disabled=false를 명시하고 실제 신규 plan으로 정책 회귀 검증했다. 승인 요청된 기존 update plan의 실질 변경은 그대로 source_ranges 하나다.
+- 신규 생성용 apply helper는 실패 시 destroy를 시도하므로 기존 서버의 firewall 변경에 사용하지 않는다. 전체 cloud verifier 역시 stop/start를 포함하므로 재실행하지 않는다.
