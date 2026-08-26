@@ -30,7 +30,7 @@
 
 1. **VM → on-prem-instance1 → NIC**, 방화벽 p12-onprem-iap/from-vpc 를 봅니다.
 2. 외부 IP 없음, IAP22,10.1.1.0/24·10.2.1.0/24 ICMP 허용인지 읽습니다.
-3. 현재 코드는 primary VM 과 같은 zone 입니다. 원문의 다른 zone 배치와 차이를 남깁니다.
+3. on-prem VM은 primary VM과 같은 region의 다른 활성 zone이어야 합니다. 저장 tfvars의 `onprem_zone`과 콘솔 Zone을 대조합니다. 리전·zone 이름은 본인 설정에 따라 달라집니다.
 
 ## Task 3. HA VPN 게이트웨이 설정하기
 

@@ -10,11 +10,16 @@ phase_preflight() {
 }
 
 phase_write_tfvars() {
-  local vpn_psk
+  local vpn_psk zones onprem_zone
+  zones="$(gcloud compute zones list --project="$GCP_PROJECT_ID" --format=json)"
+  onprem_zone="$(jq -r --arg region "$GCP_REGION" --arg primary "$GCP_ZONE" --arg requested "${P12_ONPREM_ZONE:-}" '
+    [.[] | select(.status=="UP" and (.region|endswith("/"+$region)) and .name!=$primary) | .name] | sort |
+    if $requested=="" then .[0] // empty else map(select(.==$requested)) | .[0] // empty end' <<<"$zones")"
+  [[ -n "$onprem_zone" ]] || harness_die "같은 region의 다른 활성 on-prem zone이 필요합니다."
   vpn_psk="$(openssl rand -base64 48 | tr -d '\n')"
   printf %s "$vpn_psk" | jq -Rs --arg project_id "$GCP_PROJECT_ID" --arg run_id "$2" --arg region "$GCP_REGION" --arg zone "$GCP_ZONE" \
-    --arg secondary_region "$GCP_SECONDARY_REGION" --arg secondary_zone "$GCP_SECONDARY_ZONE" \
-    '{project_id:$project_id,run_id:$run_id,region:$region,zone:$zone,secondary_region:$secondary_region,secondary_zone:$secondary_zone,vpn_psk:.}' >"$1"
+    --arg secondary_region "$GCP_SECONDARY_REGION" --arg secondary_zone "$GCP_SECONDARY_ZONE" --arg onprem_zone "$onprem_zone" \
+    '{project_id:$project_id,run_id:$run_id,region:$region,zone:$zone,secondary_region:$secondary_region,secondary_zone:$secondary_zone,onprem_zone:$onprem_zone,vpn_psk:.}' >"$1"
 }
 
 phase_write_action_plan() {

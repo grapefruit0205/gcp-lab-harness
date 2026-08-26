@@ -33,3 +33,11 @@ Checked: 2026-08-25
 - Sources: [공개 uptime/IP 안내](https://docs.cloud.google.com/monitoring/uptime-checks/using-uptime-checks), [provider7.45 계약·예제](https://raw.githubusercontent.com/hashicorp/terraform-provider-google/v7.45.0/website/docs/r/monitoring_uptime_check_config.html.markdown), [provider 구현](https://raw.githubusercontent.com/hashicorp/terraform-provider-google/v7.45.0/google/services/monitoring/resource_monitoring_uptime_check_config.go).
 - Local evidence: `phases/11/terraform/main.tf`, `tests/contract.tftest.hcl`, `monitoring.py`, `tests/test-phases-10-15.py`. 최근 boolValue가 false이거나 VM/group이 다르면 검사 실패하는 fixture가 통과했다. 한계: 메일/UI/MCP 실기와 실제 metric 수렴은 별도다.
 - Sub-foundations exposed: enum·group name·checker IP 목록 계약 — atomic; 실제 VM 도달성/권한/metric 수렴 — Cloud 실행 전 미검증.
+
+## Phase11 그룹 필터 실제 오류와 보존 복구 — observed, 2026-08-26
+
+- n=1 초기 실기: `resource.metadata.user_labels.run`은 groups.create에서HTTP400(`metadata type user_labels is not recognized`)이었다. VM3 등 기존10개 생성은 성공해그대로보존했다.
+- 반박 대조: user_labels 자체가 불가능한 것이 아니라 잘못 붙인 `resource.` 접두어 문제였다. [공식 필터 문서](https://docs.cloud.google.com/monitoring/api/v3/filters)의 Defining group membership/Filtering with groups와 [그룹 API](https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.groups)를 대조해 `metadata.user_labels.run`으로 수정했다. 두 문서는 같은 공급자 근거이며 독립성 한계를 고려해 일반 confirmed 주장이 아닌 실제 관측으로 기록한다.
+- 같은run replan은10no-op/2create/삭제교체0, bundle `fecc81639ab7b0344faf1ba0f8efc2a78968c610117d992c1dd447e6e8051507`. 수정 apply exit0을관측했다. 실제group/uptime 메트릭 검증은진행중으로별도판정한다.
+- 로컬: Python45개(그룹 invalid접두어 및 Phase12 zone회귀 포함), Phase11 TF mock/gate 통과. 사후실기 근거는run `p11-260826-2224`의개별attempt로그/manifest다. dashboard v1과timeSeries기존metadata필터는그대로구분한다.
+- 후속 observed: 설정4개 GET과멤버3개조회는성공했지만CPU timeSeries만HTTP400이었다. 응답은metadata필터가aligned metrics에서만허용된다는내용이었다. CPU조회에60초/ALIGN_MEAN을추가하고bool uptime에는평균을적용하지않는46번째회귀를통과했다. [timeSeries.list aggregation 계약](https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list)과대조했다. 실패시어느조회인지표시하며구성/CPU/uptime/수렴상태를private evidence에남기도록보완했다.

@@ -102,6 +102,18 @@ class APITests(unittest.TestCase):
 
 
 class MetricsTests(unittest.TestCase):
+    def test_metadata_cpu_query_is_aligned_but_bool_uptime_is_not_averaged(self):
+        from datetime import datetime, timezone
+        from urllib.parse import urlsplit, parse_qs
+        now = datetime(2026, 8, 26, tzinfo=timezone.utc)
+        aligned = parse_qs(urlsplit(monitoring.time_series_url("https://monitoring.googleapis.com/v3/projects/p",
+            'metadata.user_labels.run="r"', now, align_mean=True)).query)
+        self.assertEqual(aligned["aggregation.alignmentPeriod"], ["60s"])
+        self.assertEqual(aligned["aggregation.perSeriesAligner"], ["ALIGN_MEAN"])
+        unaligned = parse_qs(urlsplit(monitoring.time_series_url("https://monitoring.googleapis.com/v3/projects/p",
+            'metric.type="monitoring.googleapis.com/uptime_check/check_passed"', now)).query)
+        self.assertNotIn("aggregation.perSeriesAligner", unaligned)
+
     def test_dashboard_v1_and_other_resources_v3(self):
         self.assertEqual(monitoring.resource_url("projects/p/dashboards/d"),
                          "https://monitoring.googleapis.com/v1/projects/p/dashboards/d")
@@ -116,12 +128,17 @@ class MetricsTests(unittest.TestCase):
             "aggregation": {"alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_MEAN"}}}}]}}}]}}
         policy = {"combiner": "AND", "conditions": [{"conditionThreshold": {"filter": metric + f' AND resource.labels.instance_id="{i}"',
             "thresholdValue": .2, "duration": "60s", "comparison": "COMPARISON_GT"}} for i in ("1", "2")]}
-        group = {"filter": 'resource.metadata.user_labels.run="p11-test-001"'}
+        group = {"filter": 'metadata.user_labels.run="p11-test-001"'}
         uptime = {"period": "60s", "resourceGroup": {"resourceType": "INSTANCE", "groupId": "projects/p/groups/g"}, "httpCheck": {"port": 80, "path": "/"}}
         return [dashboard, policy, group, uptime, {"group": "projects/p/groups/g"}, "p11-test-001", ["1", "2", "3"]]
 
     def test_monitoring_configuration_exact_targets(self):
         monitoring.check_configuration(*self.config())
+
+    def test_group_rejects_invalid_resource_metadata_prefix(self):
+        args = self.config()
+        args[2]["filter"] = 'resource.metadata.user_labels.run="p11-test-001"'
+        with self.assertRaises(ValueError): monitoring.check_configuration(*args)
 
     def test_duplicate_vm_condition_not_accepted(self):
         args = self.config(); args[1]["conditions"][1] = copy.deepcopy(args[1]["conditions"][0])
@@ -130,7 +147,7 @@ class MetricsTests(unittest.TestCase):
     def test_wrong_group_or_chart_not_accepted(self):
         for kind in ("group", "chart", "uptime"):
             args = self.config()
-            if kind == "group": args[2]["filter"] = 'resource.metadata.user_labels.run="other"'
+            if kind == "group": args[2]["filter"] = 'metadata.user_labels.run="other"'
             elif kind == "chart": args[0] = {}
             else: args[3]["resourceGroup"]["groupId"] = "wrong"
             with self.subTest(kind=kind), self.assertRaises(ValueError): monitoring.check_configuration(*args)
@@ -235,6 +252,31 @@ class BillingTests(unittest.TestCase):
 
 
 class IntegrationTests(unittest.TestCase):
+    def test_onprem_zone_is_same_region_different_active_zone(self):
+        source = (ROOT / "phases/12/execute.sh").read_text().split('\nsource "$repo_root/lib/harness/safe-adapter.sh"', 1)[0]
+        zones = [{"name": name, "region": "regions/" + region, "status": status} for name, region, status in (
+            ("us-central1-a", "us-central1", "UP"), ("us-central1-b", "us-central1", "UP"),
+            ("us-central1-c", "us-central1", "DOWN"), ("europe-west1-b", "europe-west1", "UP"))]
+        for requested, success in (("", True), ("us-central1-b", True), ("us-central1-a", False),
+                                    ("us-central1-c", False), ("europe-west1-b", False)):
+            with self.subTest(requested=requested), tempfile.TemporaryDirectory() as temp:
+                script = source + '''
+gcloud(){ printf '%s' "$TEST_ZONES"; }
+harness_die(){ printf '%s\\n' "$*" >&2; exit 1; }
+phase_write_tfvars "$TEST_TFVARS" p12-test-001
+'''
+                target = Path(temp) / "vars.json"
+                result = subprocess.run(["bash", "-c", script], capture_output=True, text=True,
+                    env=dict(os.environ, TEST_ZONES=json.dumps(zones), TEST_TFVARS=str(target),
+                        GCP_PROJECT_ID="lab-project", GCP_REGION="us-central1", GCP_ZONE="us-central1-a",
+                        GCP_SECONDARY_REGION="europe-west1", GCP_SECONDARY_ZONE="europe-west1-b",
+                        P12_ONPREM_ZONE=requested))
+                self.assertEqual(result.returncode == 0, success, result.stderr)
+                if success:
+                    self.assertEqual(json.loads(target.read_text())["onprem_zone"], "us-central1-b")
+                else:
+                    self.assertFalse(target.exists(), "zone 오류 전에 PSK/tfvars를 생성하면 안 됨")
+
     def test_controller_accepts_only_declared_manual_boundary(self):
         source = (ROOT / "bin/gcp-lab-harness").read_text()
         function = "transition_artifact_guard() {" + source.split("transition_artifact_guard() {", 1)[1].split('\ncase "${1:-}" in', 1)[0]

@@ -11,13 +11,22 @@ import time
 import urllib.parse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib/harness"))
-from advanced import API, latest_uptime_ok, write_json
+from advanced import API, APIError, latest_uptime_ok, write_json
 
 
 def resource_url(name):
     # Dashboard는 Monitoring v1, alert/group/uptime은 v3 경로를 사용한다.
     version = "v1" if "/dashboards/" in name else "v3"
     return f"https://monitoring.googleapis.com/{version}/{name}"
+
+
+def time_series_url(base, filter_text, now, align_mean=False):
+    query = {"filter": filter_text, "interval.startTime": (now - timedelta(minutes=10)).isoformat(),
+             "interval.endTime": now.isoformat()}
+    if align_mean:
+        # metadata 조건은 aligned metrics에서만 허용된다. bool uptime에는 평균을 적용하지 않는다.
+        query.update({"aggregation.alignmentPeriod": "60s", "aggregation.perSeriesAligner": "ALIGN_MEAN"})
+    return f"{base}/timeSeries?{urllib.parse.urlencode(query)}"
 
 
 def check_configuration(dashboard, policy, group, uptime, names, run_id, instance_ids):
@@ -29,7 +38,7 @@ def check_configuration(dashboard, policy, group, uptime, names, run_id, instanc
         c.get("thresholdValue") != 0.2 or c.get("duration") != "60s" or c.get("comparison") != "COMPARISON_GT"
         for c in conditions) or {compact(c.get("filter", "")) for c in conditions} != expected_filters:
         raise ValueError("서로 다른 VM1/2·AND·20%·60초 alert 조건 불일치")
-    if compact(group.get("filter", "")) != compact(f'resource.metadata.user_labels.run="{run_id}"'):
+    if compact(group.get("filter", "")) != compact(f'metadata.user_labels.run="{run_id}"'):
         raise ValueError("Monitoring group run 필터 불일치")
     resource = uptime.get("resourceGroup", {})
     http = uptime.get("httpCheck", {})
@@ -55,28 +64,39 @@ def run(run_dir, project):
     base = f"https://monitoring.googleapis.com/v3/projects/{project}"
     def get_name(name):
         # Terraform dashboard id는 projects/... 형식; 다른 리소스 name도 동일하게 정규화.
-        return api.request("GET", resource_url(name))
+        try:
+            return api.request("GET", resource_url(name))
+        except APIError as error:
+            raise RuntimeError(f"Monitoring {name.split('/')[-2]} GET HTTP {error.status}") from None
+    def pages(label, url, field):
+        try:
+            return api.pages(url, field)
+        except APIError as error:
+            raise RuntimeError(f"Monitoring {label} GET HTTP {error.status}") from None
     dashboard, policy, group, uptime = [get_name(names[key]) for key in ("dashboard", "policy", "group", "uptime")]
     check_configuration(dashboard, policy, group, uptime, names, run_id, outputs["instance_ids"]["value"])
+    write_json(run_dir / "evidence/monitoring-configuration.json",
+               {"dashboard": dashboard, "policy": policy, "group": group, "uptime": uptime})
     expected = set(str(value) for value in outputs["instance_ids"]["value"])
     end = time.monotonic() + 600
     cpu = checks = None
     while time.monotonic() < end:
-        members = api.pages("https://monitoring.googleapis.com/v3/" + names["group"] + "/members", "members")
+        members = pages("group-members", "https://monitoring.googleapis.com/v3/" + names["group"] + "/members", "members")
         actual = {m.get("labels", {}).get("instance_id") for m in members["members"]}
         now = datetime.now(timezone.utc)
-        def series(filter_text):
-            query = urllib.parse.urlencode({"filter": filter_text, "interval.startTime": (now - timedelta(minutes=10)).isoformat(),
-                                           "interval.endTime": now.isoformat()})
-            return api.pages(f"{base}/timeSeries?{query}", "timeSeries")
-        cpu = series(f'metric.type="compute.googleapis.com/instance/cpu/utilization" AND resource.type="gce_instance" AND metadata.user_labels.run="{run_id}"')
-        checks = series(f'metric.type="monitoring.googleapis.com/uptime_check/check_passed" AND metric.labels.check_id="{names["uptime"].rsplit("/", 1)[-1]}"')
+        cpu = pages("cpu-series", time_series_url(base, f'metric.type="compute.googleapis.com/instance/cpu/utilization" AND resource.type="gce_instance" AND metadata.user_labels.run="{run_id}"', now, align_mean=True), "timeSeries")
+        checks = pages("uptime-series", time_series_url(base, f'metric.type="monitoring.googleapis.com/uptime_check/check_passed" AND metric.labels.check_id="{names["uptime"].rsplit("/", 1)[-1]}"', now), "timeSeries")
         cpu_ids = {s.get("resource", {}).get("labels", {}).get("instance_id") for s in cpu.get("timeSeries", []) if s.get("points")}
+        write_json(run_dir / "evidence/monitoring-poll.json", {"checked_at": now.isoformat(),
+            "expected_ids": sorted(expected), "group_ids": sorted(actual), "cpu_ids": sorted(cpu_ids),
+            "uptime_series": len(checks["timeSeries"]), "uptime_ok": latest_uptime_ok(checks, expected)})
         if actual == expected and cpu_ids == expected and latest_uptime_ok(checks, expected):
             break
         time.sleep(15)
     else:
         raise ValueError("VM3개 exact membership/CPU point/최근 uptime true가 제한 시간 내 수렴하지 않음")
+    write_json(run_dir / "evidence/cpu-series.json", cpu)
+    write_json(run_dir / "evidence/uptime-series.json", checks)
     before = run_dir / "evidence/alert-before-disable.json"
     if policy.get("enabled") is True:
         write_json(before, {"name": names["policy"], "enabled": True})

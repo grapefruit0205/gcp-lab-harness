@@ -261,6 +261,12 @@ D-047의명시범위위임에따라수정eb50…bundle을재apply했다. Terrafo
 
 Phase11 실행 전 추가보완: dashboard GET은공식Monitoring v1 경로, alert/group/uptime은v3를사용하도록분리했다. 기존모든리소스v3조회는dashboard와API계약이달랐다. `tests/test-phases-10-15.py`43개·Phase11 TF mock/gate가통과했다. 실제Phase11는아직실행전이다. [공식 dashboard GET](https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards/get).
 
+## Phase11 그룹400 보완·Phase12 zone 원문 정합성 — state: observed / verified offline — 2026-08-26
+
+Phase11 p11-260826-2224 초기계획은12create였고그룹필터HTTP400으로10개생성후실패했다. 기존VM3/네트워크/dashboard/alert/state/로그를보존하고공식`metadata.user_labels.run`으로수정했다. replan fecc81639ab7b0344faf1ba0f8efc2a78968c610117d992c1dd447e6e8051507은10no-op/2create/삭제교체0, D047범위재apply exit0이다. machine verify는진행중이며완료주장하지않는다. 근거: ignored `artifacts/phase11-group-filter-{replan,cloud-apply,cloud-verify}.log`, 해당run plan-history/attempt/manifest.
+
+Phase12새run입력은같은primary region의다른UP zone을조회·선택하고tfvars에고정한다. Terraform검증과선택함수의동일zone/타region/DOWN거부회귀를추가했다. Python45개·Phase11 TF mock1개/gate, Phase12 TF mock2개/gate가통과했다. 아직Phase12Cloud실기는없다. 원문소스/공통승인lib/다른run은변경하지않았다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.

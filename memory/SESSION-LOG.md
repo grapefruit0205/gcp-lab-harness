@@ -354,3 +354,5 @@ One short section per working session: what was worked on, what was decided (wit
 - implemented: Phase11 사전API대조에서dashboard GET의잘못된v3경로를v1로분리했다. 공식dashboard GET문서와검사추가후43회귀·Phase11 gate/TF mock PASS. 현재Phase11실기전이다.
 - estimate: 공식VM/VPN/NAT/LB요금과소형현재구성으로모든후속실습유지시대략시간당$0.5–1수준을안내했다. 데이터처리/전송/세금등은별도이며청구상한/무료를보장하지않는다. 각계획에서재확인한다.
 - observed rehearsal: 새독자가D047예외문서/AGENTS/catalog만읽고현재작업한정·완료후승계없음·일반clone승인경계를정확히구분했다. Task2출력/전체coverage두명령exit0·차단/추측0. Cloud/auth/Git변경없음. 전체Cloud준비절차가아닌위임문구와로컬출력범위의리허설이다.
+- observed 22:32 KST: Phase11 p11-260826-2224 초기12create계획 e364e9…는그룹필터HTTP400으로10개생성후실패. diagnose/state주소확인후metadata.user_labels접두어수정·Python45개/Phase11 TF/gate통과. 동일state fecc81639ab7b0344faf1ba0f8efc2a78968c610117d992c1dd447e6e8051507은10no-op/2create/삭제교체0이며D047검토후apply exit0, VM/Monitoring검증진행중이다. 전체destroy없음.
+- implemented: Phase12onprem같은region다른활성zone자동선택·입력고정·Terraform validation과negative mock·선택회귀를추가했다. gate/mock2개통과. 새Phase12실기전관련변경을D045로게시하며공통승인lib/Phase08/09는보존한다.

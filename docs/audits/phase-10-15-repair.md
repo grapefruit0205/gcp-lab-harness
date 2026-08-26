@@ -40,7 +40,7 @@ Phase gate는11–15에도 각각 수행한다. 검사는 Cloud apply를 포함�
 
 - Phase10: 실제 Billing export 연결은 없다. 고정 AVRO의 적재 전후 generation/CRC32C를 비교하지만 동시 객체 변경을 원자적으로 막지는 않는다. 결과 총행수·표본 조건·정렬 검사는 전체 golden 정답 비교와 다르다.
 - Phase11: 이메일 채널 생성·실제 메일 수신·사용자의 Metrics Explorer 조작은 자동 검증하지 않는다. MCP는 선택 검증이다.
-- Phase12: 온프레미스 VM은 원문의 다른 zone 대신 primary zone에 있다. 최종 topology는 터널 하나가 삭제된 장애 실험 상태다. Task8 cleanup은 별도 승인 전 미완료다.
+- Phase12: on-prem VM을 같은region의다른활성zone에배치하도록보완했다. 최종 topology는 터널 하나가 삭제된 장애 실험 상태다. Task8 cleanup은 별도 승인 전 미완료다.
 - Phase13: 원문의 builder reset/삭제 실험은 미구현이다. stopped builder와 disk를 보존한다. 양쪽 backend RATE50·축소 autoscaler1–2·primary-region loadgen을 사용한다. marker2개가 양쪽 리전 트래픽 분산을 증명하지는 않는다. IPv6 route가 없는 실행 환경은 HTTP 검사를 unavailable로 남긴다.
 - 공통: 자동 만료·비용 종료 스케줄러는 없다. `diagnose`는 최소 state/log 안내이며 서비스 원인 자동 분석기는 아니다. 구형 run 자동 이관과 일반 복구의 삭제/교체는 지원하지 않는다.
 - Phase03/04/06의 코드는 이번에 변경하지 않았다. 문서에는 각각 auto→custom/유럽 private subnet 미구현, 두 VM 동시 대조와 HTTPS probe, Minecraft TCP-only 검증 한계를 표시했다.

@@ -203,7 +203,7 @@ resource "google_monitoring_alert_policy" "cpu" {
 
 resource "google_monitoring_group" "nginx" {
   display_name = "Phase 11 nginx ${var.run_id}"
-  filter       = "resource.metadata.user_labels.run = \"${var.run_id}\""
+  filter       = "metadata.user_labels.run = \"${var.run_id}\""
   is_cluster   = false
 }
 

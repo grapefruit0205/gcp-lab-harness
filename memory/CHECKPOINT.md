@@ -1,31 +1,30 @@
-# Checkpoint — D047 위임 실행·Phase10 통과·Phase11 준비 — 2026-08-26 22:24
+# Checkpoint — Phase11 그룹 필터 보존 복구 — 2026-08-26 22:31
 
 ## The story so far
 
-사용자는D-047으로이번Phase10수정부터15까지구현/apply/오류수정을재질문없이위임했다. 개별SHA재확인은이번작업에한해대체하며기술적계획/소유권/비용/SHA검사는유지한다. Phase10 run `p10-260826-2106`의수정eb50…apply/verify가통과했다. dataset1no-op,415602행/시간3개TIMESTAMP/8query/Task1–5 PASS,총billed bytes333MiB. 리소스와과거실패증거는유지한다.
+D-047로 현재 계정·허용 프로젝트의 Phase10–15 구현/apply/검증/복구가 재질문 없이 위임됐다. Phase10 p10-260826-2106은 실제415602행·시간3개TIMESTAMP·8쿼리/Task1–5 통과, 리소스 보존. 관련 변경 de18392까지 main에 게시했다.
 
-Phase11 사전검사에서dashboard v1과다른Monitoring v3의조회경로를분리했고43개회귀·Phase11 TF mock/gate가통과했다. 해당변경과D047/Phase10결과게시후clean tree에서새Phase11계획을시작한다. 아직Phase11–15실기없음. Phase08/09·PSA잔여/다른run은변경없음.
+Phase11 p11-260826-2224 초기 e364e9… 적용은 그룹의 resource.metadata.user_labels 필터400으로 실패했다. VM3·VPC/subnet/firewall·SA·dashboard·policy 등10개는 생성되어 보존 중. 공식 문서의 metadata.user_labels로 TF/검증/회귀를 수정했다. Phase12는 원문 동일region 다른zone onprem을 자동 선택하도록5파일 수정했고 mock2개/gate 통과; 아직 Cloud 실행 전. Phase13–15 실기 전이다.
 
 ## Decided
 
-- D-047: 현재계정·허용project의Phase10–15는중간재질문없이구현/계획/apply/검증/보존복구. 완료후새실행에자동승계하지않음.
-- D-045: 관련변경stage/한국어commit/push,원격일치확인.
-- D-036/D-037: 전체실패destroy금지,동일state·로그보존. 실습범위밖삭제/외부계정권한확대는제외.
-- D-043/D-044: 각Task하위콘솔확인법·실제/수동/잔여상태구분.
+- D-047: 이번 Phase10–15는 저장계획/SHA/소유권/비용 검사 후 재질문 없이 실행·보존 복구. 이후 새 작업에 자동 승계하지 않음.
+- D-045: 관련 코드·검증 기록 한국어 커밋/푸시. 비밀·state·원시 로그 제외.
+- D-036/D-037: 실패 전체destroy 금지. Phase08/09·다른run 보존.
+- D-043/D-044: Task 하위별 콘솔 확인법과 실제/수동 경계 제공.
 
 ## Waiting on the user
 
-- 현재작업의SHA승인대기는없다. Q-023은D047로닫혔다.
-- Q-014 옛01–08auto-destroy실행금지,Q-019 catalog,Q-012/Q-020 PSA잔여는별도이며건드리지않는다.
+- 없음. D047 범위 내 실행은 추가승인 대기가 아니다.
+- Q014 legacy 자동destroy·Q019 catalog·Q012/Q020 PSA는 별도범위로 유지.
 
 ## Next first action
 
-`git -C /home/grapefruit/gcp-lab-harness status --short`로현재D047/Phase10/11사전수정게시여부를확인하고,게시/clean tree/FF pull후 `./phases/11/execute.sh plan --run p11-260826-2224`를생성해검토한bundle SHA로apply/verify한다(D047,재질문없음).
+`cd /home/grapefruit/gcp-lab-harness && python3 tests/test-phases-10-15.py && terraform -chdir=phases/11/terraform test && ./phases/11/execute.sh replan --run p11-260826-2224`로 그룹 필터 수정과 기존10개 보존 계획을 검증한 뒤 새SHA로 apply/verify한다.
 
 ## Tried
 
-- P10 load옵션생략→시간INTEGER. useAvroLogicalTypes=true 재적재후실제TIMESTAMP/8query통과.
-- P11 dashboard는v3가아닌v1. 조회경로분리·회귀추가.
-- phase-gate는숫자가아닌docs/phases/phase-NN-*.md경로를받는다.
-- provider init무출력은완료/로그를확인하며실패로추측하지않는다.
-- Phase09 PSA Error9를강제peering삭제/state제거로우회하지않는다.
+- P11 resource.metadata.user_labels.run → 실제API400; metadata.user_labels.run으로 수정, 기존10개 보존.
+- P11 dashboard GET v3 → 잘못된경로; v1로분기수정·회귀추가.
+- P10 AVRO logical type옵션 생략 → INTEGER; 옵션true재적재로TIMESTAMP/8query 실기통과.
+- 일반phase-gate는 숫자아닌docs/phases/phase-NN-*.md 경로를 받는다.

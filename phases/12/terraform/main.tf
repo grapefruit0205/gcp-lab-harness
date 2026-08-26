@@ -18,6 +18,13 @@ variable "run_id" {
 }
 variable "region" { type = string }
 variable "zone" { type = string }
+variable "onprem_zone" {
+  type = string
+  validation {
+    condition     = startswith(var.onprem_zone, "${var.region}-") && var.onprem_zone != var.zone
+    error_message = "on-prem VM은 같은 region의 다른 zone에 배치해야 합니다."
+  }
+}
 variable "secondary_region" { type = string }
 variable "secondary_zone" { type = string }
 variable "vpn_psk" {
@@ -154,7 +161,7 @@ resource "google_compute_instance" "vpc_secondary" {
 resource "google_compute_instance" "onprem" {
   name         = "on-prem-instance1-${var.run_id}"
   machine_type = "e2-micro"
-  zone         = var.zone
+  zone         = var.onprem_zone
   labels       = local.labels
   boot_disk {
     initialize_params {
