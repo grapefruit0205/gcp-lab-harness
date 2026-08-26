@@ -6,7 +6,7 @@
 
 Phase10 쿼리8개, Phase11 VM3 metrics/uptime/정책 전이, Phase12 BGP/라우팅/단일 경로 장애 후 ping, Phase13 부하 분산/자동 확장·축소, Phase14 backend2/VIP60응답/clientIP, Phase15 privateping/재plan0변경을 실제로 확인했다. 최종 manifest는6개 모두 verified다. Phase12 Task8은 manual-boundary이며 IPv6 실제HTTP·메일수신·UI·최종destroy는 별개다.
 
-Phase13은 NAT64포트에서 timeout/OUT_OF_RESOURCES893을 진단하고 부하NAT8192포트·keepalive로 수정했다. 최종 f5c0dead…는24no-op/1update/삭제교체0, apply/verify exit0이다. 최초 확장 관측은3대, 후속 snapshot은4대, 부하 종료 뒤 목표합계2로 복귀했다. marker4개·LB로그20개를 확인했다. 중지 builder 증거는 같은 ID의 후속 재수집임을 유지한다.
+Phase13은 NAT64포트에서 timeout/OUT_OF_RESOURCES893을 진단하고 부하NAT8192포트·keepalive로 수정했다. 최종 f5c0dead…는24no-op/1update/삭제교체0, apply/verify exit0이다. 최초 확장 관측은3대, 후속 snapshot은4대, 부하 종료 뒤 목표합계2로 복귀했다. 23:28에는두MIG각1대/stabletrue/삭제진행0·각backend HEALTHY1개를재조회해실제2대안정화까지확인했다. marker4개·LB로그20개를 확인했다. 중지 builder 증거는 같은 ID의 후속 재수집임을 유지한다.
 
 Phase14는 INTERNAL backend400→CONNECTION, gcloud 표시변환→원시JSON VM주소, Apache DirectoryIndex 누적→별도 p14-php-index.conf로 복구했다. 마지막9af07dc…18no-op apply/verify exit0이며 VM/template교체0이다. 향후 startup의 기존conf 덮어쓰기와 분리했지만 실제 VM reboot는 시험하지 않았다.
 

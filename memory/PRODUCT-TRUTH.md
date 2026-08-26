@@ -311,6 +311,10 @@ run `p13-260826-2243`의 최종 bundle `f5c0dead0e61b28ebb570ddc5cf35ad966f6dae4
 
 최종 로컬검증 observed:54회귀·TFmock9개·Bash/fmt/init/validate/각gate·전체make test-offline(Phase09 기존70개 포함) exit0, 안내13tests/15Phase90Task167원문제목 coverage PASS. 근거 `artifacts/phase10-15-final-verified-{local-tests,full-offline}.log`. Phase14 최종 안내 fresh-reader의5로컬명령도exit0/차단0이며Cloud/UI독립검증은 아니다.
 
+후속 settled 관측(23:28 KST): 두MIG 모두target1/isStable=true/currentActions.none1/deleting0,각backend의HEALTHY VM1개·IPv4HTTP정상이다. 별도 `evidence/settled-mig-readback.json`·`settled-backend-health.json`과양쪽gcloud wait-until --stable exit0으로실제2대안정화를확인했다. 이전목표합계2와진행중삭제상태를현재완료관측으로갱신한다. autoscaler가확장분2대를자동제거했으며같은template에서다시확장가능하다.
+
+게시 observed: 코드/안내30파일을한국어commit `5f04475987115736401f356a5c3243de4a7893c2`로main에push했고HTTPS원격SHA일치·FF pull/당시clean tree를확인했다. 게시코드의 `make test-offline`도exit0이다(`artifacts/phase10-15-published-full-offline.log`). 최종settled/게시확인기록은별도문서커밋에남긴다. Git에state/개인설정/원시로그를추가하지않았다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.

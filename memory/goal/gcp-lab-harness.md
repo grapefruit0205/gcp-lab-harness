@@ -166,9 +166,9 @@ v3의개별SHA재질문대기는이번작업에한해대체한다. 목표는현�
 | Phase13 | 원문13·verifier·실제manifest/evidence | observed 완료:f5c0dead…NAT보완후HTTP/marker4/LB로그20·자동확장/축소통과;IPv6HTTP미검증·builder중지보존 |
 | Phase14 | 원문14·verifier·실제manifest/evidence | observed 완료:9af07dc…CONNECTION/JSON/PHP보존복구후backend2 healthy·VIP60/clientIP통과;교체0 |
 | Phase15 | 원문15·모듈/verifier·실제evidence | observed 완료:882a7abe…4create/privateping·재plan0변경 |
-| 보고/게시 | docs/console·truth/checkpoint | 54회귀/TFmock9/전체offline·상세안내통과,실제/수동/잔여구분기록후최종게시 |
+| 보고/게시 | docs/console·truth/checkpoint | 54회귀/TFmock9/전체offline·상세안내통과;5f04475 코드/안내게시·원격SHA일치,settled/게시기록후속커밋 |
 
 비용초기추정: e2-micro VM,소형disk,VPN4tunnel,NAT,ALB/ILB를모두유지하면시간당약$0.5–1범위(데이터처리/전송/세금/리전차이/예약계약별도). 이는청구상한이아니며각실제plan에서자원수를다시검사한다. 공식2026-08-26조회근거: Compute general-purpose,Network Connectivity,NAT,Load Balancing pricing. 자동전체destroy/비용종료스케줄러는없다.
 
-Single next leaf: 최종관련diff·비밀제외·source/work binding을확인해한국어commit/main push·원격SHA일치로이번D045/D047작업을종료한다. 새Cloud실행·전체destroy는자동후속으로시작하지않는다.
+Single next leaf: 이번D045/D047의마지막settled/게시관측기록만commit/push·원격SHA확인후사용자에게결과와Task별안내를전달한다. 후속Cloud실행·전체destroy는시작하지않으며현재리소스유지비용이남는다. 향후명시적Phase11종료요청시Q024 dashboard inventory를먼저보완한다.
 Sub-foundations exposed: scope delegation—atomic;source/work/state/identity binding—atomic;11 API버전/수렴—split구성조회·CPU·그룹·uptime·전이;12라우팅/장애—splitbaseline·지역변경·failover;13/14부하/건강/멱등—phase별실기;15ping/0변경—atomic.
