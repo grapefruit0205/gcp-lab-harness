@@ -65,3 +65,12 @@ One short section per working session: what was worked on, what was decided (wit
 - observed: 정책 단위 테스트 12개, Terraform mock test 4개, Phase 06 test/gate, Phase 01–06 offline suite와 개별 Bash syntax 검사가 통과했다. provider 7.45.0의 신규 생성 plan도 공개 port-only 정책을 통과했으며 해당 테스트 plan은 apply하지 않았다.
 - 기존 run의 입력·state·manifest·evidence를 ignored updates 폴더에 보존하고 source CIDR만 변경하는 saved plan을 생성했다. observed: 추가 0·변경 1·삭제 0, 변경은 기존 Minecraft firewall의 source_ranges뿐이다. plan SHA prefix `642c5674a85a`를 사용자에게 보고했고 exact-plan 승인을 요청했다.
 - 현재 단계에서는 실제 Cloud 방화벽을 변경하지 않았다. 승인 후 saved plan apply, 직접 protocol 응답·외부 조회·SSH 제한·Terraform no-drift 확인이 남아 있다. VM/디스크 재생성·서버 재시작·destroy는 범위에 없다.
+
+## 2026-08-26 — 승인된 Phase 06 공개 접속 plan 적용
+
+- 사용자가 exact saved-plan SHA 적용 질문에 “ㄱㄱ”로 승인했다. hash와 project allowlist·기존 run·source-only 변경 범위를 재검사하고, 승인 근거를 ignored update artifact에 기록했다.
+- observed: 승인 SHA prefix `642c5674a85a`의 saved plan apply가 성공했다. 추가 0·변경 1·삭제 0이며 Minecraft firewall source_ranges만 변경했다. 기존 서버 자동 destroy 경로와 전체 cloud verifier의 stop/start는 실행하지 않았다.
+- observed: 실제 API에서 TCP 25565 source `0.0.0.0/0`, SSH TCP 22 source `35.235.240.0/20`을 확인했다. VM ID·disk/address 리소스 ID와 마지막 VM 시작 시각이 유지됐다. 직접 Minecraft status는 Java 1.20.4/protocol 765를 응답했다.
+- observed: run work와 현재 Terraform module을 동기화한 뒤 `plan -detailed-exitcode`가 0으로 종료해 추가 변경 없음을 확인했다. Phase 06 test/gate, Python 정책 테스트 12개와 Terraform mock test 4개, 개별 Bash syntax 검사를 통과했다.
+- 외부 상태 서비스는 첫 조회에 변경 전의 실패 캐시를 반환했다. cachetime·cacheexpire를 확인했고 만료 후 재조회 중이다. 실제 플레이어 로그인과 전체 Phase E2E를 이번 네트워크 변경 검증에 포함했다고 주장하지 않는다.
+- observed: 캐시 만료 후 외부 상태 API의 새 검사에서 online=true, ping=true, cachehit=false, Minecraft 1.20.4/protocol 765를 확인했다. 직접 요청과 독립적인 외부 요청 모두 성공했다. runtime manifest의 source hash·Task 4 증거 및 결과 JSON을 갱신했고 schema 검증도 통과했다. 기존 guest 증거는 보존하고 새 증거의 범위를 network-only로 명시했다.
