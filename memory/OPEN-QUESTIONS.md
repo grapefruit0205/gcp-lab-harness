@@ -26,7 +26,7 @@ Rule: anything unresolved gets a row here the moment it surfaces. A question is 
 | Q-020 | 현재 Phase09 `p09-260826-eb03`의 종료 잔여 PSA를 정리할 수 있는가? | 2026-08-26 | open — D-042 명시적 destroy 후 SQL/VM/disk/subnet/firewall/SA0, producer 사용 중 Error9로 VPC·할당 범위·연결3개 잔여. state/로그 보존, 해제 후 같은 run 정리 필요. 이전 run의 Q-012와 구분하며 강제 peering 삭제/state 제거 금지 |
 | Q-021 | Phase10–15 새 보존형 구현의 실제 Cloud E2E와 원문 대비 남은 차이는 무엇인가? | 2026-08-26 | partial — D-046으로Phase10 최초dataset apply/load는성공했으나schema INTEGER 오류로verify실패. 원인보완·42개회귀/Phase10 TF/gate후Q-023새계획승인대기다. Phase11–15실기는미실행. Phase13 reset/삭제·Phase10 golden전체정답등차이는감사문서에남아있다. 기존다른run/Phase삭제는자동수행하지않는다 |
 | Q-022 | Phase10 run `p10-260826-2106`, bundle SHA `da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`의 US dataset1create·fixture 적재·8쿼리 검증을 실행할까? 기존 변경/삭제/교체0, 실패 보존, 쿼리1GiB/개 상한·저장/전송 별도 비용·테이블 기본 만료1일 포함 | 2026-08-26 | closed — D-046: 사용자가 제시된 exact 계획의 apply·실제 검증에 “ㄱㄱ”으로 승인 |
-| Q-023 | Phase10 동일 run `p10-260826-2106`, 수정 bundle SHA `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`를 재apply·검증할까? Terraform dataset1no-op·삭제/교체0, 같은 sampleinfotable만 useAvroLogicalTypes=true/WRITE_TRUNCATE로 원본 데이터·스키마 재적재하고8쿼리 검증 | 2026-08-26 | open — 최초 실기 schema 오류(INTEGER/TIMESTAMP)를 진단·보완했다.42개 회귀/TF/gate·같은 state replan/무결성검사 PASS. 새 exact SHA와 재적재·조건부 과금을 사용자에게 제시했으며 승인 전 재apply/재적재/쿼리는 하지 않음 |
+| Q-023 | Phase10 동일 run `p10-260826-2106`, 수정 bundle SHA `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`를 재apply·검증할까? Terraform dataset1no-op·삭제/교체0, 같은 sampleinfotable만 useAvroLogicalTypes=true/WRITE_TRUNCATE로 원본 데이터·스키마 재적재하고8쿼리 검증 | 2026-08-26 | closed — D-047: 사용자가 Phase15까지 구현/apply/오류수정을 재질문 없이 명시 위임. 기술적 저장계획/SHA/소유권/비용 검사는 유지 |
 
 ## Readings in force — assumed, not decided
 

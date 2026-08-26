@@ -102,6 +102,13 @@ class APITests(unittest.TestCase):
 
 
 class MetricsTests(unittest.TestCase):
+    def test_dashboard_v1_and_other_resources_v3(self):
+        self.assertEqual(monitoring.resource_url("projects/p/dashboards/d"),
+                         "https://monitoring.googleapis.com/v1/projects/p/dashboards/d")
+        for resource in ("alertPolicies/a", "groups/g", "uptimeCheckConfigs/u"):
+            self.assertEqual(monitoring.resource_url("projects/p/" + resource),
+                             "https://monitoring.googleapis.com/v3/projects/p/" + resource)
+
     def config(self):
         metric = 'metric.type="compute.googleapis.com/instance/cpu/utilization" AND resource.type="gce_instance"'
         dashboard = {"mosaicLayout": {"tiles": [{"widget": {"xyChart": {"dataSets": [{"timeSeriesQuery": {"timeSeriesFilter": {

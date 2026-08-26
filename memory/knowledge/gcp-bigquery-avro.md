@@ -7,3 +7,5 @@
 - 근거: [공식 Avro 변환](https://docs.cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types), [JobConfigurationLoad](https://docs.cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationLoad); ignored run의`evidence/table-readback.json`, `load-readback.json`, `fixture-header-readback.json`와당시load설정코드.
 - 보완: useAvroLogicalTypes=true를명시한다. WRITE_TRUNCATE 재적재는같은run의sampleinfotable 데이터·스키마를덮어쓰므로새action/bundle승인을받고시행한다. 기존dataset·state는삭제하지않으며공유청구테이블에는사용하지않는다.
 - 표본/한계/날짜: 2026-08-26, 현재fixture1개·실제load1건.42개회귀중신규2개에서옵션누락/오류필드/실패후query0을검사했다. 수정후Cloud재적재·8쿼리성공은아직미검증이며다른Avro타입전체에일반화하지않는다. 연구초안은PRODUCT-TRUTH의실기진단항목에서이항목으로연결했다.
+
+후속실기(observed, 2026-08-26,동일fixture1개): D-047에따라옵션true로재적재한뒤415602행/시간3개TIMESTAMP/8쿼리와Task1–5가통과했다. 위의수정후미검증상태를현재run에한해갱신한다. 근거는run의`table-after-repair.json`, `phase-10-machine.json`, 두번째billing job receipt 및`artifacts/phase10-logical-types-cloud-verify.log`다. 전체golden결과/다른fixture/UI/최종destroy까지검증한것은아니다.

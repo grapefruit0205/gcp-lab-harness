@@ -105,6 +105,8 @@ sweep: README, Bash·PowerShell bootstrap, 사용자 명령 installer, Command C
 
 ## D-017 · 같은 고정 모델의 구현·검증 경로와 Phase 쉘 자동 승인을 제공한다 — 2026-08-25 (사용자, 선택 실행 모드 요청)
 
+→ 이번 Phase10–15 작업의 개별 SHA 재확인에 한해 superseded by D-047 (2026-08-26). 그 밖의 경계는 유지.
+
 기본 Command Code 구현·VS Code Codex Extension 검증 경로는 유지하되, 사용자가 선택하면 현재 Command Code 계정의 같은 고정 모델 하나가 한 Phase의 구현과 자기 검증을 연속 수행할 수 있게 한다. 한 Phase session에서는 저장소가 소유한 `.sh` 실행을 다시 묻지 않도록 자동 승인 모드를 사용한다. 모델·effort override는 금지하며, 저장 plan SHA 사용자 승인, project allowlist, cleanup 소유권, 최종 사용자 승인과 push gate는 생략하지 않는다.
 
 sweep: CLI, single-model prompt·schema·실행·검증·승인 스크립트, Command Code start·next handoff, README, workflow, orchestration과 validation에 반영함 (2026-08-25)
@@ -250,3 +252,9 @@ Phase09의 실제 검증 성공과 리소스 유지·과금을 보고받은 사�
 ## D-046 · Phase10 exact 계획 apply·BigQuery 실습 검증을 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
 
 사용자는 Q-022의 bundle SHA `da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`, run `p10-260826-2106`의 US BigQuery dataset1개 생성·원문 샘플 적재·쿼리8개 검증과 기존 삭제/교체0·조건부 과금·실패 보존을 제시한 “이 계획으로 apply·실제 검증을 진행할까요?”에 “ㄱㄱ”으로 승인했다. 같은 저장 계획을 적용하고 실제 작업/결과를 확인한다. 코드/계획 변경 시 새 SHA 승인 경계는 유지하며 정상 성공/실패에 따른 자동 destroy, 다른 Phase/계정/프로젝트 변경은 포함하지 않는다. Q-022를 닫고 동일 계획이나 일반 Phase 쉘 실행 승인은 반복 질문하지 않는다. 관련 변경 게시 요청 D-045는 이어서 적용한다.
+
+## D-047 · 이번 Phase10–15 구현·실행·오류 수정을 재질문 없이 위임한다 — 2026-08-26 (사용자, 승인 방식 명시 변경)
+
+사용자는 수정 eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106 계획의 재apply/검증 제안 뒤 “나한테 물어보지말고 phase 15까지 전부 구현 apply해줘. 중간에 문제 생기면 수정 알아서 하고”라고 명시했다. 이번 진행 중인 Phase10 수정부터Phase15까지 기존 현재 계정·허용 프로젝트 안에서 구현·계획·apply·실제검증·동일state 보존 복구를 위임하며 D-017/D-045/D-046의 매새SHA 사용자재확인 요구를 이 작업 범위에서 대체한다. 저장plan·정확한bundle무결성·고유run·소유권·비용검사와진단기록은 계속수행하고검토한SHA로apply하되사용자가각SHA를직접확인했다고허위기록하지않는다. 원문실습에필요한해당run의bounded부하/샘플재적재/VPN장애실험은scope에포함한다. 다른프로젝트/계정전환·이전Phase08/09/다른run변경·전체destroy·새외부계정권한확대는포함하지않는다. 기존D-045의관련commit/push요청을이어수행하며실패전체삭제금지D-036/D-037은유지한다. 이번작업완료후새실행에권한을자동승계하지않는다.
+
+sweep: Q-023을위임승인으로닫고AGENTS·실행안내·프로젝트pin·goal/checkpoint의현재대기를갱신한다. 과거승인기록/아카이브는역사로남기며기술적SHA검사나일반destroy보호는제거하지않는다(2026-08-26).

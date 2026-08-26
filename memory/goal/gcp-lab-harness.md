@@ -152,3 +152,22 @@ Sub-foundations exposed: source/work/input/state/account/hash — atomic, mock �
 
 Single next leaf: Q-023의수정bundle eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106 승인후같은run을재apply하고fixture재적재·8쿼리를검증한다. 데이터셋/state보존, 승인전Cloud재변경없음.
 Sub-foundations exposed: Git 인증/원격 비교 — atomic; Cloud 실행자/allowlist/API — atomic; 비용/정확한 계획 승인 — atomic; Phase별 실기 — not atomic →10 BQ/11 Monitoring/12 VPN/13 ALB/14 ILB/15 멱등성으로 분리.
+
+## Phase10–15 위임 실행 골격 v4 — 2026-08-26, D-047
+
+v3의개별SHA재질문대기는이번작업에한해대체한다. 목표는현재허용계정/project에서Phase15까지구현·apply·실제검증과오류보완이며,완료는각Task기능증거와콘솔하위안내/게시로판정한다. 원문수동UI/이메일·최종destroy는자동완료로표시하지않는다.
+
+| 분기 | 근거 | 상태·다음동작 |
+|---|---|---|
+| 위임/안전 | D047·safe adapter·AGENTS/pin | 개별질문없이저장계획/비용/소유권/SHA를검토해실행;실패보존 |
+| Phase10 | 수정eb50…·실제manifest/evidence | observed 완료:415602행/TIMESTAMP/8query/Task1–5;dataset유지 |
+| Phase11 | 원문11·monitoring.py·43회귀 | dashboard v1경로보완;새plan→VM3/메트릭/uptime/alert전이실기 |
+| Phase12 | 원문12·vpn.py·단계기록 | 새plan→라우팅/VPN/failover실기;다른run삭제없음 |
+| Phase13/14 | 원문13/14·verifier·감사한계 | 새plan→LB/부하/축소·ILB2backend통신실기,누락/오류보완 |
+| Phase15 | 원문15·모듈/verifier | 새plan→VM간통신/재plan0변경실기 |
+| 보고/게시 | docs/console·truth/checkpoint | 실제/수동/잔여리소스구분,관련변경게시 |
+
+비용초기추정: e2-micro VM,소형disk,VPN4tunnel,NAT,ALB/ILB를모두유지하면시간당약$0.5–1범위(데이터처리/전송/세금/리전차이/예약계약별도). 이는청구상한이아니며각실제plan에서자원수를다시검사한다. 공식2026-08-26조회근거: Compute general-purpose,Network Connectivity,NAT,Load Balancing pricing. 자동전체destroy/비용종료스케줄러는없다.
+
+Single next leaf: Phase10 결과와D047/Phase11 사전수정을게시해clean tree를확인하고Phase11의새run plan을생성한다.
+Sub-foundations exposed: scope delegation—atomic;source/work/state/identity binding—atomic;11 API버전/수렴—split구성조회·CPU·그룹·uptime·전이;12라우팅/장애—splitbaseline·지역변경·failover;13/14부하/건강/멱등—phase별실기;15ping/0변경—atomic.

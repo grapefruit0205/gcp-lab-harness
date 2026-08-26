@@ -346,3 +346,11 @@ One short section per working session: what was worked on, what was decided (wit
 - implemented: billing load에useAvroLogicalTypes=true, schema불일치필드/기대/실제상세, action plan에같은run table의WRITE_TRUNCATE(data/schema reload)/실패보존을명시했다. 원문/SQL8개/Phase08/09/shared4개lib변경없음. 신규회귀2개가실제POST옵션·대상/재적재방식·오류schema후query0을검사한다. 최초새test의evidence폴더fixture누락을수정후42개검사·TF mock1개/fmt/validate·Bash/gate PASS, 안내13개검사PASS.
 - observed 21:49 KST: 같은run replan exit0,dataset1no-op/추가·변경·삭제·교체0. bundle eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106의source/work/input/config/account/state/hash/schema/0600검사PASS. state SHA2e1a4222d88e38937aaff5a595ad9e25d6e3623b11e357167a1083d7e263c529는전후동일. 과거plan/manifest를보존하고현재planned, Q-023새승인대기. 수정후Cloud재적재·쿼리성공은아직없다.
 - observed rehearsal: ballast:rehearsal에따라새독자에게세개안내문서만주고Task2출력·전체coverage·안내13tests를실행하게했다. 세명령모두exit0/차단·추측0이며INTEGER실패, 보존대상과WRITE_TRUNCATE의data/schema갱신범위,새SHA승인을정확히구분했다. 도구transcript가근거이고실제Cloud/UI확인은아니다.
+
+## 2026-08-26 — Phase15까지 재질문 없는 위임 실행(D-047)
+
+- confirmed: 사용자가“나한테 물어보지말고 phase 15까지 전부 구현 apply해줘. 중간에 문제 생기면 수정 알아서 하고”라고명시하여이번작업의개별SHA재확인을범위위임으로대체했다. D047·AGENTS·실행안내·프로젝트한정pin을갱신했다. pin항목을먼저표시했고사용자의재질문금지지시에따라추가catalog질문없이반영했다. 범위밖/전체destroy보호는유지한다.
+- observed: clean tree에서FF pull후Phase10 수정eb50…apply/verify모두exit0. dataset1no-op,415602행·시간3개TIMESTAMP·8query·Task1–5검사PASS,총billed bytes333MiB. 실제GET table로사후재확인했다. 리소스/state/과거실패증거보존. 상세는PRODUCT-TRUTH와run evidence.
+- implemented: Phase11 사전API대조에서dashboard GET의잘못된v3경로를v1로분리했다. 공식dashboard GET문서와검사추가후43회귀·Phase11 gate/TF mock PASS. 현재Phase11실기전이다.
+- estimate: 공식VM/VPN/NAT/LB요금과소형현재구성으로모든후속실습유지시대략시간당$0.5–1수준을안내했다. 데이터처리/전송/세금등은별도이며청구상한/무료를보장하지않는다. 각계획에서재확인한다.
+- observed rehearsal: 새독자가D047예외문서/AGENTS/catalog만읽고현재작업한정·완료후승계없음·일반clone승인경계를정확히구분했다. Task2출력/전체coverage두명령exit0·차단/추측0. Cloud/auth/Git변경없음. 전체Cloud준비절차가아닌위임문구와로컬출력범위의리허설이다.

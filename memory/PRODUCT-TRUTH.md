@@ -253,6 +253,14 @@ Evidence: ignored `artifacts/phase10-approved-cloud-{apply,verify}.log`, `phase1
 
 수정 계획 observed 21:49 KST: 같은run/state의replan은dataset1no-op·create/update/delete/replace0이다. bundle SHA `eb50a9f987064e100984e7b79e2b9f552ade151eeba51451423f1d9784dbf106`의source/work/input/config/account/state와binary/action/binding 해시·schema·0600을재검사해PASS였다. plan 전후state SHA는위진단값과동일하다. 원래plan/manifest는plan-history에보존하고현재manifest는planned다. Q-023의새SHA승인전보완재적용은하지않았다. 진단지식은`memory/knowledge/gcp-bigquery-avro.md`에관측표본/한계와함께기록했다.
 
+## Phase10 보완 후 실제 Task1–5 통과 — state: verified, 리소스 유지 — 2026-08-26
+
+D-047의명시범위위임에따라수정eb50…bundle을재apply했다. Terraform dataset1no-op·리소스삭제없음, 실제verify exit0/manifest verified/Task1–5 passed다. 샘플415602행과필수schema검사·8개query DONE/실제결과총행수/필터·집계순서/비용상한을통과했다. 전체결과행수는query1~8 순서로70765/415602/100/29/8/3/4/8이며총billed bytes349175808(333MiB)이다. 무료할당량/계약/저장·전송까지반영한실제청구서금액은아니다.
+
+근거: ignored `artifacts/phase10-logical-types-cloud-{apply,verify}.log`, run `p10-260826-2106`의`manifest.json`, `command-code-result.json`, `evidence/phase-10-machine.json` 및두번째billing job receipt. 사후GET table의`table-after-repair.json`에서도시간3개필드TIMESTAMP와415602행을확인했다. n=1실기,전체golden정답/UI클릭/실제Billing export연결은검증범위밖이다. dataset/table·과거실패증거와state는보존하며최종destroy/종료완료를뜻하지않는다.
+
+Phase11 실행 전 추가보완: dashboard GET은공식Monitoring v1 경로, alert/group/uptime은v3를사용하도록분리했다. 기존모든리소스v3조회는dashboard와API계약이달랐다. `tests/test-phases-10-15.py`43개·Phase11 TF mock/gate가통과했다. 실제Phase11는아직실행전이다. [공식 dashboard GET](https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v1/projects.dashboards/get).
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
@@ -263,7 +271,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase 10 전체 machine verify·수정 후 재적재·destroy, Phase11–15 실제 Cloud apply·machine verify·destroy (Phase10 최초 dataset apply·load 자체는 위 실제 관측과 구분)
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09 최종destroy·이전run 잔여PSA 정리 완료, Phase10 최종destroy, Phase11–15 실제 Cloud apply·machine verify·destroy (Phase10 실제apply/보완후재적재/Task1–5 machine verify는위관측과구분)
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

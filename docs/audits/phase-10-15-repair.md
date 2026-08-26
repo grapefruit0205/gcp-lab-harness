@@ -25,6 +25,8 @@
 
 ## 재현 명령
 
+후속관측(2026-08-26): D-047의Phase15까지명시위임후Phase10 수정bundle을재apply/verify해415602행·시간3개TIMESTAMP·8query·Task1–5가통과했다. 총billed bytes는333MiB이며전체golden/UI/Billing export/종료destroy는별도다. 최초오류기록은위에보존한다. Phase11 사전대조에서dashboard GET의v1/v3경로오류도수정했고43개회귀·Phase11 gate/mock을통과했다.
+
 ```bash
 make test-offline
 ./tests/test-phases-10-15.sh

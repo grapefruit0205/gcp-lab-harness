@@ -14,6 +14,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib/harness"))
 from advanced import API, latest_uptime_ok, write_json
 
 
+def resource_url(name):
+    # Dashboard는 Monitoring v1, alert/group/uptime은 v3 경로를 사용한다.
+    version = "v1" if "/dashboards/" in name else "v3"
+    return f"https://monitoring.googleapis.com/{version}/{name}"
+
+
 def check_configuration(dashboard, policy, group, uptime, names, run_id, instance_ids):
     compact = lambda value: re.sub(r"\s+", "", value)
     metric = 'metric.type="compute.googleapis.com/instance/cpu/utilization" AND resource.type="gce_instance"'
@@ -49,7 +55,7 @@ def run(run_dir, project):
     base = f"https://monitoring.googleapis.com/v3/projects/{project}"
     def get_name(name):
         # Terraform dashboard id는 projects/... 형식; 다른 리소스 name도 동일하게 정규화.
-        return api.request("GET", "https://monitoring.googleapis.com/v3/" + name)
+        return api.request("GET", resource_url(name))
     dashboard, policy, group, uptime = [get_name(names[key]) for key in ("dashboard", "policy", "group", "uptime")]
     check_configuration(dashboard, policy, group, uptime, names, run_id, outputs["instance_ids"]["value"])
     expected = set(str(value) for value in outputs["instance_ids"]["value"])
