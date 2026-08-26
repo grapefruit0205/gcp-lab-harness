@@ -172,3 +172,11 @@ sweep: 현행 checkpoint·실행 로그의 Minecraft 유지/Phase 07 apply 대�
 ## D-030 · Phase 08 저장 plan 적용·실습 검증·관련 변경 게시를 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
 
 사용자는 bundle SHA `6d8a5c88f64c982508ff900f80aa632810a300d69f4b8fb302741154369499a3`를 제시한 “이 계획으로 apply·실습 검증 후 관련 변경을 스테이징·커밋·푸시할까요?”에 “ㅇㅇ”로 승인했다. run `p08-260826-8c1d`의 새 region bucket 1개와 고정된 action plan을 적용한다. fixture 하나의 임시 공개·즉시 회수, 새 bucket soft-delete=0, CSEK 암호화 전체 세대 삭제, 실패 시 해당 run 자동 cleanup을 포함한다. 관련 코드·테스트·문서·기록을 검사 후 stage·한국어 commit·push한다. 기존 다른 Cloud 리소스 변경과 정상 종료 후 전체 bucket destroy는 포함하지 않는다. A-004를 확정하며 같은 exact plan 승인은 반복 질문하지 않는다.
+
+## D-031 · Phase 08 비정형 오류 처리 수정 plan 재적용·실습 검증을 승인한다 — 2026-08-26 (AI-proposed, user-confirmed)
+
+사용자는 bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`를 제시한 “이 계획으로 재apply·실습 검증 진행할까요?”에 “ㅇㅇ”로 승인했다. run `p08-260826-c924`의 새 region bucket 1개와 고정된 action plan을 적용·검증한다. fixture의 임시 공개·즉시 회수, soft-delete=0, CSEK 암호화 전체 세대 삭제와 실패 시 run 자동 cleanup을 포함한다. 정상 성공 후 전체 bucket destroy나 다른 Cloud 리소스 변경은 포함하지 않는다. Q-009를 해결하며 이전 D-030 실행·실패 정리와 Git 게시 결과는 역사적 기록으로 유지한다.
+
+## D-032 · Phase 08 검증 기록 게시와 Phase 09 실행을 요청한다 — 2026-08-26 (사용자, 후속 Phase 진행)
+
+사용자는 “커밋 푸쉬 하고 phase 9 실행해줘”라고 요청했다. 로컬의 Phase 08 실제 검증 성공 기록·문서 상태를 검사해 stage·한국어 commit·push하고 Phase 09 실행 준비·검증·새 저장 계획을 진행한다. Phase 09 실제 Cloud 변경은 D-017의 새 exact plan SHA 승인 경계를 유지한다. Phase 08의 성공 run bucket 삭제는 이번 요청에 포함되지 않으며 그대로 보존한다. 비밀·state·원시 실행 로그를 게시하지 않는다.

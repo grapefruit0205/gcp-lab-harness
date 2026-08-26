@@ -12,7 +12,7 @@ Rule: anything unresolved gets a row here the moment it surfaces. A question is 
 | Q-006 | 로컬·GitHub 커밋에 사용할 Git 작성자 이름과 이메일은 무엇인가? | 2026-08-25 | closed — 사용자 소유 기존 로컬 저장소 3곳의 일치 설정 사용 |
 | Q-007 | Phase 07을 원문처럼 실제 사용자 두 계정으로 진행할 것인가? | 2026-08-26 | closed — D-024, 사용자 계정 2 지정. 실제 인증·새 plan 승인은 실행 전 별도 확인 |
 | Q-008 | Terraform 밖 `junseok-lab` bucket·기존 `mynet-us-vm-…` snapshot·`lampstack`/`read-bucket-objects` SA·`privatenet-allow-ssh` firewall도 이전 실습 삭제 대상인가? | 2026-08-26 | closed — D-029, 사용자가 남은 5개도 전부 삭제하라고 명시 |
-| Q-009 | Phase08 수정본 run `p08-260826-c924`, bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`를 apply·실습 재검증할까? | 2026-08-26 | open — 첫 승인 run은 HTTP401 실패 뒤 정리 완료. 코드가 바뀌어 새 exact plan 승인 필요 |
+| Q-009 | Phase08 수정본 run `p08-260826-c924`, bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`를 apply·실습 재검증할까? | 2026-08-26 | closed — D-031, 사용자가 새 exact SHA의 재apply·실습 검증에 “ㅇㅇ”로 승인 |
 
 ## Readings in force — assumed, not decided
 

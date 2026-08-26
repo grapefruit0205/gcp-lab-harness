@@ -135,13 +135,15 @@ Checked: 2026-08-26 — D-026에 따라 관리자 A의 VM 생성 대체 경로�
 
 직전 구현의 추가 관측(2026-08-26): 실제 두 사용자 권한·정책 preflight 및 run `p07-260826-b53c` 저장 plan이 통과했다. Terraform create 8/change 0/destroy 0이며 `artifacts/phase-07-notion-plan.log`와 해당 run manifest가 근거다. 현재 planned이며 새 apply/Cloud E2E는 미수행이다.
 
-## Phase 08 Cloud Storage 보완 — state: implemented, verified offline — 2026-08-26
+## Phase 08 Cloud Storage 보완 — state: implemented, verified offline + Cloud machine(n=1), 최종 destroy 대기 — 2026-08-26
 
 Evidence: `phases/08/{execute.sh,verify.sh,support.sh,storage_lab.py,fixture.html}`, `phases/08/terraform/main.tf`, `tests/test-phase-08.py`, `tests/test-phase-08.sh`, Terraform `tests/storage.tftest.hcl`. 최초 Python40/Terraform mock4/provider mock JSON plan3/gate PASS. 실제 실행 후 non-JSON 오류 대응 회귀를 포함해 Python44 tests PASS.
 
-Checked: 원본 Lab 08 Task 1–8을 보존하고 region bucket/ACL/CSEK rewrite/31일 lifecycle/3세대 로컬 복구/recursive rsync 경로를 보완했다. fake API 전체 흐름, 공개 grant 응답 유실 후 회수, CSEK 정확한 HTTP reason, 구키/신키 성공·거부 matrix와 metadata, 암호화 모든 세대 삭제, pagination 실패, 개별 sync hash, actor/input/code hash drift, 실제 Bash verify 실패→destroy 및 잔여 검사 실패→cleanup_required를 오프라인 검사했다. OAuth token/CSEK는 파일·argv에 기록하지 않고 HTTP 예외 원문을 출력하지 않는 구현이다. 실제 Google 응답·정책·CSEK 수렴/Cloud apply·verify·destroy·Windows 실기동은 미검증이다. 공개 ACL이 조직 PAP로 막히면 성공 실습을 했다고 주장하지 않고 policy-prevented 경계와 risk를 기록한다. 자동화에서는 공개 가능한 자체 고정 HTML fixture, 메모리 API 키, Terraform 선적용 정책, 전용 bucket soft-delete=0을 사용하며 원문 콘솔/외부 HTML/YAML 키 보관과의 차이를 문서화한다. 강제 프로세스 종료·OS swap·메모리 완전 소거까지 보장한다는 뜻은 아니다.
+최초 오프라인 Checked: 원본 Lab 08 Task 1–8을 보존하고 region bucket/ACL/CSEK rewrite/31일 lifecycle/3세대 로컬 복구/recursive rsync 경로를 보완했다. fake API 전체 흐름, 공개 grant 응답 유실 후 회수, CSEK 정확한 HTTP reason, 구키/신키 성공·거부 matrix와 metadata, 암호화 모든 세대 삭제, pagination 실패, 개별 sync hash, actor/input/code hash drift, 실제 Bash verify 실패→destroy 및 잔여 검사 실패→cleanup_required를 오프라인 검사했다. OAuth token/CSEK는 파일·argv에 기록하지 않고 HTTP 예외 원문을 출력하지 않는 구현이다. 최초에는 실제 Google 응답·Cloud 실행·Windows 실기동을 검증하지 않았으며 후속 Cloud 관측은 아래에 구분한다. 공개 ACL이 조직 PAP로 막히면 성공 실습을 했다고 주장하지 않고 policy-prevented 경계와 risk를 기록한다. 자동화에서는 공개 가능한 자체 고정 HTML fixture, 메모리 API 키, Terraform 선적용 정책, 전용 bucket soft-delete=0을 사용하며 원문 콘솔/외부 HTML/YAML 키 보관과의 차이를 문서화한다. 강제 프로세스 종료·OS swap·메모리 완전 소거까지 보장한다는 뜻은 아니다.
 
 후속 observed(2026-08-26, n=1): D-030의 run `p08-260826-8c1d`는 실제 Terraform 1 added/0 changed/0 destroyed 및 bucket policy readback에 성공했다. verifier는 HTTP401로 실패했고 자동 destroy 1개·빈 state·활성/soft-deleted bucket0까지 확인했다. 근거는 ignored `artifacts/phase-08-cloud-{apply,verify}.log`, 해당 run의 `verification-cleanup.log`, `evidence/phase-08-destroyed.json`이다. 전체 실습 성공은 아니다. 원래 로그에 오류 body 형식/Task가 없어 해당401이 어느 요청의 응답인지는 단정하지 않는다. 읽기 전용 재현에서 alt=media의404가 일반 텍스트임을 관측해 JSON-only 오류 가정을 제거했다. 익명401/403은 같은 generation의 인증 GET 전후 성공과 함께만 인정하고, media CSEK400의 reason이 없으면 같은 generation·키의 checksum metadata가 정확한 CSEK reason으로 거부되는지 추가 검사한다. 수정 코드는 오프라인만 통과했으며 새 계획의 Cloud 재검증 대기다.
+
+재실행 observed(2026-08-26 15:35 KST, 성공 n=1): D-031의 run `p08-260826-c924`는 승인 bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`로 1 added/0 changed/0 destroyed 후 실제 Cloud machine verification을 통과했다. manifest verified, Task1–8 passed, public_acl=created-tested-revoked, 암호화 세대 잔여0, 원본 복구3세대·sync2개 hash 일치, risks0이다. 별도의 읽기 전용 gcloud 재조회에서도 총5개 객체 세대(setup3+sync2), 공개 객체 ACL0·공개 bucket IAM0, 암호화 객체0과 bucket 생성 identity/정책·Terraform bucket state1을 대조했다. gcloud와 JSON API의 생성 시각 문자열 표현 차이는 같은 UTC 시각으로 정규화해 비교했다. 증거: ignored `artifacts/phase-08-reapply-{local-tests,gate,cloud,verify}.log`, 해당 run의 `evidence/phase-08-machine.json`·`phase-08-postverify-audit.json`, `artifacts/phase-08-postverify-{objects,bucket,bucket-iam}.json`. 성공 후 bucket 전체 destroy는 승인 범위가 아니므로 수행하지 않았다. bucket1은 유지되며 lab_completion.complete=false/destroy_pending=true다. 실제31일 경과 삭제·Windows 실행·전체15Lab 성공은 이 결과에 포함하지 않는다.
 
 ## Not implemented
 
@@ -153,7 +155,7 @@ capability shipped makes you claim less than you have earned. Sweep it on the sa
 - Google Cloud 계정 통합 테스트
 - 전체 15개 Lab E2E 실행
 - 실제 Phase의 Command Code 단일 모델 구현·자기 검증 E2E
-- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 전체 실습 성공(첫 apply/실패 cleanup만 관측), Phase 09–15 실제 Cloud apply·machine verify·destroy
+- Phase 07 실제 두 사용자 경로의 Cloud 통합 검증, Phase 08 성공 run의 최종 destroy·전체 종료 확인, Phase 09–15 실제 Cloud apply·machine verify·destroy
 - Monitoring·Logging MCP 실제 OAuth/IAM 연결과 Extension 교차 검증
 - WSL 없는 Windows PowerShell wrapper 실제 Windows 실행 검증
 

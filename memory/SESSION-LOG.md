@@ -201,3 +201,18 @@ One short section per working session: what was worked on, what was decided (wit
 - observed: 수정본 run `p08-260826-c924` 새 saved plan은 US-CENTRAL1 bucket `gcp-lab-p08-p08-260826-c924` 1개 create/change0/destroy0이다. binary SHA `61a32d1644bf1e6bfb0c6bf619d63a6fe5d060c53fefbdb351b01561ce68551e`, action SHA `46231c5b10f44c6c1cdb5f72ddeb46361b855e3d6b285a2905fc63268a63df6d`, bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`와 source/input hash·schema·scope·manifest planned를 재확인했다. `artifacts/phase-08-revised-plan.log`가 근거다. 새 SHA 승인은 아직 없으며 apply하지 않았다.
 - 게시 경계: D-030에 따라 관련 구현/테스트/문서/기록을 게시하되 실제 Cloud 실습 실패와 수정본 재검증 대기를 명시한다. 로컬 gate 통과와 Cloud 실습 성공을 혼동하지 않는다. 최종 원격 SHA는 실제 push 뒤 기록한다.
 - observed 15:30 KST: 관련 24개 파일을 한국어 commit `33eae83edf73ccf272b6a8f352de4ecd3e14cd95`로 만들고 기존 저장소 전용 SSH alias를 통해 main에 일반 push했다. 무인증 HTTPS `git ls-remote origin refs/heads/main`으로 원격 SHA 일치를 확인했다. force push·원격/전역 설정 변경은 없었다. 게시 후 복귀 checkpoint를 archive하고 현 상태와 Q-009의 정확한 재개 명령을 갱신했다. 새 Cloud apply는 여전히 승인 대기다.
+
+## 2026-08-26 — Phase 08 수정 plan 승인·실제 실습 성공(D-031)
+
+- confirmed: 사용자가 bundle SHA `1222d79e290b309f117390ff457b5da1aa2577fef1a30bec32aa770ef575450a`의 재apply·실습 검증에 “ㅇㅇ”로 승인했다. D-031을 기록하고 Q-009를 닫았다. 같은 승인이나 일반 `.sh` 실행을 다시 묻지 않았다.
+- observed: clean tree에서 `git pull --ff-only` 결과 already up to date이며 HEAD=origin/main `f39ffe070595885834b442ec3c709345c7799ac5`였다. saved source/input/bundle/binary SHA·planned 상태·단일 create 범위를 재확인하고 Python44/Terraform mock4·JSON guard3·Bash/TF 정적 검사·Phase08 gate를 재통과했다. 로그는 ignored `artifacts/phase-08-reapply-{local-tests,gate}.log`다.
+- observed: run `p08-260826-c924` apply는 1 added/0 changed/0 destroyed와 bucket identity/policy readback 성공이다. 실제 verify는 exit0, manifest verified/Task1–8 passed다. 임시 public ACL 생성·익명 hash·회수, CSEK 두 객체의 구키/신키 matrix·rewrite와 암호화 전체 세대 삭제,31일 lifecycle readback,3세대 원본 로컬 복구,recursive sync2개 다운로드 hash를 통과했다. risks는 빈 목록이다. 로그는 ignored `artifacts/phase-08-reapply-{cloud,verify}.log`, 증거는 해당 run `evidence/phase-08-machine.json`이다.
+- observed 15:35 KST: 별도 읽기 전용 gcloud 조회에서 bucket1/객체 세대5(setup3+sync2), 공개 객체 ACL0/공개 bucket IAM0/암호화 객체0을 확인했다. 생성 identity·versioning/lifecycle/soft-delete0과 Terraform state bucket1, 복구 및 sync 로컬 hash도 재대조했다. gcloud 생성 시각 `.891000+00:00`과 API `.891Z`는 표현만 달라 UTC epoch 정규화 후 일치했다. 새 변경이나 승인 guard 완화는 없었다. evidence는 `phase-08-postverify-audit.json`, 원시 metadata는 ignored `artifacts/phase-08-postverify-*.json`이다.
+- limits: 성공 n=1이며 실제31일 삭제·Windows·15개 전체Lab 성공으로 확대하지 않는다. CSEK 임시 객체2개의 모든 암호화 세대는 승인된 실습 정리로 삭제했고 암호화 키는 보관하지 않는다. 원본 fixture는 저장소에 남아 재생성 가능하다. 최종 bucket 전체 destroy는 승인 범위가 아니므로 실행하지 않았으며 남은 비공개 bucket1은 보관/API 비용 대상이다.
+- 기록: proof-standard에 따라 truth file을 먼저 갱신하고 guide의 실행 상태를 그 증거에 맞췄다. checkpoint는 archive 후 갱신한다. 이번 턴은 실행·검증과 로컬 결과 기록까지이며 새 commit/push는 수행하지 않는다. 기존 게시 구현 SHA와 다른 소스 변경은 없다.
+
+## 2026-08-26 — Phase 08 검증 기록 게시·Phase 09 진행 요청(D-032)
+
+- confirmed: 사용자가 “커밋 푸쉬 하고 phase 9 실행해줘”라고 요청했다. Phase08 관련 결과 기록 stage/한국어 commit/push와 Phase09 실행 준비를 진행한다. 새로운 Cloud plan SHA 승인과 Phase08 bucket 보존 경계는 유지한다.
+- observed: recall로 index/knowledge/decisions/프로젝트·사용자 rules/goal 골격을 점검했다. SQL 전용 검증 지식은 없으며 기존 Cloud/Terraform 가드레일과 게시 워크플로, Phase09 원문·문서·execute/verify/Terraform을 열었다. Phase09는 Cloud SQL1/WordPress VM2 구성으로, 새 실습 실행 전 artifact URL/hash·제한 CIDR 입력과 비밀번호·실패 정리 경로를 점검한다.
+- observed rehearsal 3차: 같은 모델 새 실행자가 Phase08 문서만으로 로컬 test(Python44/TF mock·JSON guard), phase gate, help를 실행해 모두 exit0이었다. 명령·Cloud 경계에 차단/추측은 없었다. README·개인 설정·기존 artifacts·Cloud·Git 쓰기는 범위 밖이었다. 로그 `/tmp/p08-rehearsal3.oj6dhb/`. Cloud 재검증을 뜻하지 않는다.

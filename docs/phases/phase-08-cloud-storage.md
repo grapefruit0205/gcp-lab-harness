@@ -1,7 +1,7 @@
 # Phase 08 — Cloud Storage
 
 - 원본: `references/google-cloud-labs-ko/labs/08.Cloud Storage_KR.md`
-- 상태: 구현·오프라인 검증 완료. 첫 Cloud apply는 성공했지만 실습은 HTTP401에서 실패했고 자동 정리는 완료했다. 오류 응답 처리 수정 후 Cloud 재검증 대기.
+- 상태: 구현·오프라인 검증 및 수정본의 실제 Cloud apply·Task 1–8 machine 검증 통과(2026-08-26, 성공 n=1). 첫 실패 run 정리는 완료했으며 성공 run의 최종 destroy는 대기 중이다.
 - 대상: 저장소를 clone한 사용자. Linux Bash 또는 Windows PowerShell의 Git Bash 호환층 사용.
 - 비용 위험: 중간. bucket·객체·API 사용 비용이 발생할 수 있다.
 
@@ -118,7 +118,7 @@ Command Code는 모델 override 없이 같은 스크립트를 실행한다. Exte
 
 ## Git 종료 조건
 
-검증 후 사용자가 승인한 변경만 한국어로 commit하고 명시적 push 요청이 있을 때 게시한다. 코드 게시 여부와 실제 Cloud 실습의 성공 여부를 구분한다. 현재 실습 실패/재검증 대기 상태를 완료로 표시하지 않는다.
+검증 후 사용자가 승인한 변경만 한국어로 commit하고 명시적 push 요청이 있을 때 게시한다. 코드 게시 여부, 실제 Cloud machine 검증 성공, 최종 destroy 완료 여부를 구분한다. 현재 성공 run의 bucket은 남아 있으므로 전체 정리 완료로 표시하지 않는다.
 
 ## 구현 근거
 
