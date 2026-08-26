@@ -327,3 +327,13 @@ One short section per working session: what was worked on, what was decided (wit
 - observed rehearsal: 1차의 준비 안내·P10 필드·P09 상태·중복 검사 간극을 수정했다. 2차 새 독자는 로컬 명령·34문서/107개 링크·90Task/167원문제목/221안내 항목을 확인해 차단0·broken0이었다. 네 비차단 문구를 정정하고13개 안내 검사를 재실행했다. 실제 로그인/UI/Cloud/Git 쓰기는 하지 않았다.
 - limits: 실제 Cloud 권한/quota/수렴·통신은 아직 미검증이며 원문 전체 수동 단계 완료를 주장하지 않는다. Phase13 reset/삭제·두번째 backend 방식·부하 위치, P10 전체 golden 비교 등의 차이는 docs/audits/phase-10-15-repair.md에 명시했다. 자동 비용 종료는 없다. Q-014는10–15 로컬 이관까지 partial, Q-021은 새 실기/차이 추적이다. Q-019 catalog 제안은 승인 없이 저장하지 않았다.
 - preserved: 기존 Phase08·Phase09 PSA3개·이전 run/state·승인 소스에 Cloud 변경을 하지 않았다. 로컬 미커밋 변경이며 마지막 원격 게시5aa5749와 구분한다. 다음 실제 실행은 본인 계정/project 및 새 저장 plan 승인 경계부터 진행한다.
+
+## 2026-08-26 — Phase10–15 게시와 실제 실행 준비(D-045)
+
+- confirmed: 로컬 완료 보고 후 사용자가 “커밋 푸쉬하고 apply 해서 안되는 부분 확인하면서 수정해줘”라고 요청했다. 관련 변경 게시와 순차 실기 준비를 진행한다. D017 exact plan 승인, 실패 보존, 다른 run/Phase08/09 보호는 유지한다.
+- observed: recall의 index/knowledge/decisions/catalog/skills/goal을 확인하고 GitHub SSH 게시 근거와 보존 규칙을 재사용했다. 현재 ACTIVE 계정·허용 프로젝트·ADC/billing preflight와 BigQuery/Compute/Monitoring/Logging/Storage 활성 API 조회가 통과했다. 개인 계정/설정은 ignored 경로에만 남겼다.
+- observed:40개 회귀·13개 안내·TF mock6개/fmt/validate·Phase10–15 gate를 재통과했다.82개 staged 파일의 경로와 민감 패턴·diff check를 검사한 뒤 한국어 commit b67ce8c91542a9738870af80a19db1f8073392fc를 만들고 기존 repo 전용 SSH alias로 main에 일반 push했다. 원격 HTTPS SHA 일치·fetch·pull --ff-only·clean tree를 확인했다. 원격 설정/키 내용은 변경/열람하지 않았다.
+- observed: 새로운 Phase10 run p10-260826-2106의 plan을 시작했다. 아직 apply·load/query·Cloud 리소스 변경은 하지 않았다. 로그 artifacts/phase10-initial-plan.log 및 phase-10-plan.*.log는0600/ignored 경로다.
+- observed 21:11 KST: 최초 plan exit0, US BigQuery dataset1create·update/delete/replace0을 확인했다. binary/action/binding/manifest 해시와 source/work/input/config/account/state·소유권 guard·schema/0600 재검사도exit0이다. manifest planned/state absent, bundle da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9. 사용자에게 exact SHA·계정/project·fixture 적재/8쿼리·기존 삭제 없음·조건부 비용 추정을 제시하여 Q-022 승인 대기로 기록했다. 승인 전 Cloud 변경하지 않았다.
+- estimate: 공식 BigQuery 온디맨드$6.25/TiB와 query8개×1GiB 상한으로 분석 비용은1회 약$0.04883이다. 저장/전송/예약용량/세금/재시도 비용은 별도이며 무료 잔여를 가정하지 않는다. table TTL1일과 전체 자동 destroy를 구분했다. PRODUCT-TRUTH에 출처·조건을 기록했다.
+- checkpoint: ballast:checkpoint에 따라 기존21:05 상태를 archive하고 게시 완료·Q-022 승인 대기·정확한 재개 명령으로 갱신했다. 기존 Q-014/019/020/021을 완료 처리하지 않았다. 이 후속 증거 기록도 D-045 범위에서 검사·게시한다.

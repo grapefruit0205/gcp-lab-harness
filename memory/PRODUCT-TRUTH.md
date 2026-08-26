@@ -233,6 +233,16 @@ Checked: 2026-08-26. 로컬 Markdown 출력과 보고 경로 연결의 구현·�
 
 게시 observed(18:28 KST): 관련 변경75개를 한국어 commit `eb9aad9f043ebd749e67c695c0e447755c2fafda`로 main에 push했고 무인증 원격 SHA·fast-forward pull·clean tree를 대조했다. state/개인 설정/원시 로그는 제외했다. 기존 저장소 전용 SSH alias를 사용했으며 공개 origin URL이나 전역 Git 설정을 변경하지 않았다. 사후 run IAM binding0도 확인했다. 현재 run의 PSA3개 잔여·Q-019 catalog 대기는 그대로다.
 
+## Phase10–15 게시·Phase10 실제 저장 계획 — state: observed, apply 미실행 — 2026-08-26
+
+D-045에 따라82개 파일을 `b67ce8c91542a9738870af80a19db1f8073392fc`로 main에 push했다. 원격 SHA 일치·FF pull·당시 clean tree를 대조했다. 게시 전40개 Phase 회귀·13개 안내·Terraform mock6개/fmt/init/validate·6개 Phase gate가 통과했다. evidence: ignored `artifacts/phase10-15-prepublish-{tests,gates}.log`, `phase10-15-publish-{commit,push}.log`, Git commit/remote.
+
+Observed 21:11 KST: 현재 실행 계정/allowlist/billing preflight와 필요한 활성 API를 읽기 확인한 뒤 run `p10-260826-2106`의 최초 plan이exit0이었다. US dataset `billing_p10_260826_2106`1create·update/delete/replace0, 기본 table TTL86400000ms다. action plan은 원문 AVRO fixture generation1600686329144010/CRC32C bTzWyg==의 적재와8개 쿼리다. bundle SHA `da21cf4a35d39146664507e7b2545b07945f3389fb0a04a8d818a844c4efd5d9`의 binary/action/binding/manifest 해시와 source/work/input/config/account/state·소유권 guard·manifest/action schema·파일0600을 읽기 전용 재검사했다. state=absent, manifest=planned. plan은 생성/적재/쿼리 성공 증거가 아니며 Q-022 승인 전 apply/verify하지 않았다.
+
+조건부 비용 추정: 코드의 쿼리8개×maximumBytesBilled1GiB와 [BigQuery 공식 온디맨드 가격](https://cloud.google.com/bigquery/pricing?authuser=1)의$6.25/TiB를 곱하면1회 약$0.04883이다. 무료 할당량은 남아 있다고 가정하지 않았다. 이 값은 쿼리 분석 비용만의 추정이며 저장·전송·예약용량·세금이나 반복 실행을 포함한 전체 청구 상한이 아니다. 적재 이후 저장 비용이 따로 발생할 수 있다. 기본 table 만료1일은 dataset/모든 Cloud 리소스의 자동 destroy가 아니다. 가격은2026-08-26 공식 페이지 검색 결과에서 확인했으며 실행 시점·계정 계약에 따라 재확인한다.
+
+근거: ignored `artifacts/phase10-preflight.log`, `phase10-initial-plan.log`, 해당 run의 `phase-10-plan.json`, `action-plan.json`, `binding.json`, `plan-bundle.json`, `manifest.json` 및 실제 무결성 검사 exit0. 기존 Phase08/09 리소스·state를 변경하지 않았다. Phase11–15 실제 plan/apply/verify는 아직 미실행이다.
+
 ## Not implemented
 
 <!-- Listed explicitly so absence is a fact, not a gap. Copy must not claim these.
