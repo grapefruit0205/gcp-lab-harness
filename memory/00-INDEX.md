@@ -17,6 +17,9 @@ Purpose: this folder is the durable memory for gcp-lab-harness. Conversations fo
 | `HANDOFF.md` | 다음 세션에 전달할 일회성 실행 지시 | 읽고 실행한 직후 삭제 |
 | `../.claude/skills/phase09-mysql-repair/SKILL.md` | 실기 검증한 Phase09 MySQL 보존 복구 절차 | 성공 근거·한계·날짜와 함께 유지, Cloud 변경은 새 승인 경계 준수 |
 | `../docs/console-checks.md` | 각 Phase 완료 시 사용자에게 제공할 Task별 콘솔 확인 공통 안내 | Phase별 표·출력 도구·보고 prompt·coverage 검사와 함께 유지 |
+| `../docs/console/` | 원문 Task 아래167개 제목·번호 절차를 포함한221개 상세 콘솔 확인 항목 | 원문은 보존하며 클릭 경로·판정·미구현 경계를 코드와 대조 |
+| `../docs/phase-10-15-execution.md` | Phase10–15 보존형 실행·승인·검증·복구·종료 안내 | 실제 Cloud 성공과 로컬 검증을 구분 |
+| `../docs/audits/phase-10-15-repair.md` | Phase10–15 오류 수정·남은 차이·리허설 증거 | 코드·테스트 근거와 함께 갱신 |
 
 ## Operating principles
 

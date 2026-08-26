@@ -15,16 +15,11 @@ if [[ "$mode" == offline ]]; then
 fi
 harness_validate_run_id "$run_id"; harness_load_config "$repo_root/config/harness.env"
 if [[ "$mode" == destroyed ]]; then
-  remaining="$(gcloud compute forwarding-rules list --regions="$GCP_REGION" --project="$GCP_PROJECT_ID" --filter="name=('my-ilb-$run_id')" --format='value(name)'|wc -l)"
-  gcloud compute networks describe "my-internal-app-$run_id" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true
-  gcloud compute instances describe "utility-vm-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true
-  for spec in "instance-group-1-$run_id:$GCP_ZONE" "instance-group-2-$run_id:$GCP_SECONDARY_ZONE";do mig="${spec%%:*}";zone="${spec#*:}";gcloud compute instance-groups managed describe "$mig" --zone="$zone" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true;done
-  gcloud compute backend-services describe "my-ilb-backend-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true
-  gcloud compute health-checks describe "my-ilb-health-check-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true
-  gcloud compute addresses describe "my-ilb-ip-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" >/dev/null 2>&1&&((remaining+=1))||true
-  template_count="$(gcloud compute instance-templates list --regions="$GCP_REGION" --project="$GCP_PROJECT_ID" --filter="name~'^p14-template-(a|b)-$run_id-'" --format='value(name)'|wc -l)";((remaining+=template_count))||true
-  [[ "$remaining" -eq 0 ]]||harness_die "Phase 14 network·VM·MIG·ILB 잔여 리소스: $remaining";printf 'PASS: Phase 14 잔여 리소스 0\n';exit 0
+  export GCP_PROJECT_ID
+  python3 "$repo_root/lib/harness/advanced.py" inventory --phase 14 --run-dir "$repo_root/artifacts/runs/$run_id/phase-14"
+  exit 0
 fi
+[[ "${HARNESS_SAFE_VERIFY_RUN:-}" == "$run_id" ]] || harness_die "승인 source/account 검사를 위해 phases/14/execute.sh verify --run $run_id 로 실행하세요."
 run_dir="$repo_root/artifacts/runs/$run_id/phase-14";manifest="$run_dir/manifest.json";evidence_dir="$run_dir/evidence";evidence="$evidence_dir/phase-14-machine.json";harness_manifest_require_status "$manifest" applied;mkdir -p "$evidence_dir";chmod 700 "$evidence_dir"
 zone_one="$(terraform -chdir="$run_dir/work" output -raw zone_one)";zone_two="$(terraform -chdir="$run_dir/work" output -raw zone_two)";vip="$(terraform -chdir="$run_dir/work" output -raw ilb_address)";utility="utility-vm-$run_id"
 guest(){ timeout 180 gcloud compute ssh "$utility" --zone="$zone_one" --project="$GCP_PROJECT_ID" --tunnel-through-iap --quiet --command="$1"; }
@@ -42,10 +37,18 @@ for spec in "${backend_names[@]}";do
   harness_wait_until 600 10 guest "curl -fsS --max-time 5 'http://$ip/' | grep -Fq 'backend=$name'" || harness_die "$name direct backend probe 실패"
 done
 
-health="$(gcloud compute backend-services get-health "my-ilb-backend-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" --format=json)"
-[[ "$(jq '[.[].status.healthStatus[]? | select(.healthState=="HEALTHY")]|length'<<<"$health")" -eq 2 ]]||harness_die "ILB healthy backend가 2개가 아닙니다."
-responses="$(guest "for i in \$(seq 1 60); do curl -fsS --max-time 5 'http://$vip/'; echo; done")"
-distinct="$(grep -o 'backend=[^ <]*'<<<"$responses"|sort -u|wc -l)";[[ "$distinct" -eq 2 ]]||harness_die "VIP가 backend 2개에 분산되지 않았습니다."
+healthy() {
+  gcloud compute backend-services get-health "my-ilb-backend-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" --format=json >"$evidence_dir/backend-health.json" || return 1
+  python3 "$repo_root/lib/harness/advanced.py" health --file "$evidence_dir/backend-health.json" --expected "instance-group-1-$run_id" "instance-group-2-$run_id"
+}
+harness_wait_until 600 10 healthy || harness_die "ILB 양쪽 backend health 수렴 실패"
+responses="$(guest "set -eu; for i in \$(seq 1 60); do curl -fsS --max-time 5 'http://$vip/'; printf '\\n'; done")"
+markers="$(grep -o 'backend=[^ <]*'<<<"$responses")"
+[[ "$(wc -l<<<"$markers")" -eq 60 ]] || harness_die "VIP 성공 응답 marker가 정확히60개가 아님"
+[[ "$(grep -o '<h2>Client IP</h2>10.10.20.50'<<<"$responses" | wc -l)" -eq 60 ]] || harness_die "passthrough ILB의 원본 client IP 보존 불일치"
+expected_markers="$(printf '%s\n' "${backend_names[@]}" | cut -d: -f1 | sed 's/^/backend=/' | sort)"
+[[ "$(sort -u<<<"$markers")" == "$expected_markers" ]] || harness_die "VIP 응답 backend 집합 불일치"
+distinct=2
 
 forward_json="$(gcloud compute forwarding-rules describe "my-ilb-$run_id" --region="$GCP_REGION" --project="$GCP_PROJECT_ID" --format=json)"
 jq -e '.loadBalancingScheme=="INTERNAL" and .IPAddress=="10.10.30.5" and .IPProtocol=="TCP"'<<<"$forward_json">/dev/null||harness_die "ILB frontend readback 불일치"

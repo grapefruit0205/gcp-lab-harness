@@ -18,6 +18,11 @@ variable "run_id" {
 }
 variable "region" { type = string }
 variable "zone" { type = string }
+variable "notification_channels" {
+  description = "사용자가 별도로 승인한 기존 notification channel 이름. 기본은 외부 이메일 전송 없음."
+  type        = list(string)
+  default     = []
+}
 
 provider "google" {
   project = var.project_id
@@ -29,6 +34,8 @@ data "google_compute_image" "debian" {
   family  = "debian-12"
   project = "debian-cloud"
 }
+
+data "google_monitoring_uptime_check_ips" "current" {}
 
 locals {
   labels = {
@@ -74,7 +81,7 @@ resource "google_compute_firewall" "iap_ssh" {
 resource "google_compute_firewall" "uptime_http" {
   name          = "p11-uptime-${var.run_id}"
   network       = google_compute_network.main.name
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+  source_ranges = [for checker in data.google_monitoring_uptime_check_ips.current.uptime_check_ips : "${checker.ip_address}/32" if !strcontains(checker.ip_address, ":")]
   target_tags   = ["p11-${var.run_id}"]
   allow {
     protocol = "tcp"
@@ -114,6 +121,7 @@ resource "google_compute_instance" "nginx" {
   }
 
   metadata_startup_script = local.startup_script
+  metadata                = { enable-oslogin = "TRUE" }
 
   shielded_instance_config {
     enable_integrity_monitoring = true
@@ -153,17 +161,18 @@ resource "google_monitoring_dashboard" "cpu" {
 }
 
 resource "google_monitoring_alert_policy" "cpu" {
-  display_name = "Phase 11 CPU ${var.run_id}"
-  combiner     = "AND"
-  enabled      = true
-  user_labels  = local.labels
+  display_name          = "Phase 11 CPU ${var.run_id}"
+  combiner              = "AND"
+  enabled               = true
+  user_labels           = local.labels
+  notification_channels = var.notification_channels
 
   conditions {
-    display_name = "CPU above 10 percent"
+    display_name = "VM 1 CPU above 20 percent"
     condition_threshold {
-      filter          = "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" AND resource.type=\"gce_instance\" AND metadata.user_labels.run=\"${var.run_id}\""
+      filter          = "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" AND resource.type=\"gce_instance\" AND resource.labels.instance_id=\"${google_compute_instance.nginx[0].instance_id}\""
       comparison      = "COMPARISON_GT"
-      threshold_value = 0.10
+      threshold_value = 0.20
       duration        = "60s"
       aggregations {
         alignment_period   = "60s"
@@ -173,9 +182,9 @@ resource "google_monitoring_alert_policy" "cpu" {
   }
 
   conditions {
-    display_name = "CPU above 20 percent"
+    display_name = "VM 2 CPU above 20 percent"
     condition_threshold {
-      filter          = "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" AND resource.type=\"gce_instance\" AND metadata.user_labels.run=\"${var.run_id}\""
+      filter          = "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" AND resource.type=\"gce_instance\" AND resource.labels.instance_id=\"${google_compute_instance.nginx[1].instance_id}\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0.20
       duration        = "60s"
@@ -218,13 +227,15 @@ resource "google_monitoring_uptime_check_config" "nginx" {
 
   resource_group {
     group_id      = google_monitoring_group.nginx.name
-    resource_type = "gce_instance"
+    resource_type = "INSTANCE"
   }
 }
 
 output "instance_names" {
   value = google_compute_instance.nginx[*].name
 }
+
+output "instance_ids" { value = google_compute_instance.nginx[*].instance_id }
 
 output "dashboard_name" { value = google_monitoring_dashboard.cpu.id }
 output "policy_name" { value = google_monitoring_alert_policy.cpu.name }

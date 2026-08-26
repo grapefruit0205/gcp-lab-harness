@@ -6,7 +6,7 @@
 
 저장소: [grapefruit0205/gcp-lab-harness](https://github.com/grapefruit0205/gcp-lab-harness) (public)
 
-각 Phase 완료 시 [Task별 콘솔 확인 안내](docs/console-checks.md)를 함께 제공합니다. [Phase 문서](docs/phases/README.md)의 표에서 메뉴 경로·확인 대상·통과 기준·보조 증거를 볼 수 있습니다. 로컬에서는 `python3 scripts/console-checks.py --phase 09`처럼 조회합니다. 이 안내는 실제 Cloud 검증 결과나 사용자의 콘솔 확인을 대신하지 않습니다.
+각 Phase 완료 시 [Task별 콘솔 확인 안내](docs/console-checks.md)를 함께 제공합니다. [Phase 문서](docs/phases/README.md)의 요약 표와 `docs/console/phase-NN.md`에서 원문 Task 하위 항목마다 클릭 경로·값·판정·한계·보조 증거를 볼 수 있습니다. 로컬에서는 `python3 scripts/console-checks.py --phase 10 --task 4`처럼 조회합니다. Phase10–15 실행·복구는 [보존형 실행 안내](docs/phase-10-15-execution.md)를 사용합니다. 이 안내는 실제 Cloud 검증 결과나 사용자의 콘솔 확인을 대신하지 않습니다.
 
 ## 0. 가장 쉬운 시작: Windows Desktop에 링크와 프롬프트 붙여넣기
 
@@ -52,7 +52,7 @@ Windows 환경에서 다음 public GitHub 저장소로 Google Cloud 실습 하�
     보존 복구 이관(Q-014)이 끝나지 않은 Phase의 기존 자동 실패 destroy 경로는 실행하지 않는다.
 13. 검증 승인 후 현재 Phase 소유 리소스만 cleanup하고 잔여 0을 확인한다.
     그다음 한국어 commit과 push를 완료하고 다음 Phase의 plan 승인 대기에서 멈춘다.
-14. 각 Phase 완료 보고에는 해당 문서의 Task별 콘솔 확인 표를 함께 안내한다.
+14. 각 Phase 완료 보고에는 Task별 요약 표와 원문 하위 항목별 상세 콘솔 확인서를 함께 안내한다.
     메뉴 경로·대상·통과 기준·콘솔의 한계와 보조 증거를 빠뜨리지 않는다.
     이미 destroy했다면 삭제 전 증거와 현재 리소스 부재를 구분하고 재생성하지 않는다.
 

@@ -1,5 +1,7 @@
 # Phase 15 — Terraform 인프라 배포 자동화
 
+[Phase10–15 보존형 실행·복구 안내](../phase-10-15-execution.md) · [현재 구현/오류 수정/남은 한계](../audits/phase-10-15-repair.md). 이 문서의 완료 조건은 실제 실행 후 판정할 기준이며 이번 로컬 수정의 Cloud 성공 기록이 아니다.
+
 - 원본: `references/google-cloud-labs-ko/labs/15.Automating the Deployment of Infrastructure Using Terraform_KR.md`
 - 비용 위험: 중간
 - 주요 서비스: Terraform, VPC, firewall, Compute Engine
@@ -18,6 +20,8 @@ Terraform을 초기화하고 `mynetwork` VPC, firewall, VM을 선언형으로 �
 | Task 4. Review | cli-equivalent | fmt·validate·plan·apply·idempotency·destroy evidence 검토 |
 
 ## Task별 콘솔 확인
+
+[하위 항목별 상세 확인](../console/phase-15.md): 원문 하위 제목/번호 절차마다 클릭 경로·값·판정·한계를 확인합니다.
 
 [공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
 
@@ -69,7 +73,7 @@ Command Code는 Terraform 명령과 결과 요약을 남기되 state 원문을 �
 
 ## 현재 adapter
 
-`phases/15/terraform`은 auto-mode `mynetwork`, 단일 lab firewall, local reusable instance module을 사용한 서로 다른 region의 VM 2개로 구성된다. verifier는 provider lock·fmt·validate, state address 정확히 4개, Cloud API inventory, VM 간 private ping, apply 뒤 두 번째 plan의 detailed exit code 0을 확인한다.
+`phases/15/terraform`은 auto-mode `mynetwork`, 단일 lab firewall, local reusable instance module을 사용한 서로 다른 region의 VM 2개로 구성된다. verifier는 provider lock·fmt·validate, managed state address 정확히4개(data source 제외), Cloud API inventory, VM 간 private ping, apply 뒤 두 번째 plan의 detailed exit code 0을 확인한다.
 
 ## Git 종료 조건
 

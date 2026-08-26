@@ -116,7 +116,7 @@ resource "google_compute_instance" "builder" {
 }
 
 resource "terraform_data" "builder_ready" {
-  triggers_replace = [google_compute_instance.builder.id]
+  triggers_replace = [google_compute_instance.builder.instance_id]
   provisioner "local-exec" {
     command = "${path.module}/wait-builder.sh '${var.project_id}' '${var.zone}' '${google_compute_instance.builder.name}'"
   }
@@ -156,6 +156,7 @@ resource "google_compute_health_check" "mig" {
 }
 
 resource "google_compute_region_instance_group_manager" "backend" {
+  lifecycle { ignore_changes = [target_size] }
   for_each           = toset([var.region, var.secondary_region])
   name               = each.key == var.region ? "us-1-mig-${var.run_id}" : "notus-1-mig-${var.run_id}"
   region             = each.key

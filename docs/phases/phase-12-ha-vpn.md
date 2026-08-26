@@ -1,5 +1,7 @@
 # Phase 12 — Google Cloud HA VPN
 
+[Phase10–15 보존형 실행·복구 안내](../phase-10-15-execution.md) · [현재 구현/오류 수정/남은 한계](../audits/phase-10-15-repair.md). 이 문서의 완료 조건은 실제 실행 후 판정할 기준이며 이번 로컬 수정의 Cloud 성공 기록이 아니다.
+
 - 원본: `references/google-cloud-labs-ko/labs/12.Configuring Google Cloud HA VPN_KR.md`
 - 비용 위험: 높음
 - 주요 서비스: VPC, HA VPN, Cloud Router, BGP, Compute Engine
@@ -19,10 +21,12 @@ Google Cloud 측 전역 VPC와 시뮬레이션 온프레미스 VPC 사이에 이
 | Task 5. 각 터널에 대해 BGP 피어링 생성하기 | automated | peer ASN·link-local range·session 상태 |
 | Task 6. 라우터 구성 검증하기 | automated | router status, advertised/learned routes, remote firewall |
 | Task 7. HA VPN 터널 구성 검증 및 테스트하기 | automated | tunnel/BGP health, private ping, global routing matrix |
-| Task 8. (선택 사항) 실습 환경 정리하기 | automated-required | tunnel→peer→router→gateway→network 전체 cleanup |
+| Task 8. (선택 사항) 실습 환경 정리하기 | manual-boundary | 명시적 저장 destroy 계획 승인 후 정리; verify만으로 완료 처리하지 않음 |
 | Task 9. Review | cli-equivalent | topology·redundancy·routing·connectivity evidence 검토 |
 
 ## Task별 콘솔 확인
+
+[하위 항목별 상세 확인](../console/phase-12.md): 원문 하위 제목/번호 절차마다 클릭 경로·값·판정·한계를 확인합니다.
 
 [공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
 
@@ -34,7 +38,7 @@ Google Cloud 측 전역 VPC와 시뮬레이션 온프레미스 VPC 사이에 이
 | 4 | VPN → Cloud VPN 터널 → 해당 run의 양쪽 터널 | 양쪽 경로 tunnel 상태 Established와 예상 peer/interface | 한 경로만 정상인데 이중화 전체 완료로 표시하지 않음 |
 | 5 | Cloud Router → 각 router → BGP 세션 | 각 터널의 peer ASN·link-local IP·세션 UP 일치 | BGP UP만으로 실제 응용 통신 성공은 아님 |
 | 6 | Cloud Router → router 상세/경로; VPC → 방화벽 | 광고·학습된 원격 subnet prefix와 방화벽이 일치 | 리전/라우팅 모드와 예상 경로를 saved plan과 대조 |
-| 7 | VPN tunnel 상태 + Cloud Router 경로 + 테스트 VM | 두 경로·BGP가 정상이고 private ping/global routing matrix가 통과 | 콘솔 경로만으로 ping 성공은 입증 불가. 저장 통신 evidence 필요 |
+| 7 | VPN tunnel 상태 + Cloud Router 경로 + 테스트 VM | 초기4터널/BGP 정상 → 단일 터널 장애 후 경로1·private ping 유지 | 콘솔 경로만으로 ping 성공은 입증 불가. 저장 통신 evidence 필요 |
 | 8 | 명시적 destroy 후 VPN·Cloud Router·VPC·VM 목록 | 현재 run tunnel/peer/router/gateway/network/VM 잔여0 | 검증 직후에는 유지 가능. 다른 Phase 리소스/공통 API를 삭제하지 않음 |
 | 9 | Task1–8 화면·evidence | 구성/이중 경로/실제 통신과 최종 정리 상태를 구분 | 정리 미실행은 미실행으로 표시하고 전체 완료를 과장하지 않음 |
 
@@ -50,15 +54,15 @@ Google Cloud 측 전역 VPC와 시뮬레이션 온프레미스 VPC 사이에 이
 
 ## 실행 계약
 
-Command Code `cmd`는 모델·effort 선택 없이 높은 비용 plan 승인을 확인한 뒤 실행한다. routing 수렴은 고정 sleep이 아닌 상태 polling을 사용한다. machine verification 후 Extension 검토 동안 최대 보존 시간을 강제한다.
+Command Code `cmd`는 모델·effort 선택 없이 높은 비용 plan 승인을 확인한 뒤 실행한다. routing 수렴은 고정 sleep이 아닌 상태 polling을 사용한다. machine verification 뒤에도 리소스를 보존한다. 자동 만료/비용 종료 스케줄러는 없으므로 비용을 확인하고 별도 destroy 계획을 승인해야 한다.
 
 ## 검증 게이트
 
-- 두 tunnel과 각 BGP session 상태가 established다.
-- advertised/learned prefix가 plan과 일치하고 비의도 route가 없다.
+- baseline에서 양쪽 tunnel4개·BGP4개가 정상이며 장애 후에는 살아 있는 경로1 쌍이 정상이다.
+- router bestRoutes에 필요한 원격 prefix가 포함되어 있다. 모든 비의도 route 부재까지 검사하는 것은 아니다.
 - 양방향 private ping과 global routing matrix가 기대대로다.
 - Extension은 VPN/Router/route/VM을 read-only 조회하고 PSK 노출을 검사한다.
-- 사용자가 승인해야 원본 선택 cleanup을 필수 자동 cleanup으로 실행한다.
+- 선택 Task8은 manual-boundary/destroy_pending이다. 별도 saved destroy plan 승인 전에는 삭제하지 않는다.
 
 ## 안전·비용 가드레일
 

@@ -1,5 +1,7 @@
 # Phase 07–15 구현 누락 감사와 반영 결과
 
+> 2026-08-25 당시 기록이다. Phase10–15의 현재 실패 보존·오류 수정·수동 경계는 [2026-08-26 재감사](phase-10-15-repair.md)를 따른다. 아래의 binary plan 삭제·MCP 필수 preflight 등은10–15의 현재 동작이 아니다.
+
 - 기준: 보존 원본의 모든 Task, Phase 문서의 검증 게이트, 비용·보안 가드레일
 - 판정일: 2026-08-25
 - 판정 범위: 로컬 구현·정적/offline 검증. 실제 Google Cloud apply와 Extension 승인은 별도다.

@@ -23,3 +23,4 @@
 - 각 Phase 시작 전 clean working tree에서 `git pull --ff-only`로 원격을 동기화한다. 자동 merge·rebase·force push는 하지 않으며 분기되면 중단한다.
 - 테스트는 변경 위험에 비례해 최소 범위로 실행하되, Bash 문법·Terraform 정적 검사·phase gate는 생략하지 않는다.
 - 각 Phase 완료 보고에는 `python3 scripts/console-checks.py --phase NN`으로 해당 안내를 읽고 Task별 콘솔 경로·확인 대상·통과 기준·한계와 보조 증거를 함께 제시한다(D-043). 자동 검사 통과를 사용자의 콘솔 확인 완료로 쓰지 않는다. 이미 destroy했으면 현재 리소스 부재와 삭제 전 증거를 구분하고 확인을 위해 재생성하지 않는다.
+- D-044: Task 요약만 제공하지 않고 원문 하위 항목별 상세 확인서 `docs/console/phase-NN.md`도 연결한다. 단일 Task는 `console-checks.py --phase NN --task N`으로 읽는다. Phase10–15는 `safe-adapter.sh`의 실패 보존·동일 state replan을 사용하며 legacy apply/destroy helper를 호출하지 않는다.

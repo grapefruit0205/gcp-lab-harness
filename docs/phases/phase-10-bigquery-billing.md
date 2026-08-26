@@ -1,5 +1,7 @@
 # Phase 10 — BigQuery로 Billing 데이터 분석
 
+[Phase10–15 보존형 실행·복구 안내](../phase-10-15-execution.md) · [현재 구현/오류 수정/남은 한계](../audits/phase-10-15-repair.md). 이 문서의 완료 조건은 실제 실행 후 판정할 기준이며 이번 로컬 수정의 Cloud 성공 기록이 아니다.
+
 - 원본: `references/google-cloud-labs-ko/labs/10.Examining Billing data with BigQuery_KR.md`
 - 비용 위험: 중간
 - 주요 서비스: BigQuery, Cloud Billing export 또는 고정 billing fixture
@@ -14,11 +16,13 @@
 |---|---|---|
 | Task 1. BigQuery로 데이터 가져오기 | automated | dataset/table 생성, fixture load job 상태·행 수 |
 | Task 2. 테이블 검토하기 | automated | schema·partition·sample 통계의 구조화 조회 |
-| Task 3. 간단한 쿼리 작성하기 | automated | versioned SQL과 golden result 비교 |
-| Task 4. SQL로 대규모 청구 데이터세트 분석하기 | automated/conditional | fixture 기본 경로; 실제 Billing export는 opt-in과 readiness 대기 |
+| Task 3. 간단한 쿼리 작성하기 | automated | versioned SQL job 상태·총행수·비용 필터 결과 검사 |
+| Task 4. SQL로 대규모 청구 데이터세트 분석하기 | automated/conditional | 고정 AVRO fixture의 원본 분석 SQL7개; 실제 Billing export 연결은 미구현 |
 | Task 5. Review | cli-equivalent | load·schema·query 비용·결과 검토 |
 
 ## Task별 콘솔 확인
+
+[하위 항목별 상세 확인](../console/phase-10.md): 원문 하위 제목/번호 절차마다 클릭 경로·값·판정·한계를 확인합니다.
 
 [공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
 
@@ -36,18 +40,18 @@
 
 1. dataset location, BigQuery 권한, query byte limit와 fixture checksum을 preflight한다.
 2. dataset/table/load/query 변경과 최대 처리 bytes를 plan에 기록한다.
-3. 기본 경로는 versioned fixture를 사용해 즉시 재현 가능하게 한다.
-4. 실제 Billing export 경로는 별도 opt-in, billing 권한, 비동기 데이터 도착을 확인한다.
-5. 쿼리 결과는 안정 정렬·타입 정규화 후 golden JSON과 비교한다.
+3. 공개 AVRO의 generation/CRC32C를 plan에 기록하고 적재 전후 변경 여부를 확인한다.
+4. 실제 Billing export 연결·도착 대기는 구현 범위에 포함하지 않는다.
+5. jobs API의 totalRows, sample cost 필터·집계 정렬, billed bytes를 검증한다. 전체 golden 정답 비교는 아직 없다.
 
 ## 실행 계약
 
-Command Code `cmd`는 모델 선택 없이 `bq` 또는 BigQuery API를 호출한다. query dry-run으로 bytes와 비용 경계를 먼저 확인하고 한도를 넘으면 실행하지 않는다. Billing export 미도착은 성공이 아니라 `blocked` 또는 `skipped`로 구분한다.
+Command Code `cmd`는 모델 선택 없이 BigQuery jobs API를 호출한다. 구조화 dryRun으로 bytes를 확인하고 1 GiB 상한을 넘으면 실행하지 않는다. 각 실제 job에도 maximumBytesBilled를 적용한다. Billing export 연결 성공을 주장하지 않는다.
 
 ## 검증 게이트
 
 - load job이 성공하고 행 수·schema가 fixture manifest와 일치한다.
-- 단순·분석 SQL의 정규화 결과가 golden result와 일치한다.
+- query2 전체415602행, query3 전체100행, 양수/10초과 비용 필터·집계 내림차순을 검사한다. 표본 검사를 전체 정답 비교로 부르지 않는다.
 - 각 query의 처리 bytes가 plan의 상한 이하다.
 - Extension은 BigQuery read-only metadata·job 결과와 diff를 검토한다.
 - 사용자 승인을 받은 뒤 dataset/table cleanup으로 전이한다.
@@ -71,7 +75,7 @@ Command Code는 fixture와 실제 export 결과를 혼합하지 않고 데이터
 
 ## 현재 adapter
 
-`phases/10/terraform`은 run 전용 US dataset을 소유한다. action plan은 원본 AVRO의 generation과 CRC32C를 고정하고, verifier는 415,602행을 요구한 뒤 `phases/10/sql/`의 원본 SQL 8개를 dry-run·1 GiB 상한으로 실행해 결과 hash와 처리 bytes만 남긴다.
+`phases/10/terraform`은 run 전용 US dataset을 소유한다. action plan은 원본 AVRO의 generation과 CRC32C를 고정하고, verifier는 415,602행을 요구한 뒤 `phases/10/sql/`의 원본 SQL 8개를 구조화 dry-run·1 GiB 상한으로 실행한다. job ID·총행수·sample hash·처리 bytes를 남겨 콘솔 작업 기록과 연결한다. 원시 청구 결과는 Git에 저장하지 않는다.
 
 ## Git 종료 조건
 

@@ -1,5 +1,7 @@
 # Phase 13 — 자동 확장 Application Load Balancer
 
+[Phase10–15 보존형 실행·복구 안내](../phase-10-15-execution.md) · [현재 구현/오류 수정/남은 한계](../audits/phase-10-15-repair.md). 이 문서의 완료 조건은 실제 실행 후 판정할 기준이며 이번 로컬 수정의 Cloud 성공 기록이 아니다.
+
 - 원본: `references/google-cloud-labs-ko/labs/13.Configure an Application Load Balancer (HTTP) with Autoscaling_KR.md`
 - 비용 위험: 높음
 - 주요 서비스: Compute Engine image/template/MIG, Cloud NAT, global Application Load Balancer, autoscaling
@@ -22,6 +24,8 @@ web server custom image와 managed instance group을 만들고 external Applicat
 
 ## Task별 콘솔 확인
 
+[하위 항목별 상세 확인](../console/phase-13.md): 원문 하위 제목/번호 절차마다 클릭 경로·값·판정·한계를 확인합니다.
+
 [공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
 
 | Task | 콘솔 경로·대상 | 통과 기준 | 한계·보조 확인 |
@@ -29,7 +33,7 @@ web server custom image와 managed instance group을 만들고 external Applicat
 | 1 | VPC 네트워크 → 방화벽 → run health-check 규칙 | 승인된 health-check source와 대상 tag/포트 일치 | 전체 인터넷 허용으로 바꾸지 않음 |
 | 2 | Cloud NAT → run gateway; Cloud Router → router | backend subnet/리전과 NAT 구성이 일치 | VM 패키지 egress는 guest evidence 대조 |
 | 3 | Compute Engine → 이미지 → run custom image | image 상태·원본 disk/provenance가 승인 builder와 일치 | 이미지 존재만으로 웹서버 자동 시작을 입증하지 못함 |
-| 4 | Compute Engine → 인스턴스 템플릿·인스턴스 그룹 → MIG | custom image 참조·VM health·autoscaling 최소/최대/CPU 설정 일치 | 템플릿과 실제 MIG VM의 버전 차이를 확인 |
+| 4 | Compute Engine → 인스턴스 템플릿·인스턴스 그룹 → MIG | custom image 참조·VM health·autoscaling 최소/최대/LB 이용률 설정 일치 | 템플릿과 실제 MIG VM의 버전 차이를 확인 |
 | 5 | 네트워크 서비스 → 부하 분산 → run 외부 Application LB | frontend IP/포트·URL map·backend service·health-check 및 healthy backend 확인 | VM RUNNING과 LB backend healthy는 별개 |
 | 6 | LB → 모니터링; MIG → Monitoring → 그룹 크기/CPU 그래프 | 실행 시간에 HTTP/분산 evidence와 scale-out/in 변화가 있음 | 새 부하 테스트를 임의 실행하지 않음. 최종 크기 하나만으로 전이 입증 불가 |
 | 7 | 이미지·MIG·LB·Monitoring 화면 | image→template→MIG→backend→frontend 연결과 통신 증거 대조 | LB 주소 표시만으로 실제 요청 성공·분산 성공을 선언하지 않음 |
@@ -40,13 +44,13 @@ web server custom image와 managed instance group을 만들고 external Applicat
 
 1. global/regional quota, health check ranges, machine/image와 부하 도구를 preflight한다.
 2. 모든 image·template·MIG·LB·NAT·IP 변경과 autoscaling 상한을 plan한다.
-3. custom image를 checksum이 고정된 provisioning으로 만들고 builder를 제거한다.
+3. 승인된 startup 코드로 Apache 이미지를 만들고 builder는 중지 보존한다. base image 참조와 설치 버전을 기록하지만 apt 패키지 전체 checksum 고정은 아니다.
 4. MIG가 healthy해진 뒤 LB frontend를 구성하고 HTTP content/backend marker를 확인한다.
 5. 제한된 부하를 발생시켜 autoscaling evidence를 수집하고 부하 프로세스를 반드시 종료한다.
 
 ## 실행 계약
 
-Command Code `cmd`는 현재 고정 모델을 상속하고 저장된 고비용 plan 승인 뒤에만 apply한다. backend health와 scale은 timeout polling한다. machine verification 뒤 Extension 검토까지 리소스를 유지하되 자동 만료를 둔다.
+Command Code `cmd`는 현재 고정 모델을 상속하고 저장된 고비용 plan 승인 뒤에만 apply한다. backend health와 scale은 timeout polling한다. machine verification 뒤에도 리소스를 유지한다. 자동 만료는 없으며 중지 builder의 disk·image·LB 등 비용은 별도 destroy 전까지 남는다.
 
 ## 검증 게이트
 
@@ -58,7 +62,7 @@ Command Code `cmd`는 현재 고정 모델을 상속하고 저장된 고비용 p
 
 ## 안전·비용 가드레일
 
-- autoscaling 최대 instance 수, 부하 duration·QPS, VM/disk 크기를 제한한다.
+- autoscaling 최대 instance 수, 부하360초·동시 요청100개·VM/disk 크기를 제한한다. 엄밀한 QPS rate limit은 아니다.
 - health check 외 public management ingress를 열지 않는다.
 - 부하 프로세스에 timeout과 종료 trap을 두고 무제한 트래픽을 금지한다.
 - global IP, forwarding rule, proxy, URL map, backend, MIG, image, NAT를 역의존 순서로 정리한다.
@@ -75,7 +79,7 @@ Command Code는 HTTP 200 하나만으로 성공을 선언하지 않고 backend h
 
 ## 현재 adapter
 
-`phases/13/terraform`은 immutable Debian base image를 plan에 고정하고 serial readiness 뒤 builder를 중지해 Apache custom image를 만든다. 두 regional MIG, min 1/max 2 autoscaler, logging-enabled backend, IPv4·IPv6 forwarding을 구성한다. verifier는 builder 삭제·image provenance, healthy backend, 여러 backend marker, bounded load의 scale-out과 scale-in을 각각 확인한다.
+`phases/13/terraform`은 immutable Debian base image를 plan에 고정하고 serial readiness 뒤 builder를 중지해 Apache custom image를 만든다. 두 regional MIG, min 1/max 2 autoscaler, logging-enabled backend, IPv4·IPv6 forwarding을 구성한다. verifier는 중지 builder·image provenance, 각 리전의 healthy backend, 여러 backend marker, bounded load의 scale-out과 scale-in을 각각 확인한다. 원문의 builder reset/삭제는 미실행이며 양쪽 backend RATE50·축소 규모를 사용한다. marker2개가 두 리전 트래픽 분산 자체를 입증하지는 않는다.
 
 ## Git 종료 조건
 

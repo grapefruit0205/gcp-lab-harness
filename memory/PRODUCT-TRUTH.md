@@ -4,6 +4,16 @@ Rule: every entry carries evidence (code path, test, screenshot), a date, and th
 
 ## Implemented
 
+## Phase10–15 재감사와 Task 하위 항목 안내 — state: implemented, verified offline (부분) — 2026-08-26
+
+Evidence: `lib/harness/{safe-adapter.sh,advanced.py}`, `phases/10/billing.py`, `phases/11/monitoring.py`, `phases/12/vpn.py`, Phase10–15 execute/verify/Terraform, `tests/test-phases-10-15.py`, `docs/console/phase-01.md`~`15.md`, `scripts/console-checks.py`, `tests/test-console-checks.py`.
+
+Checked(observed, 2026-08-26): 최종40개 로컬 회귀 검사와13개 상세 안내 검사가 통과했다. 새 보존 어댑터·동일 state replan·현재 계정/source/input/work/state/binary/action 결합, API pagination·403/404 구분, BigQuery job/전체 행 수/sample 조건, Monitoring 정확한 VM 조건·group·chart·최신 uptime true, VPN 단계 재개·manual-boundary 상태 전이, ALB 리전별 health·IPv6 분기·bounded unit, ILB NAT 의존성과 HTTP 실패/Client IP, Terraform managed/data 주소 분리를 검사했다. 최초31개/12개 검사에서 추가 회귀로 확장했으며, 하위 제목 수177은 Task 밖 제목 포함 집계였으므로 원문 Task 안의167개로 정정한다. 상세 안내는90개 Task·221개 확인 항목이다. 실제 Cloud apply/수렴/통신·새 Git 게시·콘솔 UI 클릭 성공은 이번 증거가 아니다.
+
+한계: Phase13 builder는 동일 state 보존 복구를 위해 중지 유지하며 원문 삭제/reset은 미실행이다. 양쪽 RATE·축소 규모·primary-region 부하를 사용하고 marker2개는 두 리전 분산 자체를 입증하지 않는다. Phase11 이메일/UI·Phase12 Task8 최종 destroy는 수동 경계다. Phase10은 전체 golden 정답 비교가 아닌 행 수/schema·job 통계/sample 의미 검사다. Phase01–09 기존 미구현 차이는 안내에 표시했으며 해당 Cloud 코드는 바꾸지 않았다. 자동 비용 중지는 없다.
+
+후속 최종 observed(2026-08-26, 로컬 작업1회): `make test-offline`·`tests/test-phases-10-15.sh`·Phase10–15 각 gate 모두exit0이다.40개 회귀/13개 안내/6개 TF mock, Phase09 기존70개 검사도 통과했다. ignored `artifacts/phase10-15-{full-offline,local-tests,gates}.log`, `phase09-regression-after-10-15.log`가 근거다. 독립 리허설2차는34문서107개 링크 누락0·차단0이었다. 비차단 네 문구를 수정하고 안내를 재검사했다. 원문·Phase08/09·기존 공통4개 lib에는 diff가 없으며 Cloud/Git 게시를 수행하지 않았다.
+
 <!-- ## <capability> — <state: implemented|wired|operational|verified> — 2026-08-25
 Evidence: <code path / test / screenshot>
 Checked: 2026-08-25 — re-confirm against the code once this is over 90 days old -->

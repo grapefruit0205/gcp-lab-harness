@@ -18,11 +18,14 @@ class ConsoleChecksTests(unittest.TestCase):
         return f"{GUIDE.HEADING}\n\n{GUIDE.HEADER}\n|---|---|---|---|\n{rows}\n\n## 다음 항목\n본문"
 
     def test_all_phases_match_original_tasks(self):
+        total_headings = 0
         for phase in range(1, 16):
             with self.subTest(phase=phase):
-                _, section, count = GUIDE.load_guide(f"{phase:02}")
+                _, section, count, source_headings = GUIDE.load_guide(f"{phase:02}")
                 self.assertGreater(count, 0)
                 self.assertIn("../console-checks.md", section)
+                total_headings += source_headings
+        self.assertEqual(total_headings, 167)
 
     def test_missing_duplicate_and_reordered_tasks_rejected(self):
         for numbers in ([1], [1, 1], [2, 1], [1, 2, 3]):
@@ -53,6 +56,30 @@ class ConsoleChecksTests(unittest.TestCase):
         for phase in ("00", "16", "../09", "9"):
             result = subprocess.run([sys.executable, str(REPO / "scripts/console-checks.py"), "--phase", phase], capture_output=True)
             self.assertEqual(result.returncode, 2)
+
+    def test_detail_missing_heading_rejected(self):
+        original = "## 🧩 Task 1. 시험\n### 필수 하위항목\n"
+        for detail in ("## Task 1. 시험\n### 다른 항목\n\n1. 경로\n2. 값", "## Task 1. 시험\n### 필수 하위항목\n\n1. 경로"):
+            with self.assertRaises(ValueError): GUIDE.validate_detail(original, detail, [1])
+
+    def test_detail_unheaded_task_still_needs_steps(self):
+        with self.assertRaises(ValueError): GUIDE.validate_detail("## 🧩 Task 1. 시험", "## Task 1. 시험\n요약", [1])
+
+    def test_detail_duplicate_heading_rejected(self):
+        detail = "## Task 1. 시험\n" + "### 중복\n\n1. 경로\n2. 값\n" * 2
+        with self.assertRaises(ValueError): GUIDE.validate_detail("## 🧩 Task 1. 시험", detail, [1])
+
+    def test_single_task_command(self):
+        result = subprocess.run([sys.executable, str(REPO / "scripts/console-checks.py"), "--phase", "10", "--task", "4"], capture_output=True, text=True, check=True)
+        self.assertIn("query8", result.stdout)
+        self.assertIn("artifacts/runs/<RUN_ID>/phase-10/evidence/", result.stdout)
+        self.assertIn("Project history", result.stdout)
+        self.assertNotIn("## Task 5", result.stdout)
+
+    def test_invalid_task_rejected(self):
+        for flags in (["--phase", "10", "--task", "99"], ["--check-all", "--task", "1"]):
+            result = subprocess.run([sys.executable, str(REPO / "scripts/console-checks.py"), *flags], capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
 
     def test_completion_surfaces_require_guide(self):
         for path in ("AGENTS.md", "prompts/phase-review.md", "prompts/phase-execute.md", "prompts/single-model-phase.md",

@@ -222,7 +222,14 @@ transition_artifact_guard() {
       harness_require_file "$evidence" "machine evidence" || return
       jq -e '.status == "verified" and ([.checks[].status] | all(. == "passed" or . == "manual-boundary"))' \
         "$manifest" >/dev/null || harness_die "machine_verified 전이는 모든 check가 완료된 verified manifest가 필요합니다."
-      jq -e '.tasks | type == "object" and length > 0 and ([.[] | .status] | all(. == "passed"))' \
+      jq -e --slurpfile manifest "$manifest" '
+        .tasks as $tasks | ($manifest[0].source_tasks // []) as $source |
+        ($tasks | type == "object" and length > 0) and
+        (if ($source | length) > 0 then
+          ($tasks | keys | sort) == ([$source[].id] | sort) and
+          all($source[]; . as $task | $tasks[$task.id].status == "passed" or
+            ($task.classification == "manual-boundary" and $tasks[$task.id].status == "manual-boundary"))
+        else [$tasks[] | .status] | all(. == "passed") end)' \
         "$evidence" >/dev/null || harness_die "machine evidence의 Task 판정이 완료되지 않았습니다."
       ;;
     destroyed)

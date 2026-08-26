@@ -5,6 +5,7 @@ export HARNESS_REPO_ROOT="$repo_root" HARNESS_PHASE=15 HARNESS_PHASE_RESOURCE_LI
 export HARNESS_PHASE_ALLOWED_TYPES_JSON='["google_compute_network","google_compute_firewall","google_compute_instance"]'
 
 phase_preflight() {
+  [[ "${GCP_ZONE%-*}" != "${GCP_SECONDARY_ZONE%-*}" ]] || harness_die "Phase15는 서로 다른 두 region의 zone이 필요합니다."
   [[ "$GCP_ZONE" != "$GCP_SECONDARY_ZONE" ]] || harness_die "두 VM에는 서로 다른 zone이 필요합니다."
 }
 phase_write_tfvars() {
@@ -28,5 +29,5 @@ phase_plan_guard() {
     any(.resource_changes[]; .address|startswith("module.mynet_vm_2."))
   ' "$1" >/dev/null || harness_die "Phase 15 auto-mode VPC·firewall·local module VM 2개 계약 불일치"
 }
-source "$repo_root/lib/harness/phase-adapter.sh"
-harness_phase_adapter_main "$@"
+source "$repo_root/lib/harness/safe-adapter.sh"
+safe_adapter_main "$@"

@@ -2,7 +2,7 @@
 
 원본 Lab 하나가 실행 Phase 하나다. Foundation은 별도 문서이며 `run-all`은 아래 15개 Phase만 순차 진행한다.
 
-완료 보고에는 각 문서의 **Task별 콘솔 확인** 표를 항상 함께 안내한다. [공통 콘솔 확인법](../console-checks.md)과 `python3 scripts/console-checks.py --phase NN`을 사용한다. 기계 검증·사용자 콘솔 확인·destroy 상태를 구분하며, 이미 삭제된 환경을 안내 목적으로 재생성하지 않는다.
+완료 보고에는 각 문서의 **Task별 콘솔 확인** 표와 원문 하위 항목별 상세 확인서를 항상 함께 안내한다. [공통 콘솔 확인법](../console-checks.md)과 `python3 scripts/console-checks.py --phase NN`을 사용한다. 단일 Task는 `--task N`을 추가한다. 기계 검증·사용자 콘솔 확인·destroy 상태를 구분하며, 이미 삭제된 환경을 안내 목적으로 재생성하지 않는다.
 
 | Phase | 원본 Lab | 비용 위험 | 핵심 승인 증거 |
 |---:|---|---|---|
@@ -15,8 +15,8 @@
 | [07](phase-07-iam.md) | Exploring IAM | 중간 | allow/deny·role rollback |
 | [08](phase-08-cloud-storage.md) | Cloud Storage | 중간 | ACL·CSEK·lifecycle·version·sync |
 | [09](phase-09-cloud-sql.md) | Implementing Cloud SQL | 높음 | SQL·proxy·WordPress·private path |
-| [10](phase-10-bigquery-billing.md) | Billing data with BigQuery | 중간 | load·schema·golden query |
-| [11](phase-11-monitoring.md) | Resource Monitoring | 낮음–중간 | MCP/API dashboard·alert·uptime |
+| [10](phase-10-bigquery-billing.md) | Billing data with BigQuery | 중간 | load·schema·query job/총행수/비용 상한 |
+| [11](phase-11-monitoring.md) | Resource Monitoring | 낮음–중간 | API dashboard·alert·실제 uptime, MCP 선택 |
 | [12](phase-12-ha-vpn.md) | HA VPN | 높음 | tunnels·BGP·routes·private ping |
 | [13](phase-13-external-alb.md) | Application Load Balancer | 높음 | backend health·routing·autoscale |
 | [14](phase-14-internal-nlb.md) | Internal Network Load Balancer | 높음 | internal client·backend distribution |

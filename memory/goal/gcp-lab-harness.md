@@ -98,4 +98,57 @@ Single next leaf: VS Code Extension에서 현재 diff를 독립 검토한 뒤 �
 
 Known gaps: Google Cloud 통합 실행은 비용·승인 경계 때문에 이번 로컬 구현의 완료 증거가 아니다. Google provider 7.45.0 schema 검증은 통과했지만 실제 API 수렴, Windows PowerShell 실기동, MCP OAuth는 아직 검증하지 않았다.
 
-Sub-foundations exposed: 선언형 리소스 — atomic; imperative action 승인 — not atomic → action-plan hash와 exact target으로 분리; 비밀 수명주기 — not atomic → Git 제외·0600 runtime·redaction·cleanup으로 분리; 실제 데이터 경로 — not atomic → Phase별 verifier로 분리.
+## Phase10–15·상세 콘솔 안내 골격 v2 — 2026-08-26
+
+목표(D-044): 원문 하위 항목까지 따라갈 수 있는 콘솔 확인법과 Phase10–15의 보존형 실행·정확한 검증을 구현한다. v1은 초기 구현 기록으로 유지하며 이 재감사는 그 위의 수정이다.
+
+완료 기준: 원문 세부 coverage, Bash·Terraform 정적 검사, 실패/거짓 성공 회귀 테스트, Phase gate, 상세 안내 출력과 새 독자 로컬 리허설 통과. 실제 Cloud 실행·브라우저 확인·새 게시와 구분한다.
+
+| 분기 | 필요한 것 | 보유 자산 | 간극 → 첫 동작 |
+|---|---|---|---|
+| 실행 | 실패 후 state 보존·재계획 | Phase09 recovery·D036/37 | 다른 Phase의 auto-destroy 경로 대조 |
+| 기능 | BQ/Monitoring/VPN/ALB/ILB/Terraform | 원문10–15·기존 adapter·coverage audit | 원문별 실제 검사와 오류 판정 대조 |
+| 안내 | 각 Task 하위 항목의 클릭 순서·값 | 15개 문서·90 Task 표·console-checks.py | 원문 하위 제목·단계를 누락 없이 연결 |
+| 증거 | offline·정적·새 독자 실행 | 기존 suites·provider lock·rehearsal | 회귀 fixture와 검증 결과 기록 |
+
+지형 질문: API 수렴·pagination·권한 오류가 성공으로 오인되는가? 파괴적 장애 실험이 반드시 복구되는가? 재실행이 기존 state를 잃는가? 콘솔에서 확인할 수 없는 동작을 명확히 분리했는가? Cloud 실측은 이번 로컬 완료의 범위 밖이다.
+
+원자 leaf / source / 상태:
+
+1. 원문10–15와 각 verifier의 검증 조건 대조 — `references/google-cloud-labs-ko/labs/10*`~`15*`, `docs/audits/phase-10-15-repair.md` — observed。수동 경계·미구현 차이는 감사에 명시했다.
+2. Phase10–15 실패가 자동 destroy를 호출하지 않음 — `lib/harness/safe-adapter.sh`, 실제 Bash apply/replan 실패 mock — verified-offline。legacy cleanup=true여도 삭제 호출0·state/plan/로그 보존을 검사했다.
+3. 같은 run/state 재계획이 삭제·교체를 거부하고 새 승인에 결합됨 — safe adapter/advanced.py의 bundle·binding·계정/config/state guard — verified-offline。stale SHA/config 변경은 Terraform 호출 전 거부한다.
+4. 각 Phase 기능 오류가 회귀 fixture에서 재현·차단됨 — `tests/test-phases-10-15.py`40개·각 Terraform mock1개(합6개), fmt/init/validate/Bash·Phase10–15 gate — verified-offline。실제 Cloud E2E는 미검증이다.
+5. 90 Task의 모든 원문 하위 제목이 상세 확인 절차에 연결됨 — `scripts/console-checks.py`·13개 검사·독립 집계 — verified-offline。원문 Task 안의167개 제목/상세221항목이다. 최초177은 Task 밖 제목 포함 집계여서 정정했다.
+6. 안내를 처음 보는 독자가 로컬 경로·명령을 수행할 수 있음 — `docs/audits/phase-10-15-repair.md` 리허설 기록 — observed。두 번째 독자의 로컬 명령·34문서/107개 링크 검사에서 차단되는 막힘0. 실제 UI 클릭·Cloud 실행은 제외했다.
+
+Single next leaf: 사용자가 새 실행을 요청하면 `docs/phase-10-15-execution.md`의 본인 계정/프로젝트·clean tree 준비부터 확인하고 Phase10의 새 저장 계획을 만들기. 현재 미커밋 작업을 자동 삭제/게시하지 않는다.
+
+Sub-foundations exposed: source/work/input/state/account/hash — atomic, mock 검사; HTTP API 상태·pagination·실패 판정 — atomic, fixture 검사; 단계형 VPN/부하 프로세스 — atomic, 상태·경계 mock 검사; Cloud IAM/quota/수렴/데이터 경로 — atomic but untested, 다음 승인된 실제 실습에서 검사; 원문 builder reset/삭제·전체 golden 정답 등 — 미구현 차이를 감사에 명시. 추가로 숨겨 둔 선행 지식 분기는 없다.
+
+완료 근거: `artifacts/phase10-15-{local-tests,full-offline,gates}.log` 모두exit0, Phase09 기존70개 회귀exit0, 원문/Phase08/09 및 승인된 공통4개 lib diff0. `git diff --check` 통과. 이번 v2 로컬 완료는 Cloud apply·게시 완료가 아니다.
+
+## Phase10–15 게시·Cloud 실기 골격 v3 — 2026-08-26
+
+목표(D-045): 상세 안내·보완 코드를 커밋·푸시하고 Phase10부터 실제 apply/검증에서 발견되는 문제를 리소스 보존 방식으로 해결한다.
+완료 기준: 원격 SHA 일치, 각 Phase의 새 저장 계획 승인, 실제 apply·Task별 검증 증거, 오류 시 진단/수정/새 plan 승인/재검증과 콘솔 확인 안내. 삭제는 이번 완료 기준이나 자동 후속 동작이 아니다.
+
+| 분기 | 필요한 것 | 보유 근거 | 간극 → 첫 동작 |
+|---|---|---|---|
+| 게시 | 검증된 diff·비밀 제외·원격 일치 | v2 검사, GitHub 게시 knowledge | staged 경로/비밀 검사 후 한국어 commit·일반 push |
+| 실행 준비 | 현재 계정·allowlist·API·정확한 plan | D017·safe adapter·config | 읽기 preflight와 Phase10 새 run plan |
+| 실기·복구 | 실제 서비스 결과·로그·동일 state | Phase별 verifier·D036/37 | 승인된 apply 뒤 verify; 실패면 진단하여 최소 수정 |
+| 완료 보고 | Task 하위 콘솔 확인·실기/수동 구분 | docs/console·PRODUCT-TRUTH | 실행한 Task별 상태와 증거 기록 |
+
+지형 질문: offline 통과와 실제 API 권한/데이터 오류의 차이는 무엇인가? 각 계획이 기존 리소스에 영향을 주는가? 비용·quota·소스 변경으로 승인이 stale해지지 않는가? — 계획/실측으로 확인하며 추정 성공을 쓰지 않는다.
+
+원자 leaf:
+1. 현재 diff/비밀/검사 → commit·원격 SHA 확인 — source: Git·tests·knowledge/github-publish-workflow.md — named-unfilled.
+2. Phase10 계정/project/API와 saved plan 대상·비용·SHA 확인 — source: preflight·safe adapter·BigQuery 공식 가격 — named-unfilled.
+3. 정확한 plan 승인 — source: D017 및 사용자 응답 — named-unfilled.
+4. 각 Phase10–15 실제 apply와 기능 검증 — source: run state/manifest·Task evidence — named-unfilled.
+5. 실패 원인 분리·최소 수정·같은 state replan·새 승인·재검증 — source: private attempt logs/diagnosis·회귀 검사 — 오류 발생 시 분리.
+6. Task별 콘솔 안내와 종료 상태 보고 — source: docs/console/phase-NN.md·실제 evidence — named-unfilled.
+
+Single next leaf: 현재 검증된 변경을 stage/commit/push하고 원격 SHA를 대조한다.
+Sub-foundations exposed: Git 인증/원격 비교 — atomic; Cloud 실행자/allowlist/API — atomic; 비용/정확한 계획 승인 — atomic; Phase별 실기 — not atomic →10 BQ/11 Monitoring/12 VPN/13 ALB/14 ILB/15 멱등성으로 분리.

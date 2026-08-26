@@ -14,7 +14,7 @@ phase_write_tfvars() {
 phase_write_action_plan() {
   jq -n --arg run_id "$2" '{schema_version:1,phase:"13",run_id:$run_id,actions:[
     {id:"golden-image",kind:"terraform",target:("p13-builder-"+$run_id),mutation:"wait for serial readiness, stop builder, create image",rollback:"image and builder destroy",timeout_seconds:900,contains_secret:false},
-    {id:"builder-delete",kind:"gcloud",target:("p13-builder-"+$run_id),mutation:"delete stopped builder after image creation",rollback:"image remains source of truth",timeout_seconds:300,contains_secret:false},
+    {id:"builder-preserve",kind:"gcloud",target:("p13-builder-"+$run_id),mutation:"read stopped builder; retain for same-state repair",rollback:"explicit saved destroy plan removes builder",timeout_seconds:300,contains_secret:false},
     {id:"backend-health",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"bounded health polling",rollback:"read-only",timeout_seconds:900,contains_secret:false},
     {id:"lb-log-readback",kind:"gcloud",target:("p13-http-backend-"+$run_id),mutation:"verify logConfig and bounded current-backend log polling",rollback:"read-only",timeout_seconds:600,contains_secret:false},
     {id:"bounded-load",kind:"guest",target:("p13-loadgen-"+$run_id),mutation:"maximum 360-second ApacheBench loop",rollback:"kill exact ab processes",timeout_seconds:420,contains_secret:false},
@@ -44,7 +44,7 @@ phase_after_apply() {
   jq -n --arg base_image_sha256 "$(printf %s "$base_image" | sha256sum | awk '{print $1}')" --arg apache_version "$apache_version" \
     '{base_image_sha256:$base_image_sha256,apache_package_version:$apache_version,builder_ready:true,builder_stopped_before_image:true}' >"$provenance"
   chmod 600 "$provenance"
-  gcloud compute instances delete "p13-builder-$run_id" --zone="$GCP_ZONE" --project="$GCP_PROJECT_ID" --quiet >/dev/null
+  # Terraform 밖 삭제는 다음 repair의 image/builder 의존성을 깨뜨리므로 중지 상태를 보존한다.
 }
-source "$repo_root/lib/harness/phase-adapter.sh"
-harness_phase_adapter_main "$@"
+source "$repo_root/lib/harness/safe-adapter.sh"
+safe_adapter_main "$@"

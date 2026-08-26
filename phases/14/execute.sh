@@ -29,5 +29,5 @@ phase_plan_guard() {
     ([.resource_changes[]|select(.type=="google_compute_forwarding_rule")][0].change.after.load_balancing_scheme=="INTERNAL")
   ' "$1" >/dev/null || harness_die "Phase 14 two-template·two-MIG·internal forwarding 계약 불일치"
 }
-source "$repo_root/lib/harness/phase-adapter.sh"
-harness_phase_adapter_main "$@"
+source "$repo_root/lib/harness/safe-adapter.sh"
+safe_adapter_main "$@"

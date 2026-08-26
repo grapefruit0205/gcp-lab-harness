@@ -315,3 +315,15 @@ One short section per working session: what was worked on, what was decided (wit
 - observed: dirty worktree를 보존하며 git fetch 후 HEAD와 origin/main의 ahead/behind0을 확인했다. 현재 관련 파일의 stage·commit·push 검사를 진행 중이며 비밀/state/원시 로그는 게시하지 않는다.
 - observed 18:28 KST: 공개 대상75개 파일의 경로·새 추가 줄에 대한 개인 실행값/비밀 패턴 검사와 commit 전 Phase09 gate를 통과했다. 한국어 commit `eb9aad9f043ebd749e67c695c0e447755c2fafda`를 생성했다. HTTPS push는 credential helper 부재로 실패했지만, 기존 repo 전용 SSH alias로 같은 저장소에 일반 push했다. 무인증 HTTPS ls-remote의 main SHA 일치·fetch·pull --ff-only·clean tree를 확인했다. origin/global 설정·키 내용은 변경/열람하지 않았다. 근거는 ignored `artifacts/phase-09-console-{commit,push,push-ssh,pull}.log`와 Git 기록이다.
 - observed: 사후 IAM 조회도 해당 run principal binding0이었다(`artifacts/phase-09-user-destroy-iam.json`). 전체 destroy는 PSA3개 때문에 여전히 미완료이며, 게시 성공을 Cloud 정리 완료로 혼동하지 않는다. checkpoint를 archive하고 이 게시 확인 기록을 별도 한국어 커밋으로 남긴다.
+
+## 2026-08-26 — Task 하위 콘솔 안내·Phase10–15 보존형 구현(D-044)
+
+- confirmed: 사용자가 원문 Task 아래 하위 항목까지 상세 콘솔 확인법과 Phase10–15 구현·오류 보완을 요청했다. 새 Cloud apply/destroy 또는 새 commit/push 승인을 추론하지 않았다.
+- observed 시작20:20 KST: main5aa5749의 clean tree에서 pull --ff-only는 Already up to date였다. recall/decision/knowledge 자산과 원문을 대조했다. 대규모 원문 감사는 recall의 분담 지침으로 read-only 조사했고, 새 독자 리허설은 rehearsal 지침에 따라 독립 실행했다.
+- implemented: Phase01–15의90개 Task에 원문 하위 제목167개·번호 절차를 연결한221개 상세 확인 항목을 추가했다. 클릭 경로·읽을 값·판정·한계/보조 증거를 적고 단일 Task 출력에 준비 안내를 포함했다. 원문은 수정하지 않았다. 최초177 집계는 Task 밖 제목 포함이라167로 정정했다.
+- implemented: Phase10–15는 별도 safe adapter의 실패 보존·동일 run replan·새 정확한 SHA 승인·명시적 destroy plan을 사용한다. config/account/source/work/input/state 변경·일반 복구의 delete/replace를 차단한다. initial plan 실패·replan·apply·verify 시도 로그를 보존한다. 기존 Phase08/09·공통4개 승인 lib는 변경하지 않았다.
+- implemented: BigQuery 구조화 jobs/전체 행 수/비용 상한, Monitoring INSTANCE/실제 checker IP·정확한 chart/group/조건·최근 uptime=true, VPN 단계/Cloud ID 재개와 선택 정리 상태, ALB builder 보존/지역별 health/부하 종료, ILB NAT 선행·실제 Client IP·HTTP 실패·전체 zone inventory, Terraform managed/data 구분을 보완했다. 컨트롤러는 선언된 manual-boundary만 허용하고 누락/실패는 거부한다.
+- observed 최종20:58 KST:40개 회귀·13개 안내 검사·TF mock6개/fmt/init/validate·Phase10–15 gate·make test-offline·Phase09 기존70개 회귀가 모두exit0. 로그는 ignored artifacts/phase10-15-{local-tests,full-offline,gates}.log 및 phase09-regression-after-10-15.log다. git diff --check도 통과했고 원문/Phase08/09/기존공통4개lib diff0이다.
+- observed rehearsal: 1차의 준비 안내·P10 필드·P09 상태·중복 검사 간극을 수정했다. 2차 새 독자는 로컬 명령·34문서/107개 링크·90Task/167원문제목/221안내 항목을 확인해 차단0·broken0이었다. 네 비차단 문구를 정정하고13개 안내 검사를 재실행했다. 실제 로그인/UI/Cloud/Git 쓰기는 하지 않았다.
+- limits: 실제 Cloud 권한/quota/수렴·통신은 아직 미검증이며 원문 전체 수동 단계 완료를 주장하지 않는다. Phase13 reset/삭제·두번째 backend 방식·부하 위치, P10 전체 golden 비교 등의 차이는 docs/audits/phase-10-15-repair.md에 명시했다. 자동 비용 종료는 없다. Q-014는10–15 로컬 이관까지 partial, Q-021은 새 실기/차이 추적이다. Q-019 catalog 제안은 승인 없이 저장하지 않았다.
+- preserved: 기존 Phase08·Phase09 PSA3개·이전 run/state·승인 소스에 Cloud 변경을 하지 않았다. 로컬 미커밋 변경이며 마지막 원격 게시5aa5749와 구분한다. 다음 실제 실행은 본인 계정/project 및 새 저장 plan 승인 경계부터 진행한다.

@@ -1,5 +1,7 @@
 # Phase 14 — Internal Network Load Balancer
 
+[Phase10–15 보존형 실행·복구 안내](../phase-10-15-execution.md) · [현재 구현/오류 수정/남은 한계](../audits/phase-10-15-repair.md). 이 문서의 완료 조건은 실제 실행 후 판정할 기준이며 이번 로컬 수정의 Cloud 성공 기록이 아니다.
+
 - 원본: `references/google-cloud-labs-ko/labs/14.Configure an Internal Network Load Balancer_KR.md`
 - 비용 위험: 높음
 - 주요 서비스: VPC, Cloud NAT, MIG, regional internal passthrough Network Load Balancer
@@ -19,6 +21,8 @@
 | Task 5. Internal Network Load Balancer 테스트하기 | automated | utility VM의 internal VIP 반복 curl과 backend distribution |
 
 ## Task별 콘솔 확인
+
+[하위 항목별 상세 확인](../console/phase-14.md): 원문 하위 제목/번호 절차마다 클릭 경로·값·판정·한계를 확인합니다.
 
 [공통 확인법](../console-checks.md)을 먼저 읽고 자신의 프로젝트·해당 run만 선택한다. 아래는 **확인 기준**이지 이번 실행의 성공 기록이 아니다. 원본 Task 이름은 위 매핑과 대응한다.
 
@@ -56,7 +60,7 @@ Command Code `cmd`는 별도 모델 설정 없이 saved plan을 실행한다. ex
 
 - internal VIP와 CIDR은 충돌 검사 후 run 전용 범위를 쓴다.
 - management ingress와 health source를 최소화하고 external forwarding rule을 금지한다.
-- MIG 크기·VM 유형·NAT 실행 시간에 상한을 둔다.
+- MIG 크기·VM 유형과 각 검사 polling 시간을 제한한다. NAT 자동 만료는 없으므로 명시적 종료 전 비용이 남는다.
 - utility VM도 run 소유 리소스로 포함해 forwarding→backend→MIG→network 순서로 정리한다.
 
 ## 완료 조건
@@ -71,7 +75,7 @@ Command Code는 utility VM 내부에서 실제 data path를 검증하고 API 존
 
 ## 현재 adapter
 
-`phases/14/terraform`은 subnet 2개, 축소된 firewall 4개, regional template 2개, 서로 다른 zone의 MIG 2개, utility VM과 `10.10.30.5` internal forwarding을 만든다. verifier는 utility VM에서 각 backend IP를 먼저 직접 호출하고, 이어 VIP 60회 요청에서 두 hostname marker가 모두 나오는지 확인하며 external instance IP가 0인지 검사한다.
+`phases/14/terraform`은 subnet 2개, 축소된 firewall 4개, regional template 2개, 서로 다른 zone의 MIG 2개, utility VM과 `10.10.30.5` internal forwarding을 만든다. verifier는 utility VM에서 각 backend IP를 먼저 직접 호출하고, 이어 VIP60회 요청 모두 성공·두 hostname marker·실제 client IP10.10.20.50을 확인하며 external instance IP가0인지 검사한다. MIG는 NAT 생성에 의존하고 startup의 apt 재시도는 유한하다. 삭제 후 inventory는 한 zone이 아닌 전체 zone을 조회하며 조회 실패를 부재로 처리하지 않는다.
 
 ## Git 종료 조건
 

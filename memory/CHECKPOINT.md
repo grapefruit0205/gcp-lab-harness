@@ -1,31 +1,35 @@
-# Checkpoint — Phase09 종료 잔여3개·90개 Task 콘솔 안내 게시 확인 — 2026-08-26 18:28
+# Checkpoint — Phase10–15 게시·Cloud 실행 준비 — 2026-08-26 21:05
 
 ## The story so far
 
-Phase09 run `p09-260826-eb03`은 DB1044/API400 보완 후 실제 SQL/WordPress Task1–6 검증을 통과했다. 이후 D-042 요청으로 destroy했고 SQL/VM2/disk2/subnet/firewall/SA·전용 IAM은 없어졌다. PSA producer 사용 중 Error9로 VPC·할당 범위·연결3개만 남아 cleanup_required다. state에는 잔여3개와 활성 유지 API3개가 있고, 새 백업·강제 삭제/state 제거는 하지 않았다. Phase08과 이전 run 잔여는 보존했다.
+D-044의 로컬 구현·검사를 완료했다. Phase01–15의90개 Task를221개 상세 확인 항목으로 나눴고 Task 안의 원문 하위 제목167개를 모두 연결했다. Phase10–15의 보존형 실행·동일 state replan·정확한 SHA 승인과 기능 오류를 보완했다.40개 회귀·13개 안내·TF mock6개/fmt/validate·전체 offline suite·6개 Phase gate·Phase09 기존70개 검사가 통과했다. 새 독자2차 리허설도34문서107링크·차단0이었다.
 
-D-043에 따라 모든15개 Phase/90개 Task의 콘솔 경로·통과 기준·한계/보조 확인을 문서·AGENTS·prompt·review 출력 경로에 연결했다. 8개 안내 회귀 테스트·90개 coverage·Phase09 70tests/TF/gate·controller·Phase01–15 offline suite·독립 문서 리허설 통과. 관련75개 파일을 `eb9aad9f043ebd749e67c695c0e447755c2fafda`로 commit/push하고 실제 원격 main SHA와 fast-forward pull·clean tree를 확인했다. 이 checkpoint는 그 게시 확인의 후속 기록이다. Cloud 실행 소스 e701…/shared adapter/다른 Phase Cloud 코드는 그대로다. 새 pin catalog 항목만 사용자 확인 전이다.
+사용자가 D-045로 commit/push와 실제 apply·오류 수정을 요청했다. 현재 변경40개 회귀/13개 안내 검사를 재확인했고 원격과 HEAD5aa5749는 분기0이다. 계정·allowlist·billing preflight를 통과했다. commit/push와 Phase10 새 계획을 준비 중이며 아직 새 Cloud 변경은 없다. 원문·Phase08/09·승인 공통4개 lib는 그대로다. Phase08 bucket, Phase09 p09-260826-eb03 PSA/VPC3개 및 이전 run 잔여도 보존했다. 실제 Cloud 성공과 원문 전체 수동 단계 완료는 미검증/일부 미구현이며 docs/audits/phase-10-15-repair.md에 구분했다.
 
 ## Decided
 
-- D-042: 현재 Phase09 run 정상 종료 destroy 승인, Phase08·다른 run 잔여·공통 API 보존.
-- D-043: Phase별 Task 콘솔 확인법을 항상 안내하고 관련 변경을 로컬·원격 Git에 반영한다.
-- D-036/D-037: 실패해도 리소스/state/로그 보존·진단한다. 자동 destroy 금지.
+- D-045: 해당 변경 stage·commit·push 후 Phase10부터 실제 실행/오류 보완. exact plan 승인과 실패 보존은 유지.
+- D-044: Task 하위 상세 안내와 Phase10–15 구현·오류 보완.
+- D-036/D-037: 실패 시 리소스/state/계획/로그 보존 후 진단·새 plan 승인·재apply. 자동 전체 삭제 금지.
+- D-043: 완료 보고에 Task별 콘솔 경로·값·판정·한계/증거를 항상 안내.
+- 기존 run의 계정/config/project는 고정하고 원래 작성자 계정을 clone 사용자의 기본값으로 만들지 않는다.
 
 ## Waiting on the user
 
-- Q-019: 제시한 phase-task-console-check exact 항목의 ballast catalog 저장만 확인 대기. AGENTS·문서·보고 동작은 D-043대로 반영했다.
-- Q-020: 현재 run PSA producer 해제 후 같은 run 정리 필요. 강제 peering 삭제/state 제거는 금지하며 이전 run Q-012와 구분한다.
-- 다른 Phase의 보존 복구 이관(Q-014)은 별도이며 기존 자동 실패 destroy 경로 실행 금지.
+- 새 Cloud 실행에는 별도 저장 계획의 정확한 SHA 승인이 필요하며 현재 새 계획은 없다. commit/push는 D-045에 따라 진행 중.
+- Q-014:01–08 옛 자동 삭제 경로 미이관; Q-021:10–15 실기·원문 차이 추적.
+- Q-019 catalog 항목 확인, Q-012/Q-020 PSA producer 잔여는 여전히 별도다. 자동 처리하지 않는다.
 
 ## Next first action
 
-`python3 /home/grapefruit/gcp-lab-harness/scripts/console-checks.py --phase 09`로 Task별 확인법을 읽는다. 현재 SQL/VM은 삭제됐으므로 Cloud 재생성/재apply는 하지 않는다.
+`git -C /home/grapefruit/gcp-lab-harness diff --cached --stat`로 게시 범위를 검사하고 D-045의 한국어 commit·push를 완료한다.
 
 ## Tried
 
-- API 비밀번호 초기화 성공만으로 DB 사용 가능을 판단한 경로: root USAGE뿐이라 wordpress1044. 실제 권한/SQL 검사가 필요했다.
-- type 없는 역할+비밀번호 동시 요청:400/INTERNAL_ERROR. 옛 backend 원문이 없어 단일 원인을 분리 입증하지 못했지만 새 분리 요청·양쪽 실제 SQL/HTTP 검증은 통과했다.
-- 명시적 destroy의 PSA 삭제: SQL 삭제 성공 뒤에도 producer 사용 중 Error9. 같은 요청을 무작정 반복하거나 강제 peering 삭제하지 않는다.
-- 삭제 전 apply receipt/state SHA는 역사적 증거다. 현재 state는 종료 정리로 변경됐으며 예전 apply receipt로 재verify하지 않는다. 비밀/state/원시 로그는 Git 제외다.
-- HTTPS push는 credential helper 부재로 실패했다. 기존 repo 전용 SSH alias로 같은 origin 저장소에 일반 push했고 origin/global 설정·개인 키 내용은 변경/열람하지 않았다.
+- P10 bq dry-run 텍스트 파싱·page 크기를 총행수로 판단하던 경로는 jobs API/totalRows로 교체했다.
+- P11 시계열 존재만 확인하던 거짓 성공은 정확한 대상과 최신 true 값 검사로 교체했다.
+- P12 실패 전체 destroy·재시도4터널 강제 대기·선택 정리를 passed로 처리하던 경로는 단계 재개/manual-boundary로 교체했다.
+- P13 builder 외부 삭제는 다음 repair의 의존성을 깨므로 stopped 보존. 원문 reset/삭제는 아직 미구현이며 disk 비용이 남는다.
+- P14 잘못된 zone inventory·CLI 오류를0개로 취급하던 경로는 aggregated/fail-closed 조회로 교체했다.
+- 원문 하위 제목 최초177 집계는 Task 밖 제목까지 포함했다. 실제 대상167·상세221로 독립 재집계했다.
+- Phase09 PSA Error9는 producer 사용 중이므로 강제 peering 삭제/state 제거/무작정 재시도하지 않는다.

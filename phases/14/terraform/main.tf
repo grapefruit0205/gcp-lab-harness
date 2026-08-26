@@ -40,11 +40,15 @@ locals {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y apache2 curl
+    apt_retry() { for attempt in $(seq 1 6); do if timeout 180 "$@"; then return 0; fi; sleep 10; done; return 1; }
+    apt_retry apt-get update
+    apt_retry apt-get install -y apache2 libapache2-mod-php curl
     internal_ip="$(curl -fsS -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)"
     zone="$(curl -fsS -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/zone | awk -F/ '{print $4}')"
-    printf '<h1>Internal Load Balancing Lab</h1><h2>Client IP</h2>%s<h2>Hostname</h2>backend=%s<h2>Server Location</h2>%s\n' "$internal_ip" "$(hostname)" "$zone" >/var/www/html/index.html
+    printf '%s' "$zone" >/var/www/p14-zone
+    printf '%s\n' '<?php printf("<h1>Internal Load Balancing Lab</h1><h2>Client IP</h2>%s<h2>Hostname</h2>backend=%s<h2>Server Location</h2>%s", htmlspecialchars($_SERVER["REMOTE_ADDR"]), htmlspecialchars(gethostname()), htmlspecialchars(file_get_contents("/var/www/p14-zone"))); ?>' >/var/www/html/index.php
+    printf 'DirectoryIndex index.php\n' >/etc/apache2/conf-available/p14-index.conf
+    a2enconf p14-index
     systemctl enable --now apache2
   EOT
 }
@@ -158,6 +162,7 @@ resource "google_compute_region_instance_template" "b" {
 }
 
 resource "google_compute_instance_group_manager" "a" {
+  depends_on         = [google_compute_router_nat.nat]
   name               = "instance-group-1-${var.run_id}"
   zone               = var.zone_one
   base_instance_name = "p14-group1-${var.run_id}"
@@ -170,6 +175,7 @@ resource "google_compute_instance_group_manager" "a" {
 }
 
 resource "google_compute_instance_group_manager" "b" {
+  depends_on         = [google_compute_router_nat.nat]
   name               = "instance-group-2-${var.run_id}"
   zone               = var.zone_two
   base_instance_name = "p14-group2-${var.run_id}"
@@ -201,8 +207,8 @@ resource "google_compute_instance" "utility" {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y curl
+    for attempt in $(seq 1 6); do if timeout 180 apt-get update && timeout 180 apt-get install -y curl; then break; fi; sleep 10; done
+    command -v curl
   EOT
   depends_on              = [google_compute_router_nat.nat]
 }

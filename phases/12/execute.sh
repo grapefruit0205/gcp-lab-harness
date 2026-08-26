@@ -12,9 +12,9 @@ phase_preflight() {
 phase_write_tfvars() {
   local vpn_psk
   vpn_psk="$(openssl rand -base64 48 | tr -d '\n')"
-  jq -n --arg project_id "$GCP_PROJECT_ID" --arg run_id "$2" --arg region "$GCP_REGION" --arg zone "$GCP_ZONE" \
-    --arg secondary_region "$GCP_SECONDARY_REGION" --arg secondary_zone "$GCP_SECONDARY_ZONE" --arg vpn_psk "$vpn_psk" \
-    '{project_id:$project_id,run_id:$run_id,region:$region,zone:$zone,secondary_region:$secondary_region,secondary_zone:$secondary_zone,vpn_psk:$vpn_psk}' >"$1"
+  printf %s "$vpn_psk" | jq -Rs --arg project_id "$GCP_PROJECT_ID" --arg run_id "$2" --arg region "$GCP_REGION" --arg zone "$GCP_ZONE" \
+    --arg secondary_region "$GCP_SECONDARY_REGION" --arg secondary_zone "$GCP_SECONDARY_ZONE" \
+    '{project_id:$project_id,run_id:$run_id,region:$region,zone:$zone,secondary_region:$secondary_region,secondary_zone:$secondary_zone,vpn_psk:.}' >"$1"
 }
 
 phase_write_action_plan() {
@@ -22,6 +22,7 @@ phase_write_action_plan() {
     {id:"psk-runtime",kind:"terraform",target:"0600 tfvars and ignored run state",mutation:"generate runtime-only 48-byte PSK and redact plan JSON",rollback:"tfvars removed after destroy",timeout_seconds:300,contains_secret:true},
     {id:"routing-convergence",kind:"gcloud",target:("two routers and four tunnels "+$run_id),mutation:"bounded status polling",rollback:"read-only",timeout_seconds:900,contains_secret:false},
     {id:"connectivity-matrix",kind:"guest",target:"on-prem and two vpc-demo VMs",mutation:"bidirectional and cross-region private ICMP probes",rollback:"no retained mutation",timeout_seconds:300,contains_secret:false},
+    {id:"routing-transition",kind:"gcloud",target:("vpc-demo-"+$run_id),mutation:"GLOBAL baseline to REGIONAL negative cross-region probe then GLOBAL success",rollback:"same state replan restores GLOBAL on failure",timeout_seconds:1200,contains_secret:false},
     {id:"single-path-failure",kind:"gcloud",target:("vpc-demo-tunnel0-"+$run_id),mutation:"delete exact Terraform-owned tunnel after baseline evidence",rollback:"remaining topology destroyed after review",timeout_seconds:300,contains_secret:false},
     {id:"failover-probe",kind:"guest",target:("on-prem-instance1-"+$run_id),mutation:"bounded ping through surviving tunnel",rollback:"no retained mutation",timeout_seconds:300,contains_secret:false}
   ]}' >"$1"
@@ -44,5 +45,5 @@ phase_after_destroy() {
   rm -f "$repo_root/artifacts/runs/$1/phase-12/work/phase-12.auto.tfvars.json"
 }
 
-source "$repo_root/lib/harness/phase-adapter.sh"
-harness_phase_adapter_main "$@"
+source "$repo_root/lib/harness/safe-adapter.sh"
+safe_adapter_main "$@"
