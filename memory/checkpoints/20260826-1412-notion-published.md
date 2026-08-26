@@ -1,4 +1,4 @@
-# Checkpoint — Phase 07 Notion 게시 완료·새 apply 승인 대기 — 2026-08-26 14:12
+# Checkpoint — Phase 07 Notion 재계획·게시 준비 — 2026-08-26 14:11
 
 ## The story so far
 
@@ -6,7 +6,7 @@
 
 clone한 사람은 `./bin/gcp-lab-harness accounts setup`에서 자신의 두 계정을 입력한다. 최초 A 제안값도 그 환경의 활성 gcloud 사용자뿐이다. 개인 계정 설정/프로젝트 설정/credentials는 Git에서 제외한다. 승인된 run의 계정은 saved inputs로 고정한다.
 
-observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase gate, Phase 01–15 offline와 controller, 개인정보·원문/Phase 06 소스 보존 검사를 통과했다. 문서 리허설의 비차단 `accounts setup --help` 문제도 수정·재검사했다. 마지막 실제 accounts check에서 **A/B 인증 모두 통과**했고 preflight 및 새 run `p07-260826-b53c` 저장 plan을 생성했다. Terraform create 8/change 0/destroy 0, bundle SHA `04f7afb8d5e1e331ae11d6da3ef0eea8936f9a77c26739c6fb97d02388d9043a`다. 아직 planned 상태이며 apply/E2E는 실행하지 않았다. D-026 관련 구현 커밋 `ad24c8d7918dca6a336d20f1b3e22543e9dd9411`을 GitHub main에 푸시하고 원격 SHA 일치를 확인했다.
+observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase gate, Phase 01–15 offline와 controller, 개인정보·원문/Phase 06 소스 보존 검사를 통과했다. 문서 리허설의 비차단 `accounts setup --help` 문제도 수정·재검사했다. 마지막 실제 accounts check에서 **A/B 인증 모두 통과**했고 preflight 및 새 run `p07-260826-b53c` 저장 plan을 생성했다. Terraform create 8/change 0/destroy 0, bundle SHA `04f7afb8d5e1e331ae11d6da3ef0eea8936f9a77c26739c6fb97d02388d9043a`다. 아직 planned 상태이며 apply/E2E는 실행하지 않았다. D-026으로 승인된 관련 커밋·푸시는 최종 게시 준비 중이다.
 
 ## Decided
 
@@ -22,7 +22,7 @@ observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase ga
 
 ## Next first action
 
-`cd /home/grapefruit/gcp-lab-harness && sha256sum artifacts/runs/p07-260826-b53c/phase-07/plan-bundle.json`로 승인 후보 hash를 재확인한다. 사용자가 이 새 SHA의 적용을 승인한 경우에만 source/inputs/action/binary 재검사 후 saved apply·IAM verify를 진행한다.
+`cd /home/grapefruit/gcp-lab-harness && git diff --check && git status --short`로 게시 대상 최종 검토 후 D-026 범위의 Phase 07 변경만 한국어 커밋·일반 push하고 원격 SHA를 대조한다.
 
 ## Tried
 
@@ -31,4 +31,3 @@ observed: Python 84개, Terraform mock 8개, fmt/validate, Bash syntax, Phase ga
 - B 미로그인을 전체 인증 성공으로 처리하거나 과거 plan 승인을 재사용하지 않는다.
 - HTTP403 단독은 IAM 거부, VM insert HTTP200은 최종 생성 성공의 증거가 아니다. 실제 permission/operation/RUNNING identity를 검사한다.
 - 과거 a9d2는 최종 Storage 거부 판정 실패 후 소유 리소스 13개와 VM/bootdisk를 정리했다. 새 실제 사용자 경로의 Cloud E2E 증거가 아니다.
-- HTTPS origin에는 push credential이 없었다. 기존 repo 전용 SSH alias로 같은 GitHub 저장소에 일반 push해 해결했다. origin URL/개인 인증 설정은 바꾸지 않았다.
